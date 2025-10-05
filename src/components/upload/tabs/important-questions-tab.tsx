@@ -1,280 +1,319 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { CardItem } from "../card-item"
-import { MediaUploader } from "../media-uploader"
-import type { Media} from "@/models/media"
-import type { ImportantQuestionTextAnswer } from "@/models/important-question-text-answer"
+import { useEffect, useMemo, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Plus, Trash2 } from "lucide-react";
+import { MediaUploader } from "../media-uploader";
+import { CardItem } from "../card-item";
+import type { Media } from "@/models/media";
 
+type ImportantQuestionData = {
+  question: string;
+  text_answer?: string;
+  video_file?: File;
+  is_public: boolean;
+};
 
-function genId() {
-  return `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-}
-
-type QuestionDraft = {
-  id: string
-  question: string
-  visibility: "public" | "private"
-  textAnswers: Array<Pick<ImportantQuestionTextAnswer, "id" | "title" | "description" | "answer" | "created_by">>
-  videoAnswers: Array<{
-    id: string
-    title: string
-    description?: string
-    is_ai_generated: boolean
-    created_by: string
-    media: Media[]
-  }>
-}
+type QuestionItem = {
+  id: string;
+  question: string;
+  text_answer: string;
+  video_files: Media[];
+  is_public: boolean;
+};
 
 type ImportantQuestionsTabProps = {
-  resourceId: string
-  createdBy: string
-}
+  resource_id: string;
+  created_by: string;
+  on_questions_change?: (questions: ImportantQuestionData[]) => void;
+};
 
-export function ImportantQuestionsTab({ resourceId, createdBy }: ImportantQuestionsTabProps) {
-  const [questions, setQuestions] = useState<QuestionDraft[]>([
-    { id: genId(), question: "", visibility: "public", textAnswers: [], videoAnswers: [] },
-  ])
+export function ImportantQuestionsTab({
+  resource_id,
+  created_by,
+  on_questions_change,
+}: ImportantQuestionsTabProps) {
+  const [questions, set_questions] = useState<QuestionItem[]>([
+    {
+      id: `question-${Date.now()}`,
+      question: "",
+      text_answer: "",
+      video_files: [],
+      is_public: true,
+    },
+  ]);
+
+  // Convert to ImportantQuestionData format for parent component
+  const questions_data: ImportantQuestionData[] = useMemo(() => {
+    return questions
+      .filter((question) => question.question.trim()) // Only include questions with text
+      .map((question) => ({
+        question: question.question.trim(),
+        text_answer: question.text_answer.trim() || undefined,
+        video_file: question.video_files[0]?.file || undefined,
+        is_public: question.is_public,
+      }));
+  }, [questions]);
+
+  // Notify parent component when questions data changes
+  useEffect(() => {
+    if (on_questions_change) {
+      on_questions_change(questions_data);
+    }
+  }, [questions_data, on_questions_change]);
 
   useEffect(() => {
     try {
-      localStorage.setItem("draft_questions", JSON.stringify(questions))
+      localStorage.setItem(
+        "draft_important_questions",
+        JSON.stringify(questions)
+      );
     } catch {}
-  }, [questions])
+  }, [questions]);
 
-  function addQuestion() {
-    setQuestions((q) => [...q, { id: genId(), question: "", visibility: "public", textAnswers: [], videoAnswers: [] }])
-  }
-  function removeQuestion(idx: number) {
-    setQuestions((q) => q.filter((_, i) => i !== idx))
-  }
-  function updateQuestion<K extends keyof QuestionDraft>(idx: number, key: K, value: QuestionDraft[K]) {
-    setQuestions((q) => {
-      const copy = q.slice()
-      copy[idx] = { ...copy[idx], [key]: value }
-      return copy
-    })
-  }
+  const add_question = () => {
+    const new_question: QuestionItem = {
+      id: `question-${Date.now()}`,
+      question: "",
+      text_answer: "",
+      video_files: [],
+      is_public: true,
+    };
+    set_questions((prev) => [...prev, new_question]);
+  };
 
-  function addTextAnswer(idx: number) {
-    setQuestions((q) => {
-      const copy = q.slice()
-      copy[idx].textAnswers.push({
-        id: genId(),
-        title: "",
-        description: "",
-        answer: "",
-        created_by: createdBy,
-      })
-      return copy
-    })
-  }
-  function updateTextAnswer(idx: number, aIdx: number, partial: Partial<QuestionDraft["textAnswers"][number]>) {
-    setQuestions((q) => {
-      const copy = q.slice()
-      copy[idx].textAnswers[aIdx] = { ...copy[idx].textAnswers[aIdx], ...partial }
-      return copy
-    })
-  }
-  function removeTextAnswer(idx: number, aIdx: number) {
-    setQuestions((q) => {
-      const copy = q.slice()
-      copy[idx].textAnswers.splice(aIdx, 1)
-      return copy
-    })
-  }
+  const remove_question = (question_id: string) => {
+    set_questions((prev) =>
+      prev.filter((question) => question.id !== question_id)
+    );
+  };
 
-  function addVideoAnswer(idx: number) {
-    setQuestions((q) => {
-      const copy = q.slice()
-      copy[idx].videoAnswers.push({
-        id: genId(),
-        title: "",
-        description: "",
-        is_ai_generated: false,
-        created_by: createdBy,
-        media: [],
-      })
-      return copy
-    })
-  }
-  function updateVideoAnswer(idx: number, aIdx: number, partial: Partial<QuestionDraft["videoAnswers"][number]>) {
-    setQuestions((q) => {
-      const copy = q.slice()
-      copy[idx].videoAnswers[aIdx] = { ...copy[idx].videoAnswers[aIdx], ...partial }
-      return copy
-    })
-  }
-  function removeVideoAnswer(idx: number, aIdx: number) {
-    setQuestions((q) => {
-      const copy = q.slice()
-      copy[idx].videoAnswers.splice(aIdx, 1)
-      return copy
-    })
-  }
+  const update_question = (
+    question_id: string,
+    updates: Partial<QuestionItem>
+  ) => {
+    set_questions((prev) =>
+      prev.map((question) =>
+        question.id === question_id ? { ...question, ...updates } : question
+      )
+    );
+  };
 
-  const payload = useMemo(() => questions.map<QuestionDraft>((q) => q), [questions])
+  const validate_question = (question: QuestionItem): string[] => {
+    const errors: string[] = [];
+
+    if (!question.question.trim()) {
+      errors.push("Question text is required");
+    }
+
+    if (!question.is_public) {
+      if (!question.text_answer.trim() && question.video_files.length === 0) {
+        errors.push("Private questions must have either text or video answer");
+      }
+    }
+
+    return errors;
+  };
 
   return (
     <div className="space-y-4">
-      {questions.map((q, idx) => (
-        <CardItem
-          key={q.id}
-          title={`Question ${idx + 1}`}
-          description="Add your question and optional text/video answers."
-          onRemove={questions.length > 1 ? () => removeQuestion(idx) : undefined}
-        >
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor={`q-text-${idx}`}>Question</Label>
-              <Textarea
-                id={`q-text-${idx}`}
-                value={q.question}
-                onChange={(e) => updateQuestion(idx, "question", e.target.value)}
-                placeholder="e.g., Explain the process scheduling algorithms..."
-                className="min-h-24"
-                aria-invalid={q.question.trim().length === 0}
-              />
-            </div>
+      <CardItem
+        title="Important Questions"
+        description="Add questions that frequently appear in exams. Private questions require answers."
+      >
+        <div className="space-y-6">
+          {questions.map((question, index) => {
+            const question_errors = validate_question(question);
+            const has_errors = question_errors.length > 0;
 
-            <div className="flex items-center justify-between">
-              <Label>Visibility</Label>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Private</span>
-                <Switch
-                  checked={q.visibility === "public"}
-                  onCheckedChange={(v) => updateQuestion(idx, "visibility", v ? "public" : "private")}
-                  aria-label="Toggle question public visibility"
-                />
-                <span className="text-xs text-muted-foreground">Public</span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Text Answers</Label>
-                <Button variant="secondary" size="sm" onClick={() => addTextAnswer(idx)}>
-                  Add text answer
-                </Button>
-              </div>
-              {q.textAnswers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No text answers yet.</p>
-              ) : null}
-              {q.textAnswers.map((ans, aIdx) => (
-                <div key={ans.id} className="grid gap-3 border border-border rounded-md p-3">
-                  <div className="grid gap-2">
-                    <Label htmlFor={`qa-title-${idx}-${aIdx}`}>Title</Label>
-                    <Input
-                      id={`qa-title-${idx}-${aIdx}`}
-                      value={ans.title}
-                      onChange={(e) => updateTextAnswer(idx, aIdx, { title: e.target.value })}
-                      placeholder="e.g., Round Robin Explanation"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor={`qa-desc-${idx}-${aIdx}`}>Description (optional)</Label>
-                    <Textarea
-                      id={`qa-desc-${idx}-${aIdx}`}
-                      value={ans.description ?? ""}
-                      onChange={(e) => updateTextAnswer(idx, aIdx, { description: e.target.value })}
-                      placeholder="Short context…"
-                      className="min-h-20"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor={`qa-answer-${idx}-${aIdx}`}>Answer</Label>
-                    <Textarea
-                      id={`qa-answer-${idx}-${aIdx}`}
-                      value={ans.answer}
-                      onChange={(e) => updateTextAnswer(idx, aIdx, { answer: e.target.value })}
-                      placeholder="Detailed answer…"
-                      className="min-h-28"
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <Button variant="ghost" size="sm" onClick={() => removeTextAnswer(idx, aIdx)}>
-                      Remove answer
-                    </Button>
+            return (
+              <div
+                key={question.id}
+                className="border border-border rounded-lg p-4 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Question {index + 1}</h4>
+                  <div className="flex items-center gap-2">
+                    {questions.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => remove_question(question.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Video Answers</Label>
-                <Button variant="secondary" size="sm" onClick={() => addVideoAnswer(idx)}>
-                  Add video answer
-                </Button>
-              </div>
-              {q.videoAnswers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No video answers yet.</p>
-              ) : null}
-              {q.videoAnswers.map((ans, aIdx) => (
-                <div key={ans.id} className="grid gap-3 border border-border rounded-md p-3">
+                <div className="grid gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor={`qva-title-${idx}-${aIdx}`}>Title</Label>
-                    <Input
-                      id={`qva-title-${idx}-${aIdx}`}
-                      value={ans.title}
-                      onChange={(e) => updateVideoAnswer(idx, aIdx, { title: e.target.value })}
-                      placeholder="e.g., Preemptive vs Non-preemptive"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor={`qva-desc-${idx}-${aIdx}`}>Description (optional)</Label>
+                    <Label htmlFor={`question-text-${question.id}`}>
+                      Question
+                    </Label>
                     <Textarea
-                      id={`qva-desc-${idx}-${aIdx}`}
-                      value={ans.description ?? ""}
-                      onChange={(e) => updateVideoAnswer(idx, aIdx, { description: e.target.value })}
-                      placeholder="Short context…"
-                      className="min-h-20"
+                      id={`question-text-${question.id}`}
+                      value={question.question}
+                      onChange={(e) =>
+                        update_question(question.id, {
+                          question: e.target.value,
+                        })
+                      }
+                      placeholder="e.g., Explain the difference between stack and queue data structures"
+                      className={`min-h-20 ${
+                        has_errors && !question.question.trim()
+                          ? "border-red-300"
+                          : ""
+                      }`}
                     />
+                    {!question.question.trim() && (
+                      <span className="text-xs text-red-500">
+                        Question text is required
+                      </span>
+                    )}
                   </div>
-                  <MediaUploader
-                    value={ans.media}
-                    onChange={(media) => updateVideoAnswer(idx, aIdx, { media })}
-                    maxFiles={1}
-                    accept="video/*"
-                    helper="Attach a single video per answer."
-                  />
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor={`qva-ai-${idx}-${aIdx}`}>AI generated?</Label>
-                      <Switch
-                        id={`qva-ai-${idx}-${aIdx}`}
-                        checked={ans.is_ai_generated}
-                        onCheckedChange={(v) => updateVideoAnswer(idx, aIdx, { is_ai_generated: v })}
-                      />
+
+                  <div className="grid gap-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Visibility</Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          Private
+                        </span>
+                        <Switch
+                          checked={question.is_public}
+                          onCheckedChange={(checked) =>
+                            update_question(question.id, { is_public: checked })
+                          }
+                          aria-label="Toggle question visibility"
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          Public
+                        </span>
+                      </div>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => removeVideoAnswer(idx, aIdx)}>
-                      Remove answer
-                    </Button>
+                    {!question.is_public && (
+                      <p className="text-xs text-orange-600">
+                        Private questions must have either text or video answer
+                      </p>
+                    )}
                   </div>
+
+                  <div className="grid gap-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`question-answer-${question.id}`}>
+                        Text Answer
+                      </Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-xs text-muted-foreground underline underline-offset-2 cursor-help">
+                              {question.is_public
+                                ? "optional"
+                                : "required if no video"}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-popover text-popover-foreground border-border">
+                            {question.is_public
+                              ? "Public questions can be answer-optional"
+                              : "Private questions need either text or video answer"}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Textarea
+                      id={`question-answer-${question.id}`}
+                      value={question.text_answer}
+                      onChange={(e) =>
+                        update_question(question.id, {
+                          text_answer: e.target.value,
+                        })
+                      }
+                      placeholder="Provide a detailed answer to this question..."
+                      className="min-h-32"
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Video Answer</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-xs text-muted-foreground underline underline-offset-2 cursor-help">
+                              {question.is_public
+                                ? "optional"
+                                : "required if no text"}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-popover text-popover-foreground border-border">
+                            Upload a video explanation for this question
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <MediaUploader
+                      value={question.video_files}
+                      onChange={(files) =>
+                        update_question(question.id, { video_files: files })
+                      }
+                      max_files={1}
+                      accept="video/*"
+                      file_type="video"
+                    />
+                  </div>
+
+                  {has_errors && (
+                    <div className="bg-red-50 border border-red-200 rounded p-3">
+                      <p className="text-sm text-red-700 font-medium">
+                        Issues with this question:
+                      </p>
+                      <ul className="list-disc list-inside text-xs text-red-600 mt-1">
+                        {question_errors.map((error, idx) => (
+                          <li key={idx}>{error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
-        </CardItem>
-      ))}
+              </div>
+            );
+          })}
 
-      <div className="flex items-center justify-between">
-        <Button variant="secondary" onClick={addQuestion}>
-          Add another question
-        </Button>
-        <Button>Save Questions</Button>
-      </div>
+          <Button variant="outline" onClick={add_question} className="w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Another Question
+          </Button>
+        </div>
+      </CardItem>
 
-      <CardItem title="Preview Payload">
+      <CardItem
+        title="Preview"
+        description="This shows how your questions would be stored."
+      >
         <pre className="text-xs md:text-sm overflow-auto rounded-md border border-border p-3 bg-muted/50">
-          {JSON.stringify(payload, null, 2)}
+          {JSON.stringify(questions_data, null, 2)}
         </pre>
       </CardItem>
+
+      <div className="flex justify-end">
+        <div className="text-xs text-muted-foreground mb-2">
+          {questions_data.length > 0
+            ? `✓ ${questions_data.length} question(s) ready`
+            : "Add at least one question"}
+        </div>
+      </div>
     </div>
-  )
+  );
 }
