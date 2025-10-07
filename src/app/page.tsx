@@ -2,6 +2,11 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
 import Link from "next/link";
+import docLoader from "@/lib/rag-chatbot/load-doc";
+import doc_loader from "@/lib/rag-chatbot/load-doc";
+import create_doc_chunk from "@/lib/rag-chatbot/create-doc-chunk";
+import embeddings from "@/lib/rag-chatbot/embedding-model-config";
+import embedDocumentsWithHandling from "@/lib/rag-chatbot/embed-documents";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -13,14 +18,29 @@ export default async function Home() {
 
   // If user exists, get additional profile data from students table
   let studentData = null;
-  if (user) {
-    const { data } = await supabase
-      .from("students")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-    studentData = data;
-  }
+  // if (user) {
+  //   const { data } = await supabase
+  //     .from("students")
+  //     .select("*")
+  //     .eq("id", user.id)
+  //     .single();
+  //   studentData = data;
+  // }
+
+  // const document = await doc_loader();
+
+  // console.log("Document content preview:", document);
+
+  // const chunked_doc = await create_doc_chunk(document);
+
+  // console.log("Chunked doc preview:", chunked_doc);
+
+  // const embedded_data = await embedDocumentsWithHandling(
+  //   embeddings,
+  //   chunked_doc
+  // );
+
+  // console.log("Embedded data preview:", embedded_data); // Log first 2 embeddings for brevity
 
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
