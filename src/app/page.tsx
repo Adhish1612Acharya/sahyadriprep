@@ -1,46 +1,115 @@
+// src/app/page.tsx
+"use client";
+
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 import { LogoutButton } from "@/components/logout-button";
 import Link from "next/link";
-import docLoader from "@/lib/rag-chatbot/load-doc";
-import doc_loader from "@/lib/rag-chatbot/load-doc";
-import create_doc_chunk from "@/lib/rag-chatbot/create-doc-chunk";
-import embeddings from "@/lib/rag-chatbot/embedding-model-config";
-import embedDocumentsWithHandling from "@/lib/rag-chatbot/embed-documents";
+import { useState, useEffect } from "react";
 
-export default async function Home() {
-  const supabase = await createClient();
+export default function Home() {
+  // ✅ Add state for user data
+  const [user, setUser] = useState<any>(null);
+  const [studentData, setStudentData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiResult, setApiResult] = useState<any>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  // Get the current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // ✅ Chat test state
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [chatResult, setChatResult] = useState<any>(null);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [testMessage, setTestMessage] = useState("What is machine learning?");
 
-  // If user exists, get additional profile data from students table
-  let studentData = null;
-  // if (user) {
-  //   const { data } = await supabase
-  //     .from("students")
-  //     .select("*")
-  //     .eq("id", user.id)
-  //     .single();
-  //   studentData = data;
-  // }
+  // ✅ Move user fetching to useEffect
+  useEffect(() => {
+    const initializeUser = async () => {
+      const supabase = createClient();
 
-  // const document = await doc_loader();
+      // Get the current user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-  // console.log("Document content preview:", document);
+      setUser(user);
 
-  // const chunked_doc = await create_doc_chunk(document);
+      // If user exists, get additional profile data from students table
+      if (user) {
+        const { data } = await supabase
+          .from("students")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        setStudentData(data);
+      }
+    };
 
-  // console.log("Chunked doc preview:", chunked_doc);
+    initializeUser();
+  }, []);
 
-  // const embedded_data = await embedDocumentsWithHandling(
-  //   embeddings,
-  //   chunked_doc
-  // );
+  // ✅ Test RAG processing API
+  const testRagApi = async () => {
+    setIsLoading(true);
+    setApiError(null);
+    setApiResult(null);
 
-  // console.log("Embedded data preview:", embedded_data); // Log first 2 embeddings for brevity
+    try {
+      console.log("🚀 Testing RAG API...");
+
+      const response = await fetch("/api/rag/process", {
+        method: "POST",
+        body: JSON.stringify({}),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setApiResult(data);
+      console.log("✅ RAG API Response:", data);
+    } catch (error: any) {
+      console.error("❌ RAG API Error:", error);
+      setApiError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ✅ Test Chat API
+  const testChatApi = async () => {
+    setIsChatLoading(true);
+    setChatError(null);
+    setChatResult(null);
+
+    try {
+      console.log("💬 Testing Chat API with message:", testMessage);
+
+      const response = await fetch("/api/rag/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setChatResult(data);
+      console.log("✅ Chat API Response:", data);
+    } catch (error: any) {
+      console.error("❌ Chat API Error:", error);
+      setChatError(error.message);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
 
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
@@ -79,14 +148,14 @@ export default async function Home() {
         </div>
       </header>
 
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start max-w-4xl w-full">
         {/* User Welcome Section */}
         {user && (
-          <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+          <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
             <h2 className="text-2xl font-bold mb-4 text-center">
               Welcome Back!
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-3 mb-6">
               <div className="flex justify-between">
                 <span className="font-medium text-gray-600 dark:text-gray-300">
                   Name:
@@ -115,24 +184,6 @@ export default async function Home() {
               </div>
               <div className="flex justify-between">
                 <span className="font-medium text-gray-600 dark:text-gray-300">
-                  Joined:
-                </span>
-                <span className="text-gray-900 dark:text-white">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </span>
-              </div>
-              {studentData?.created_at && (
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600 dark:text-gray-300">
-                    Student Since:
-                  </span>
-                  <span className="text-gray-900 dark:text-white">
-                    {new Date(studentData.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-600 dark:text-gray-300">
                   Email Verified:
                 </span>
                 <span
@@ -142,6 +193,153 @@ export default async function Home() {
                 >
                   {user.email_confirmed_at ? "✓ Verified" : "✗ Not Verified"}
                 </span>
+              </div>
+            </div>
+
+            {/* ✅ API Test Buttons */}
+            <div className="space-y-4">
+              {/* RAG Processing Test */}
+              <div>
+                <button
+                  onClick={testRagApi}
+                  disabled={isLoading}
+                  className={`w-full font-medium py-3 px-6 rounded-lg transition-colors ${
+                    isLoading
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-purple-600 hover:bg-purple-700 text-white"
+                  }`}
+                >
+                  {isLoading
+                    ? "🔄 Testing RAG Processing..."
+                    : "🧠 Test RAG Processing"}
+                </button>
+
+                {/* RAG API Result Display */}
+                {apiResult && (
+                  <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <h3 className="font-medium text-green-800 mb-2">
+                      ✅ RAG Processing Success!
+                    </h3>
+                    <div className="text-sm text-green-700">
+                      <p>
+                        <strong>Message:</strong> {apiResult.message}
+                      </p>
+                      {apiResult.data && (
+                        <div className="mt-2">
+                          <p>
+                            <strong>Chunks:</strong>{" "}
+                            {apiResult.data.processing?.chunks_created || 0}
+                          </p>
+                          <p>
+                            <strong>Embeddings:</strong>{" "}
+                            {apiResult.data.processing?.embeddings_generated ||
+                              0}
+                          </p>
+                          <p>
+                            <strong>Stored:</strong>{" "}
+                            {apiResult.data.processing?.chunks_stored || 0}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {apiError && (
+                  <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <h3 className="font-medium text-red-800 mb-2">
+                      ❌ RAG Processing Error
+                    </h3>
+                    <p className="text-sm text-red-700">{apiError}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Chat Test */}
+              <div>
+                {/* Test Message Input */}
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Test Chat Message:
+                  </label>
+                  <input
+                    type="text"
+                    value={testMessage}
+                    onChange={(e) => setTestMessage(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter your test message..."
+                  />
+                </div>
+
+                <button
+                  onClick={testChatApi}
+                  disabled={isChatLoading || !testMessage.trim()}
+                  className={`w-full font-medium py-3 px-6 rounded-lg transition-colors ${
+                    isChatLoading || !testMessage.trim()
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                  }`}
+                >
+                  {isChatLoading ? "💬 Testing Chat..." : "💬 Test RAG Chat"}
+                </button>
+
+                {/* Chat API Result Display */}
+                {chatResult && (
+                  <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h3 className="font-medium text-blue-800 mb-2">
+                      ✅ Chat Response!
+                    </h3>
+                    <div className="text-sm text-blue-700 space-y-2">
+                      <div>
+                        <strong>Response:</strong>
+                        <p className="mt-1 text-gray-700 bg-white p-3 rounded border">
+                          {chatResult.message}
+                        </p>
+                      </div>
+
+                      {chatResult.metadata && (
+                        <div>
+                          <strong>Metadata:</strong>
+                          <ul className="mt-1 space-y-1">
+                            <li>
+                              📄 Relevant chunks:{" "}
+                              {chatResult.metadata.relevant_chunks_count}
+                            </li>
+                            <li>
+                              🎯 Context used:{" "}
+                              {chatResult.metadata.context_used ? "Yes" : "No"}
+                            </li>
+                            {chatResult.metadata.sources &&
+                              chatResult.metadata.sources.length > 0 && (
+                                <li>
+                                  📚 Sources:
+                                  <ul className="ml-4 mt-1">
+                                    {chatResult.metadata.sources.map(
+                                      (source: any, index: number) => (
+                                        <li key={index} className="text-xs">
+                                          • {source.document_title} (similarity:{" "}
+                                          {source.similarity})
+                                        </li>
+                                      )
+                                    )}
+                                  </ul>
+                                </li>
+                              )}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {chatError && (
+                  <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <h3 className="font-medium text-red-800 mb-2">
+                      ❌ Chat Error
+                    </h3>
+                    <p className="text-sm text-red-700">{chatError}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -1,5 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
-import { ChatMessage, ChatSession, SimilarChunk, VectorChunk, VectorDocument } from "./vector-store-service.types";
+import { createClient } from "@/lib/vector_supabase/server";
+import {
+  ChatMessage,
+  ChatSession,
+  SimilarChunk,
+  VectorChunk,
+  VectorDocument,
+} from "./vector-store-service.types";
 
 // Helper function for cosine similarity
 function cosineSimilarity(vecA: number[], vecB: number[]): number {
@@ -15,8 +21,9 @@ export const vectorStoreServerOperations = {
   async storeDocument(
     document: Omit<VectorDocument, "id" | "created_at" | "updated_at">
   ) {
-    const vectorStoreServer = await createClient();
-    const { data, error } = await vectorStoreServer
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
       .from("documents")
       .insert({
         ...document,
@@ -30,9 +37,10 @@ export const vectorStoreServerOperations = {
     return data as VectorDocument;
   },
 
-  // Store document chunks with embeddings
+  // ✅ Updated store chunks method
   async storeDocumentChunks(
     documentId: string,
+    documentTitle: string, // ✅ Pass title for caching
     chunksWithEmbeddings: Array<{
       content: string;
       embedding: number[];
@@ -41,19 +49,20 @@ export const vectorStoreServerOperations = {
       metadata?: Record<string, any>;
     }>
   ) {
-    const vectorStoreServer = await createClient();
+    const supabase = await createClient();
 
     const chunks = chunksWithEmbeddings.map((chunk) => ({
-      document_id: documentId,
+      document_id: documentId, // ✅ String reference
+      document_title: documentTitle, // ✅ Cache title
       content: chunk.content,
-      embedding: `[${chunk.embedding.join(",")}]`, // Convert to pgvector format
+      embedding: `[${chunk.embedding.join(",")}]`,
       chunk_index: chunk.chunkIndex,
       token_count: chunk.tokenCount || chunk.content.split(" ").length,
       metadata: chunk.metadata || {},
       created_at: new Date().toISOString(),
     }));
 
-    const { data, error } = await vectorStoreServer
+    const { data, error } = await supabase
       .from("document_chunks")
       .insert(chunks)
       .select();
@@ -63,7 +72,7 @@ export const vectorStoreServerOperations = {
     return data as VectorChunk[];
   },
 
-  // Vector similarity search
+  // ✅ Updated search with document info
   async searchSimilarChunks(
     queryEmbedding: number[],
     options: {
@@ -77,85 +86,58 @@ export const vectorStoreServerOperations = {
       };
     } = {}
   ): Promise<SimilarChunk[]> {
-    const vectorStoreServer = await createClient();
-
-    const { limit = 5, threshold = 0.7, filters = {} } = options;
-    const queryVector = `[${queryEmbedding.join(",")}]`;
+    const supabase = await createClient();
+    const { limit = 20, threshold = 0.3, filters = {} } = options;
 
     try {
-      // Build the query with document join for filtering
-      let query = vectorStoreServer.from("document_chunks").select(`
-          id,
-          document_id,
-          content,
-          embedding,
-          chunk_index,
-          token_count,
-          metadata,
-          created_at,
-          documents!inner(
-            id,
-            title,
-            subject_id,
-            module_id,
-            exam_id,
-            source_type,
-            source_reference
-          )
-        `);
+      console.log("Searching with embedding:", queryEmbedding);
+      // Call vector_search_function RPC with parameters
+      const { data, error } = await supabase.rpc("vector_search_function", {
+        query_embedding: queryEmbedding,
+        match_threshold: 1 - threshold, // similarity threshold converted to pgvector distance
+        limit_count: limit,
+      });
 
-      // Apply filters through the documents join
-      if (filters.subject_id) {
-        query = query.eq("documents.subject_id", filters.subject_id);
-      }
-      if (filters.module_id) {
-        query = query.eq("documents.module_id", filters.module_id);
-      }
-      if (filters.exam_id) {
-        query = query.eq("documents.exam_id", filters.exam_id);
-      }
-      if (filters.document_id) {
-        query = query.eq("document_id", filters.document_id);
-      }
-
-      // Order by similarity and limit
-      const { data, error } = await query
-        .order(`embedding <-> '${queryVector}'`)
-        .limit(limit);
+      console.log("Raw search results:", data, error);
 
       if (error) throw new Error(`Vector search failed: ${error.message}`);
 
       if (!data) return [];
 
-      // Calculate similarity scores and filter by threshold
-      const results: SimilarChunk[] = data
-        .map((chunk: any) => {
-          try {
-            const chunkEmbedding = JSON.parse(chunk.embedding);
-            const similarity = cosineSimilarity(queryEmbedding, chunkEmbedding);
+      // Apply additional filters client-side since RPC returns all matches below threshold
+      // const filteredResults = (data as any[])
+      //   .filter(chunk => {
+      //     if (filters.subject_id && chunk.metadata?.subject_id !== filters.subject_id) return false;
+      //     if (filters.module_id && chunk.metadata?.module_id !== filters.module_id) return false;
+      //     if (filters.exam_id && chunk.metadata?.exam_id !== filters.exam_id) return false;
+      //     if (filters.document_id && chunk.document_id !== filters.document_id) return false;
+      //     return true;
+      //   })
+      //   .map(chunk => {
+      //     try {
+      //       return {
+      //         ...chunk,
+      //         embedding: typeof chunk.embedding === 'string' ? JSON.parse(chunk.embedding) : chunk.embedding,
+      //         similarity: 1 - chunk.similarity_distance, // convert distance back to similarity
+      //         document: {
+      //           id: chunk.document_id,
+      //           title: chunk.document_title,
+      //           subject_id: chunk.metadata?.subject_id,
+      //           module_id: chunk.metadata?.module_id,
+      //           exam_id: chunk.metadata?.exam_id,
+      //         },
+      //       };
+      //     } catch {
+      //       console.warn("Failed to parse embedding for chunk:", chunk.id);
+      //       return null;
+      //     }
+      //   })
+      //   .filter(Boolean)
+      //   .filter(chunk => chunk.similarity >= threshold);
 
-            return {
-              id: chunk.id,
-              document_id: chunk.document_id,
-              content: chunk.content,
-              embedding: chunkEmbedding,
-              chunk_index: chunk.chunk_index,
-              token_count: chunk.token_count,
-              metadata: chunk.metadata,
-              created_at: chunk.created_at,
-              similarity,
-              document: chunk.documents,
-            };
-          } catch (embeddingError) {
-            console.warn("Failed to parse embedding for chunk:", chunk.id);
-            return null;
-          }
-        })
-        .filter(
-          (chunk: any) => chunk !== null && chunk.similarity >= threshold
-        );
+      // return filteredResults as SimilarChunk[];
 
-      return results;
+      return data;
     } catch (error: any) {
       console.error("Error in searchSimilarChunks:", error);
       throw new Error(`Vector search failed: ${error.message}`);
