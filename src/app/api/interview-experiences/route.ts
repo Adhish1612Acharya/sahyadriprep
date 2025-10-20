@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validatePDF } from "@/helpers/validatePdf.helpers";
+import { validate_pdf } from "@/helpers/validate-pdf.helpers";
+import { validate_video } from "@/helpers/validate-video.helpers";
 import { createInterviewExperienceSchema } from "@/schemas/interview-experience.schema";
-import { saveUploadedFile, cleanupTempFiles } from "@/helpers/file.helpers";
-import { uploadInterviewExperiencePDF } from "@/lib/cloudinary/upload";
+import { save_uploaded_file, cleanup_temp_files } from "@/helpers/file.helpers";
+import {
+  uploadInterviewExperiencePDF,
+  uploadInterviewExperienceVideo,
+} from "@/lib/cloudinary/upload";
+import { deleteFromCloudinary } from "@/lib/cloudinary/delete"; // ✅ NEW
 import { UPLOAD_DIRECTORIES } from "@/constants/upload-directories.constants";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as v_createClient } from "@/lib/vector_supabase/server";
 import doc_loader from "@/lib/rag-chatbot/load-doc";
 import create_doc_chunk from "@/lib/rag-chatbot/create-doc-chunk";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
@@ -15,15 +21,21 @@ import embeddings from "@/lib/rag-chatbot/embedding-model-config";
  */
 export async function POST(request: NextRequest) {
   const tempFiles: string[] = [];
+  const uploadedCloudinaryAssets: Array<{
+    publicId: string;
+    resourceType: "image" | "video" | "raw";
+  }> = []; // ✅ Track uploaded Cloudinary assets
 
   try {
     console.log("🚀 Starting interview experience upload...");
 
     const supabase = await createClient();
+    const vector_supabase = await v_createClient();
 
     // ✅ Step 1: Parse FormData
     const formData = await request.formData();
     const file = formData.get("document") as File | null;
+    const videoFile = formData.get("video_preview") as File | null;
 
     // ✅ Step 2: Validate file exists and is PDF
     if (!file) {
@@ -33,7 +45,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const fileValidation = validatePDF(file);
+    const fileValidation = validate_pdf(file);
     if (!fileValidation.valid) {
       return NextResponse.json(
         { error: fileValidation.error },
@@ -45,12 +57,43 @@ export async function POST(request: NextRequest) {
       `📄 Received PDF: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`
     );
 
-    // ✅ Step 3: Save file temporarily
-    const tempFilePath = await saveUploadedFile(file, {
+    // ✅ Step 2.5: Validate video if provided
+    if (videoFile) {
+      const videoValidation = validate_video(videoFile);
+      if (!videoValidation.valid) {
+        return NextResponse.json(
+          { error: videoValidation.error },
+          { status: 400 }
+        );
+      }
+      console.log(
+        `🎬 Received Video: ${videoFile.name} (${(
+          videoFile.size /
+          1024 /
+          1024
+        ).toFixed(2)} MB)`
+      );
+    }
+
+    // ✅ Step 3: Save files temporarily
+    const tempFilePath = await save_uploaded_file(file, {
       subdirectory: UPLOAD_DIRECTORIES.INTERVIEW_EXPERIENCES,
     });
     tempFiles.push(tempFilePath);
-    console.log(`💾 Saved to temp: ${tempFilePath}`);
+    console.log(`💾 Saved PDF to temp: ${tempFilePath}`);
+
+    let tempVideoPath: string | null = null;
+    if (videoFile) {
+      tempVideoPath = await save_uploaded_file(videoFile, {
+        subdirectory: UPLOAD_DIRECTORIES.INTERVIEW_EXPERIENCES + "/videos",
+      });
+
+      if (tempVideoPath) {
+        tempFiles.push(tempVideoPath);
+      }
+
+      console.log(`💾 Saved Video to temp: ${tempVideoPath}`);
+    }
 
     // ✅ Step 4: Validate form data with Zod
     const rawData = {
@@ -62,18 +105,12 @@ export async function POST(request: NextRequest) {
         : undefined,
       company_id: formData.get("company_id") as string,
       source: "admin_upload",
-      //   position: formData.get("position") as string | null,
-      //   experienceText: formData.get("experienceText") as string | null,
-      //   result: formData.get("result") as string | null,
-      //   salaryOffered: formData.get("salaryOffered")
-      //     ? parseFloat(formData.get("salaryOffered") as string)
-      //     : undefined,
     };
 
     const validationResult = createInterviewExperienceSchema.safeParse(rawData);
 
     if (!validationResult.success) {
-      await cleanupTempFiles(tempFiles);
+      await cleanup_temp_files(tempFiles);
       return NextResponse.json(
         {
           error: "Validation failed",
@@ -104,8 +141,13 @@ export async function POST(request: NextRequest) {
       .eq("id", validatedData.company_id)
       .single();
 
-    // ✅ Step 6: Upload to Cloudinary
-    console.log("☁️ Uploading to Cloudinary...");
+    // ✅ Step 6: Get current user (for created_by)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    // ✅ Step 7: Upload PDF to Cloudinary
+    console.log("☁️ Uploading PDF to Cloudinary...");
     const cloudinaryResult = await uploadInterviewExperiencePDF(tempFilePath, {
       student_name: validatedData.student_name,
       company_name: company_data?.name || "unknown_company",
@@ -113,18 +155,74 @@ export async function POST(request: NextRequest) {
     });
 
     if (!cloudinaryResult.success) {
-      throw new Error(`Cloudinary upload failed: ${cloudinaryResult.error}`);
+      throw new Error(
+        `Cloudinary PDF upload failed: ${cloudinaryResult.error}`
+      );
     }
 
-    console.log(`   ✅ Uploaded: ${cloudinaryResult.secureUrl}`);
+    // ✅ Track uploaded PDF for cleanup on error
+    uploadedCloudinaryAssets.push({
+      publicId: cloudinaryResult.publicId!,
+      resourceType: "raw",
+    });
 
-    // ✅ Step 7: Get current user (for created_by)
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    console.log(`   ✅ PDF Uploaded: ${cloudinaryResult.secureUrl}`);
 
-    // ✅ Step 8: Create media record
-    console.log("💿 Creating media record...");
+    // ✅ Step 7.5: Upload Video to Cloudinary (if provided)
+    let videoCloudinaryResult = null;
+    let video_media_id = null;
+
+    if (videoFile && tempVideoPath) {
+      console.log("☁️ Uploading Video to Cloudinary...");
+      videoCloudinaryResult = await uploadInterviewExperienceVideo(
+        tempVideoPath,
+        {
+          student_name: validatedData.student_name,
+          company_name: company_data?.name || "unknown_company",
+          batch: validatedData.batch,
+        }
+      );
+
+      if (!videoCloudinaryResult.success) {
+        console.warn(`⚠️ Video upload failed: ${videoCloudinaryResult.error}`);
+        // Continue anyway - video is optional
+      } else {
+        // ✅ Track uploaded video for cleanup on error
+        uploadedCloudinaryAssets.push({
+          publicId: videoCloudinaryResult.publicId!,
+          resourceType: "video",
+        });
+
+        console.log(`   ✅ Video Uploaded: ${videoCloudinaryResult.secureUrl}`);
+
+        // Create media record for video
+        const { data: video_media_data, error: video_media_error } =
+          await supabase
+            .from("media")
+            .insert({
+              url: videoCloudinaryResult.secureUrl!,
+              public_id: videoCloudinaryResult.publicId!,
+              file_name: videoFile.name,
+              file_type: videoCloudinaryResult.format,
+              file_size: videoCloudinaryResult.bytes,
+              uploaded_by: user?.id,
+            })
+            .select("id")
+            .single();
+
+        if (video_media_error) {
+          throw new Error(
+            `Failed to create video media record: ${video_media_error.message}`
+          );
+        }
+
+        video_media_id = video_media_data.id;
+        console.log(`   Video media created: ${video_media_id}`);
+      }
+    }
+
+    // ✅ Step 8: Create PDF media record
+    console.log("💿 Creating PDF media record...");
     const { data: media_data, error: media_error } = await supabase
       .from("media")
       .insert({
@@ -138,9 +236,14 @@ export async function POST(request: NextRequest) {
       .select("id")
       .single();
 
-    if (media_error) throw media_error;
+    if (media_error) {
+      throw new Error(
+        `Failed to create PDF media record: ${media_error.message}`
+      );
+    }
+
     const media_id = media_data.id;
-    console.log(`   Media created: ${media_id}`);
+    console.log(`   PDF Media created: ${media_id}`);
 
     // ✅ Step 9: Create interview experience record
     console.log("📝 Creating interview experience...");
@@ -153,14 +256,20 @@ export async function POST(request: NextRequest) {
         company_id: validatedData.company_id,
         batch: validatedData.batch,
         placed_year: validatedData.placed_year,
-        media_id: media_id,
+        document_media_id: media_id, // ✅ Fixed column name
+        video_media_id: video_media_id,
         source: "admin_upload",
         created_by: user?.id,
       })
       .select("id")
       .single();
 
-    if (experienceError) throw experienceError;
+    if (experienceError) {
+      throw new Error(
+        `Failed to create interview experience: ${experienceError.message}`
+      );
+    }
+
     const experience_id = experienceData.id;
     console.log(`   Experience created: ${experience_id}`);
 
@@ -175,25 +284,29 @@ export async function POST(request: NextRequest) {
       metadata: {
         total_document_chunks_count: chunks.length,
         interview_experience_id: experience_id,
-        media_id: media_id,
+        document_media_id: media_id,
+        video_media_id: video_media_id,
         document_title: file.name,
         student_name: validatedData.student_name,
         company_id: validatedData.company_id,
         college_id: validatedData.college_id,
         batch: validatedData.batch,
-        // position: validatedData.position,
+        has_video_preview: !!video_media_id,
       },
     }));
 
-    const { error: chunksError } = await supabase
+    const { error: chunksError } = await vector_supabase
       .from("content_chunks")
       .insert(chunksToInsert);
 
-    if (chunksError) throw chunksError;
+    if (chunksError) {
+      throw new Error(`Failed to store embeddings: ${chunksError.message}`);
+    }
+
     console.log(`   ✅ Stored ${chunksToInsert.length} chunks`);
 
     // ✅ Step 11: Cleanup temp files
-    await cleanupTempFiles(tempFiles);
+    await cleanup_temp_files(tempFiles);
     console.log("🗑️ Cleaned up temp files");
 
     // ✅ Success response
@@ -204,10 +317,12 @@ export async function POST(request: NextRequest) {
         data: {
           experience_id,
           media_id,
+          video_media_id,
           college_id: validatedData.college_id,
           company_id: validatedData.company_id,
-          chunksStored: chunks.length,
-          cloudinaryUrl: cloudinaryResult.secureUrl,
+          chunks_stored: chunks.length,
+          cloudinary_url: cloudinaryResult.secureUrl,
+          video_url: videoCloudinaryResult?.secureUrl || null,
         },
       },
       { status: 201 }
@@ -215,8 +330,35 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("❌ Error creating interview experience:", error);
 
-    // Cleanup temp files on error
-    await cleanupTempFiles(tempFiles);
+    // ✅ Cleanup Cloudinary uploads on error
+    if (uploadedCloudinaryAssets.length > 0) {
+      console.log("🧹 Rolling back Cloudinary uploads...");
+      for (const asset of uploadedCloudinaryAssets) {
+        try {
+          const deleteResult = await deleteFromCloudinary(
+            asset.publicId,
+            asset.resourceType
+          );
+          if (deleteResult.success) {
+            console.log(
+              `   ✅ Deleted ${asset.resourceType}: ${asset.publicId}`
+            );
+          } else {
+            console.warn(
+              `   ⚠️ Failed to delete ${asset.resourceType}: ${asset.publicId} - ${deleteResult.error}`
+            );
+          }
+        } catch (deleteError) {
+          console.error(
+            `   ❌ Error deleting ${asset.resourceType}: ${asset.publicId}`,
+            deleteError
+          );
+        }
+      }
+    }
+
+    // ✅ Cleanup temp files on error
+    await cleanup_temp_files(tempFiles);
 
     const message =
       error instanceof Error

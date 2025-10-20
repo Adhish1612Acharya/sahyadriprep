@@ -104,8 +104,33 @@ export async function uploadInterviewExperiencePDF(
     tags.push(`student-${student_name.toLowerCase().replace(/\s/g, "-")}`);
 
   return uploadToCloudinary(filePath, {
-    folder: "interview_experiences/documents",
-    resourceType: "auto",
+    folder: "sahyadriprep/interview_experiences/documents",
+    resourceType: "raw",
     tags,
+  });
+}
+
+export async function uploadInterviewExperienceVideo(
+  filePath: string,
+  metadata: {
+    student_name?: string;
+    company_name?: string;
+    batch?: string;
+  } = {}
+): Promise<CloudinaryUploadResult> {
+  const { student_name, company_name, batch } = metadata;
+
+  const tags = ["interview-experience-video"];
+  if (company_name)
+    tags.push(`company-${company_name.toLowerCase().replace(/\s/g, "-")}`);
+  if (batch) tags.push(`batch-${batch}`);
+  if (student_name)
+    tags.push(`student-${student_name.toLowerCase().replace(/\s/g, "-")}`);
+
+  return uploadToCloudinary(filePath, {
+    folder: "sahyadriprep/interview_experiences/videos",
+    resourceType: "video",
+    tags,
+    // Video-specific options can be passed to uploadToCloudinary if needed
   });
 }

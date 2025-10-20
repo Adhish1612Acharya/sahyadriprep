@@ -1,7 +1,7 @@
 /**
  * Validate file is PDF
  */
-export function validatePDF(file: File): { valid: boolean; error?: string } {
+export function validate_pdf(file: File): { valid: boolean; error?: string } {
   if (file.type !== "application/pdf") {
     return {
       valid: false,

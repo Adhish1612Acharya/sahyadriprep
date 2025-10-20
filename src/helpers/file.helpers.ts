@@ -7,7 +7,7 @@ import path from "path";
  * @param subdirectory - Optional subdirectory path (e.g., 'interview_experiences', 'notes/pdfs')
  * @returns Full path to the directory
  */
-export async function ensureUploadsDirExists(
+export async function ensure_uploads_dir_exists(
   subdirectory?: string
 ): Promise<string> {
   const baseUploadsDir = path.join(process.cwd(), "public", "uploads");
@@ -31,7 +31,7 @@ export async function ensureUploadsDirExists(
  * @param options - Save options
  * @returns Path to saved file
  */
-export async function saveUploadedFile(
+export async function save_uploaded_file(
   file: File,
   options?: {
     customFilename?: string;
@@ -41,7 +41,7 @@ export async function saveUploadedFile(
   const { customFilename, subdirectory } = options || {};
 
   // ✅ Create directory with optional subdirectory
-  const uploadsDir = await ensureUploadsDirExists(subdirectory);
+  const uploadsDir = await ensure_uploads_dir_exists(subdirectory);
 
   const timestamp = Date.now();
   const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
@@ -59,7 +59,7 @@ export async function saveUploadedFile(
 /**
  * Delete a file from disk
  */
-export async function deleteFile(filePath: string): Promise<void> {
+export async function delete_file(filePath: string): Promise<void> {
   try {
     if (existsSync(filePath)) {
       await unlink(filePath);
@@ -74,10 +74,10 @@ export async function deleteFile(filePath: string): Promise<void> {
 /**
  * Cleanup multiple temp files
  */
-export async function cleanupTempFiles(filePaths: string[]): Promise<void> {
+export async function cleanup_temp_files(filePaths: string[]): Promise<void> {
   const deletePromises = filePaths.map(async (filePath) => {
     try {
-      await deleteFile(filePath);
+      await delete_file(filePath);
     } catch (error) {
       console.warn(`⚠️ Could not delete ${filePath}:`, error);
     }
