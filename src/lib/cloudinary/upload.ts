@@ -53,14 +53,32 @@ export async function uploadToCloudinary(
       height: result.height,
       duration: result.duration,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Cloudinary upload error:", error);
 
-    const cloudinaryError = error as UploadApiErrorResponse;
+    const isUploadApiError = (e: unknown): e is UploadApiErrorResponse =>
+      typeof e === "object" &&
+      e !== null &&
+      "message" in e &&
+      typeof (e as Record<string, unknown>).message === "string";
+
+    let message = "Upload failed";
+
+    if (isUploadApiError(error)) {
+      message = error.message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    } else {
+      try {
+        message = String(error);
+      } catch {
+        // keep default
+      }
+    }
 
     return {
       success: false,
-      error: cloudinaryError.message || "Upload failed",
+      error: message,
     };
   }
 }
@@ -71,21 +89,21 @@ export async function uploadToCloudinary(
 export async function uploadInterviewExperiencePDF(
   filePath: string,
   metadata: {
-    studentName?: string;
-    companyName?: string;
+    student_name?: string;
+    company_name?: string;
     batch?: string;
   } = {}
 ): Promise<CloudinaryUploadResult> {
-  const { studentName, companyName, batch } = metadata;
+  const { student_name, company_name, batch } = metadata;
 
   const tags = ["interview-experience"];
-  if (companyName)
-    tags.push(`company-${companyName.toLowerCase().replace(/\s/g, "-")}`);
+  if (company_name)
+    tags.push(`company-${company_name.toLowerCase().replace(/\s/g, "-")}`);
   if (batch) tags.push(`batch-${batch}`);
-  if (studentName)
-    tags.push(`student-${studentName.toLowerCase().replace(/\s/g, "-")}`);
+  if (student_name)
+    tags.push(`student-${student_name.toLowerCase().replace(/\s/g, "-")}`);
 
-  return  uploadToCloudinary(filePath, {
+  return uploadToCloudinary(filePath, {
     folder: "interview_experiences/documents",
     resourceType: "auto",
     tags,
