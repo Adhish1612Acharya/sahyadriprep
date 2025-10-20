@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { moduleService } from "@/services/modules/moduleService";
+import { moduleService } from "@/services/modules/module.service";
 import { Module } from "@/models/module";
 
 export const useModules = (subjectId?: string) => {

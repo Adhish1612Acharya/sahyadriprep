@@ -5,7 +5,10 @@ import {
   SimilarChunk,
   VectorChunk,
   VectorDocument,
-} from "./vector-store-service.types";
+} from "./types";
+import { CHUNKS_CONTENT_TYPES } from "@/constants/chunks-content-types.constants";
+import embeddings from "@/lib/rag-chatbot/embedding-model-config";
+import { ContentType } from "@/models/content-chunk.types";
 
 // Helper function for cosine similarity
 function cosineSimilarity(vecA: number[], vecB: number[]): number {
@@ -70,6 +73,50 @@ export const vectorStoreServerOperations = {
     if (error)
       throw new Error(`Failed to store document chunks: ${error.message}`);
     return data as VectorChunk[];
+  },
+
+  search: async (
+    query: string,
+    options?: {
+      contentType?: ContentType;
+      threshold?: number;
+      limit?: number;
+    }
+  ) => {
+    const supabase = await createClient();
+    const queryEmbedding = await embeddings.embedQuery(query);
+
+    const { data, error } = await supabase.rpc("match_content", {
+      query_embedding: queryEmbedding,
+      match_threshold: options?.threshold || 0.7,
+      match_count: options?.limit || 10,
+      filter_content_type: options?.contentType || null,
+    });
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Search interview experiences only
+   */
+  searchInterviewExperiences: async (query: string, limit = 10) => {
+    return vectorStoreServerOperations.search(query, {
+      contentType: CHUNKS_CONTENT_TYPES.INTERVIEW_EXPERIENCE,
+      threshold: 0.75,
+      limit,
+    });
+  },
+
+  /**
+   * Search YouTube videos only
+   */
+  searchYouTubeVideos: async (query: string, limit = 10) => {
+    return vectorStoreServerOperations.search(query, {
+      contentType: CHUNKS_CONTENT_TYPES.YOUTUBE_VIDEO,
+      threshold: 0.7,
+      limit,
+    });
   },
 
   // ✅ Updated search with document info

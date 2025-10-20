@@ -1,6 +1,6 @@
 // src/app/api/rag/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { vectorStoreServerOperations } from "@/services/supabase/vector-store/vector-store-service";
+import { vectorStoreServerOperations } from "@/services/supabase/vector-store/vector-store.service";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import groq from "@/lib/groq/groq";
 
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       // message = "The second round was Phase 1 Technical Round, where at first I was asked to explain my projects. They asked about my favorite subject (I said OOPS) and then questioned me on that, mostly related to fundamentals and how it varies across various other programming languages. Later, they switched to a DSA-based problem-solving approach where I was given a few real-life examples, asked which algorithm to go with,",
-      message="What is the third   technical   round  at deloitte?",
+      message = "What is the third   technical   round  at deloitte?",
       session_id,
       user_id,
       conversation_history = [],
@@ -217,65 +217,65 @@ Would you like me to explain any specific part in more detail or help you with r
 }
 
 // GET method to retrieve chat sessions
-export async function GET(request: NextRequest) {
-  try {
-    const url = new URL(request.url);
-    const session_id = url.searchParams.get("session_id");
-    const user_id = url.searchParams.get("user_id");
+// export async function GET(request: NextRequest) {
+//   try {
+//     const url = new URL(request.url);
+//     const session_id = url.searchParams.get("session_id");
+//     const user_id = url.searchParams.get("user_id");
 
-    if (session_id) {
-      // Get specific chat session with messages
-      const [sessionResult, messagesResult] = await Promise.all([
-        vectorStoreServerOperations.vectorStoreServer
-          .from("chat_sessions")
-          .select("*")
-          .eq("id", session_id)
-          .single(),
-        vectorStoreServerOperations.vectorStoreServer
-          .from("chat_messages")
-          .select("*")
-          .eq("session_id", session_id)
-          .order("created_at", { ascending: true }),
-      ]);
+//     if (session_id) {
+//       // Get specific chat session with messages
+//       const [sessionResult, messagesResult] = await Promise.all([
+//         vectorStoreServerOperations.vectorStoreServer
+//           .from("chat_sessions")
+//           .select("*")
+//           .eq("id", session_id)
+//           .single(),
+//         vectorStoreServerOperations.vectorStoreServer
+//           .from("chat_messages")
+//           .select("*")
+//           .eq("session_id", session_id)
+//           .order("created_at", { ascending: true }),
+//       ]);
 
-      if (sessionResult.error) throw sessionResult.error;
-      if (messagesResult.error) throw messagesResult.error;
+//       if (sessionResult.error) throw sessionResult.error;
+//       if (messagesResult.error) throw messagesResult.error;
 
-      return NextResponse.json({
-        success: true,
-        session: sessionResult.data,
-        messages: messagesResult.data,
-      });
-    } else if (user_id) {
-      // Get all sessions for a user
-      const { data, error } =
-        await vectorStoreServerOperations.vectorStoreServer
-          .from("chat_sessions")
-          .select("*")
-          .eq("user_id", user_id)
-          .order("updated_at", { ascending: false });
+//       return NextResponse.json({
+//         success: true,
+//         session: sessionResult.data,
+//         messages: messagesResult.data,
+//       });
+//     } else if (user_id) {
+//       // Get all sessions for a user
+//       const { data, error } =
+//         await vectorStoreServerOperations.vectorStoreServer
+//           .from("chat_sessions")
+//           .select("*")
+//           .eq("user_id", user_id)
+//           .order("updated_at", { ascending: false });
 
-      if (error) throw error;
+//       if (error) throw error;
 
-      return NextResponse.json({
-        success: true,
-        sessions: data,
-      });
-    } else {
-      // Get recent public sessions or general info
-      const stats = await vectorStoreServerOperations.getDocumentStats();
+//       return NextResponse.json({
+//         success: true,
+//         sessions: data,
+//       });
+//     } else {
+//       // Get recent public sessions or general info
+//       const stats = await vectorStoreServerOperations.getDocumentStats();
 
-      return NextResponse.json({
-        success: true,
-        message: "Chat endpoint is ready",
-        stats,
-      });
-    }
-  } catch (error: any) {
-    console.error("❌ Error in chat GET:", error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
-  }
-}
+//       return NextResponse.json({
+//         success: true,
+//         message: "Chat endpoint is ready",
+//         stats,
+//       });
+//     }
+//   } catch (error: any) {
+//     console.error("❌ Error in chat GET:", error);
+//     return NextResponse.json(
+//       { success: false, error: error.message },
+//       { status: 500 }
+//     );
+//   }
+// }

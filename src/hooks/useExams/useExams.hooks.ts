@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { examService } from "@/services/exams/examService";
+import { examService } from "@/services/exams/exam.service";
 import { Exam } from "@/models/exam";
 
 export const useExams = () => {

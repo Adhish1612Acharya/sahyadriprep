@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validatePDF } from "@/helpers/validation/validatePdf";
-import { createInterviewExperienceSchema } from "@/helpers/validation/schema/createInterviewExperienceSchema";
-import { saveUploadedFile, cleanupTempFiles } from "@/helpers/file";
+import { validatePDF } from "@/helpers/validation/validatePdf.helpers";
+import { createInterviewExperienceSchema } from "@/schema/create-interview-experience.schema";
+import { saveUploadedFile, cleanupTempFiles } from "@/helpers/file.helpers";
 import { uploadInterviewExperiencePDF } from "@/lib/cloudinary/upload";
-import { UPLOAD_DIRECTORIES } from "@/constants/upload-directories";
+import { UPLOAD_DIRECTORIES } from "@/constants/upload-directories.constants";
 import { createClient } from "@/lib/supabase/server";
 import doc_loader from "@/lib/rag-chatbot/load-doc";
 import create_doc_chunk from "@/lib/rag-chatbot/create-doc-chunk";
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
     }));
 
     const { error: chunksError } = await supabase
-      .from("document_chunks")
+      .from("content_chunks")
       .insert(chunksToInsert);
 
     if (chunksError) throw chunksError;

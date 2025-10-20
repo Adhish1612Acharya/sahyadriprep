@@ -18,6 +18,9 @@ export type { ImportantQuestion } from "./important-question";
 export type { ImportantQuestionTextAnswer } from "./important-question-text-answer";
 export type { ImportantQuestionVideoAnswer } from "./important-question-video-answer";
 
+export type { InterviewExperience, InterviewExperienceWithDetails } from "./interview-experience.types";
+
+
 // Type unions for common use cases
 export type Answer =
   | ImportantTopicTextAnswer
@@ -32,3 +35,7 @@ export type TextAnswer = ImportantTopicTextAnswer | ImportantQuestionTextAnswer;
 
 // Visibility type for reuse
 export type Visibility = "public" | "private";
+
+
+
+
