@@ -1,6 +1,6 @@
 // src/app/api/rag/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { vectorStoreServerOperations } from "@/services/supabase/vector-store/vector-store.service";
+import { vectorStoreServerOperations } from "@/services/supabase/vector-store.service";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import groq from "@/lib/groq/groq";
 

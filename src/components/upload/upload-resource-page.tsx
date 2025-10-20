@@ -10,9 +10,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { NotesTab } from "./tabs/notes-tab";
 import { ImportantTopicsTab } from "./tabs/important-topics-tab";
 import { ImportantQuestionsTab } from "./tabs/important-questions-tab";
-import { useSubjects } from "@/hooks/useSubjects/useSubjects.hooks";
-import { useModules } from "@/hooks/useModules/useModules.hooks";
-import { useExams } from "@/hooks/useExams/useExams.hooks";
+import { useSubjects } from "@/hooks/useSubject.hook";
+import { useModules } from "@/hooks/useModule.hook";
+import { useExams } from "@/hooks/useExam.hook";
 // import { useResourceUpload } from "@/hooks/useResourceUpload";
 
 type StepOneState = {

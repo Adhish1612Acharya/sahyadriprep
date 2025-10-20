@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { subjectService } from "@/services/subjects/subject.service";
-import { Subject } from "@/models/subject";
+import { subjectService } from "@/services/subject.service";
+import { Subject } from "@/models/subject.types";
 
 export const useSubjects = () => {
   const queryClient = useQueryClient();

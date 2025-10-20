@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import type { Media } from "@/models/media";
+import type { Media } from "@/models/media.types";
 
 type MediaUploaderProps = {
   value: Media[];

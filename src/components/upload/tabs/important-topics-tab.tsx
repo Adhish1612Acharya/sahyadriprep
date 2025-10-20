@@ -15,7 +15,7 @@ import {
 import { Plus, Trash2 } from "lucide-react";
 import { MediaUploader } from "../media-uploader";
 import { CardItem } from "../card-item";
-import type { Media } from "@/models/media";
+import type { Media } from "@/models/media.types";
 
 type ImportantTopicData = {
   title: string;

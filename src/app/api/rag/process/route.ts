@@ -1,6 +1,6 @@
 // src/app/api/rag/process/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { vectorStoreServerOperations } from "@/services/supabase/vector-store/vector-store.service";
+import { vectorStoreServerOperations } from "@/services/supabase/vector-store.service";
 import doc_loader from "@/lib/rag-chatbot/load-doc";
 import create_doc_chunk from "@/lib/rag-chatbot/create-doc-chunk";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";

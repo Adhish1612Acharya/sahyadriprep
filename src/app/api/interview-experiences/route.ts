@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validatePDF } from "@/helpers/validation/validatePdf.helpers";
-import { createInterviewExperienceSchema } from "@/schema/create-interview-experience.schema";
+import { validatePDF } from "@/helpers/validatePdf.helpers";
+import { createInterviewExperienceSchema } from "@/schemas/interview-experience.schema";
 import { saveUploadedFile, cleanupTempFiles } from "@/helpers/file.helpers";
 import { uploadInterviewExperiencePDF } from "@/lib/cloudinary/upload";
 import { UPLOAD_DIRECTORIES } from "@/constants/upload-directories.constants";

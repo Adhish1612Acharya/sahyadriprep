@@ -25,7 +25,7 @@ Does the file contain:
 |--------------|-----------|---------|-------|
 | **Types/Interfaces only** | `.types.ts` | `exam.types.ts` | Type definitions, interfaces |
 | **Constants only** | `.constants.ts` | `api-routes.constants.ts` | Enums, constant values |
-| **Utility functions** | `.utils.ts` | `date.utils.ts` | Helper/utility functions |
+| **Utility functions** | `.utils.ts` | `.helpers.ts`  | `date.utils.ts` | `date.helpers.ts` | Helper/utility functions |
 | **Service/API logic** | `.service.ts` | `exam.service.ts` | Business logic, API calls |
 | **React hooks** | `.hook.ts` | `useExam.hook.ts` | Custom React hooks |
 | **Configuration** | `.config.ts` | `supabase.config.ts` | Config files |

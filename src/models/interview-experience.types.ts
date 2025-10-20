@@ -1,5 +1,5 @@
-import { College } from "./college";
-import { Company } from "./company";
+import { College } from "./college.types";
+import { Company } from "./company.types";
 
 export type ExperienceSource = 'admin_upload' | 'student_self_upload';
 

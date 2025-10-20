@@ -1,5 +1,5 @@
 import { axiosClient } from "@/lib/axiosClient";
-import { Module } from "@/models/module";
+import { Module } from "@/models/module.types";
 
 export const moduleService = {
   getAll: async (): Promise<Module[]> => {

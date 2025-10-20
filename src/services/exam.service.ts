@@ -1,5 +1,5 @@
 import { axiosClient } from "@/lib/axiosClient";
-import { Exam } from "@/models/exam";
+import { Exam } from "@/models/exam.types";
 
 export const examService = {
   getAll: async (): Promise<Exam[]> => {

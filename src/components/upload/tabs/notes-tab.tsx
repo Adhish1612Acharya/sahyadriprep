@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/tooltip";
 import { MediaUploader } from "../media-uploader";
 import { CardItem } from "../card-item";
-import type { Media } from "@/models/media";
-import type { Note } from "@/models/note";
+import type { Media } from "@/models/media.types";
+import type { Note } from "@/models/note.types";
 
 type NoteData = {
   title: string;

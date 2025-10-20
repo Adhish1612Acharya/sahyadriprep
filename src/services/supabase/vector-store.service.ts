@@ -5,7 +5,7 @@ import {
   SimilarChunk,
   VectorChunk,
   VectorDocument,
-} from "./types";
+} from "@/types/vector-store.types";
 import { CHUNKS_CONTENT_TYPES } from "@/constants/chunks-content-types.constants";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import { ContentType } from "@/models/content-chunk.types";
