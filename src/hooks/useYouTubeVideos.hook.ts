@@ -1,10 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   youtubeService,
-  YouTubeVideo,
   CreateYouTubeVideoInput,
   ProcessVideoInput,
-  ProcessVideoResponse,
 } from "@/services/interview-youtube-video.service";
 // import { useToast } from "@/hooks/use-toast";
 
@@ -42,6 +40,18 @@ export const useInterviewYouTubeVideos = () => {
     useQuery({
       queryKey: ["youtube-video", id],
       queryFn: () => youtubeService.getVideoById(id!),
+      enabled: !!id,
+      staleTime: 5 * 60 * 1000,
+    });
+
+  // ============================================
+  // NEW: Query to fetch AI-generated content for a video
+  // Calls GET /interview-experiences/youtube-videos/:id/ai
+  // ============================================
+  const useAIContentQuery = (id: string | null) =>
+    useQuery({
+      queryKey: ["youtube-video-ai", id],
+      queryFn: () => youtubeService.getAIContent(id!),
       enabled: !!id,
       staleTime: 5 * 60 * 1000,
     });
@@ -135,6 +145,7 @@ export const useInterviewYouTubeVideos = () => {
     useVideoQuery,
     useVideosByCompanyQuery,
     useVideosByCollegeQuery,
+    useAIContentQuery,
 
     // Mutations
     createVideo,

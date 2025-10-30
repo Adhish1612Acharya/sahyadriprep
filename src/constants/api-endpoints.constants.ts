@@ -133,6 +133,7 @@ export const YOUTUBE_ENDPOINTS = {
     `/interview-experiences/youtube-videos?college_id=${collegeId}`,
   PROCESS: (id: string) =>
     `/interview-experiences/youtube-videos/${id}/process`,
+  AI: (id: string) => `/interview-experiences/youtube-videos/${id}/ai`,
 } as const;
 
 // ============================================

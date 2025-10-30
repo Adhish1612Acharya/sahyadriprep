@@ -305,4 +305,56 @@ export const youtubeService = {
       );
     }
   },
+
+  /**
+   * Fetch AI-generated content for a video (overview, segments, flashcards, tips).
+   * Calls: GET /api/interview-experiences/youtube-videos/:id/ai
+   */
+  getAIContent: async (
+    id: string
+  ): Promise<{
+    overview: { presentInDB: boolean; data: OverviewData | null };
+    segments: { presentInDB: boolean; count: number; data: VideoSegment[] };
+    flashcards: { presentInDB: boolean; count: number; data: Flashcard[] };
+    tips: { presentInDB: boolean; count: number; data: VideoTip[] };
+  }> => {
+    try {
+      const response = await axiosClient.get<{
+        success: boolean;
+        ai: {
+          overview: { presentInDB: boolean; data: OverviewData | null };
+          segments: {
+            presentInDB: boolean;
+            count: number;
+            data: VideoSegment[];
+          };
+          flashcards: {
+            presentInDB: boolean;
+            count: number;
+            data: Flashcard[];
+          };
+          tips: { presentInDB: boolean; count: number; data: VideoTip[] };
+        };
+      }>(YOUTUBE_ENDPOINTS.AI(id));
+
+      if (!response.data.success) {
+        throw new Error("Failed to fetch AI content");
+      }
+
+      return response.data.ai;
+    } catch (error: any) {
+      console.error("❌ Error fetching AI content:", error);
+      if (error.response?.status === 404) {
+        throw new Error("Video not found");
+      }
+      if (error.response?.status === 500) {
+        throw new Error("Server error while fetching AI content");
+      }
+      throw new Error(
+        error.response?.data?.error ||
+          error.message ||
+          "Failed to fetch AI content"
+      );
+    }
+  },
 };
