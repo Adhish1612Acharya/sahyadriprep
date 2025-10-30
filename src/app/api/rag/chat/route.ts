@@ -1,23 +1,25 @@
 // src/app/api/rag/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { vectorStoreServerOperations } from "@/services/supabase/vector-store.service";
-import embeddings from "@/lib/rag-chatbot/embedding-model-config";
-import groq from "@/lib/groq/groq";
+import generateRAGResponse from "@/helpers/generate-rag-response.helpers";
 
+/**
+ * POST /api/chat
+ * RAG chatbot for interview experiences
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
-      // message = "The second round was Phase 1 Technical Round, where at first I was asked to explain my projects. They asked about my favorite subject (I said OOPS) and then questioned me on that, mostly related to fundamentals and how it varies across various other programming languages. Later, they switched to a DSA-based problem-solving approach where I was given a few real-life examples, asked which algorithm to go with,",
-      message = "What is the third   technical   round  at deloitte?",
-      session_id,
-      user_id,
+      message,
+      // session_id,
+      // user_id,
       conversation_history = [],
-      search_limit = 3,
-      similarity_threshold = 0.7,
-      context_filters = {},
+      search_limit = 5,
+      similarity_threshold = 0.75,
     } = body;
 
+    // ✅ Validation
     if (!message || message.trim().length === 0) {
       return NextResponse.json(
         { success: false, error: "Message is required" },
@@ -25,40 +27,84 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (search_limit < 1 || search_limit > 20) {
+      return NextResponse.json(
+        { success: false, error: "Search limit must be between 1 and 20" },
+        { status: 400 }
+      );
+    }
+
+    if (similarity_threshold < 0 || similarity_threshold > 1) {
+      return NextResponse.json(
+        { success: false, error: "Threshold must be between 0 and 1" },
+        { status: 400 }
+      );
+    }
+
     console.log("💬 Processing chat message:", message);
+    console.log("📊 Search parameters:", {
+      search_limit,
+      similarity_threshold,
+    });
 
-    // Step 1: Generate embedding for user message
-    const queryEmbedding = await embeddings.embedQuery(message);
+    const startTime = Date.now();
 
-    // Step 2: Search for relevant context
+    // ✅ Step 1: Search interview experiences using new method
+    console.log("🔍 Searching interview experiences...");
+    const searchStartTime = Date.now();
+
     const relevantChunks =
-      await vectorStoreServerOperations.searchSimilarChunks(queryEmbedding, {
-        limit: search_limit,
-        threshold: similarity_threshold,
-        filters: context_filters,
-      });
+      await vectorStoreServerOperations.searchInterviewExperiences(
+        message,
+        search_limit
+      );
 
-    console.log("Releveant chunks : ", relevantChunks);
+    const searchTime = Date.now() - searchStartTime;
+    console.log(`✅ Search completed in ${searchTime}ms`);
+    console.log(`📊 Found ${relevantChunks.length} relevant chunks`);
+    console.log("Releveant Chunks: ", relevantChunks);
 
-    // Step 3: Build context from relevant chunks
+    // ✅ Step 2: Build context from relevant chunks
     const context = relevantChunks
-      .map(
-        (chunk) =>
-          `[From: ${chunk.document?.title || "Document"}]\n${chunk.content}`
-      )
+      .map((chunk: any, index: number) => {
+        const metadata = chunk.metadata || {};
+        const source =
+          metadata.document_title ||
+          metadata.company_name ||
+          metadata.student_name ||
+          "Interview Experience";
+
+        return `[Source ${index + 1}: ${source}]
+Company: ${metadata.company_name || "N/A"}
+Student: ${metadata.student_name || "Anonymous"}
+Batch: ${metadata.batch || "N/A"}
+Similarity: ${(chunk.similarity * 100).toFixed(1)}%
+
+Summary:
+${chunk.summary || "No summary available"}
+
+Full Content:
+${chunk.content || "No content available"}`;
+      })
       .join("\n\n---\n\n");
 
-    console.log("context:", context);
+    console.log("📝 Context length:", context.length);
+    console.log("Context: ", context);
 
-    // Step 4: Generate response (simple template-based for now)
+    // ✅ Step 3: Generate AI response with context
+    const responseStartTime = Date.now();
     const response = await generateRAGResponse(
       message,
       context,
-      relevantChunks
+      relevantChunks,
+      conversation_history
     );
+    const responseTime = Date.now() - responseStartTime;
 
-    // Step 5: Store chat message if session_id provided
-    // let stored_message = null;
+    console.log(`🤖 AI response generated in ${responseTime}ms`);
+
+    // // ✅ Step 4: Store chat messages (optional)
+    // let stored_message_id = null;
     // if (session_id) {
     //   try {
     //     // Store user message
@@ -68,151 +114,88 @@ export async function POST(request: NextRequest) {
     //       content: message,
     //       metadata: {
     //         timestamp: new Date().toISOString(),
-    //         embedding_dimension: queryEmbedding.length,
+    //         search_limit,
+    //         similarity_threshold,
     //       },
     //     });
 
     //     // Store assistant response
-    //     stored_message = await vectorStoreServerOperations.addChatMessage({
-    //       session_id,
-    //       role: "assistant",
-    //       content: response.content,
-    //       metadata: {
-    //         relevant_chunks: relevantChunks.length,
-    //         context_used: context.length > 0,
-    //         sources: relevantChunks.map((chunk) => ({
-    //           document_id: chunk.document_id,
-    //           title: chunk.document?.title,
-    //           similarity: chunk.similarity,
-    //         })),
-    //       },
+    //     const stored_message = await vectorStoreServerOperations.addChatMessage(
+    //       {
+    //         session_id,
+    //         role: "assistant",
+    //         content: response.content,
+    //         metadata: {
+    //           relevant_chunks: relevantChunks.length,
+    //           context_used: context.length > 0,
+    //           sources: relevantChunks.map((chunk: any) => ({
+    //             content_id: chunk.id,
+    //             content_type: chunk.content_type,
+    //             similarity: chunk.similarity,
+    //             metadata: chunk.metadata,
+    //           })),
+    //           performance: {
+    //             search_time_ms: searchTime,
+    //             response_time_ms: responseTime,
+    //           },
+    //         },
+    //       }
+    //     );
+
+    //     stored_message_id = stored_message.id;
+
+    //     // Update session timestamp and title
+    //     await vectorStoreServerOperations.updateChatSession(session_id, {
+    //       title: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
     //     });
 
-    //     // Update session timestamp
-    //     await vectorStoreServerOperations.updateChatSession(session_id, {
-    //       title: stored_message ? message.substring(0, 50) + "..." : undefined,
-    //     });
-    //   } catch (sessionError) {
-    //     console.warn("⚠️ Failed to store chat messages:", sessionError);
-    //     // Continue without storing - don't fail the whole request
-    //   }
+    //     console.log("💾 Chat messages stored successfully");
+    // } catch (sessionError) {
+    //   console.warn("Some error occurred", sessionError);
+    //   // Continue without storing - don't fail the whole request
     // }
 
+    const totalTime = Date.now() - startTime;
+
+    // ✅ Step 5: Return response
     return NextResponse.json({
       success: true,
       message: response.content,
       metadata: {
         context_used: context.length > 0,
         relevant_chunks_count: relevantChunks.length,
-        sources: relevantChunks.map((chunk) => ({
-          document_title: chunk.document?.title,
+        sources: relevantChunks.map((chunk: any) => ({
+          content_type: chunk.content_type,
           similarity: Math.round(chunk.similarity * 1000) / 1000,
-          preview: chunk.content.substring(0, 100) + "...",
+          company: chunk.metadata?.company_name || "N/A",
+          student: chunk.metadata?.student_name || "Anonymous",
+          batch: chunk.metadata?.batch || "N/A",
+          preview: chunk.content.substring(0, 150) + "...",
         })),
-        // session_info: stored_message
+        // session_info: session_id
         //   ? {
         //       session_id,
-        //       message_id: stored_message.id,
+        //       message_id: stored_message_id,
         //     }
         //   : null,
+        performance: {
+          search_time_ms: searchTime,
+          response_time_ms: responseTime,
+          total_time_ms: totalTime,
+        },
       },
     });
   } catch (error: any) {
     console.error("❌ Error in chat:", error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      {
+        success: false,
+        error: error.message || "Chat processing failed",
+        details:
+          process.env.NODE_ENV === "development" ? error.stack : undefined,
+      },
       { status: 500 }
     );
-  }
-}
-
-// Simple RAG response generator (replace with your LLM of choice)
-async function generateRAGResponse(
-  userMessage: string,
-  context: string,
-  relevantChunks: any[]
-): Promise<{ content: string; sources: string[] }> {
-  if (context.trim().length === 0) {
-    return {
-      content: `I don't have enough context in my knowledge base to answer your question about "${userMessage}". Could you try asking about a topic that's covered in the uploaded study materials?`,
-      sources: [],
-    };
-  }
-
-  try {
-    // ✅ Create RAG prompt with context
-    const ragPrompt = `You are a helpful study assistant. Answer the user's question based on the provided context from study materials.
-
-Context from study materials:
-${context}
-
-User Question: ${userMessage}
-
-Instructions:
-- Answer based only on the provided context
-- Be clear and educational
-- If the context doesn't fully answer the question, mention what information is available
-- Keep the response concise but informative
-- Don't make up information not in the context
-
-Answer:`;
-
-    // ✅ Call Groq API
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a knowledgeable study assistant that helps students understand their study materials. Always base your answers on the provided context.",
-        },
-        {
-          role: "user",
-          content: ragPrompt,
-        },
-      ],
-      model: "openai/gpt-oss-20b", // ✅ Using Llama3 (fast and free)
-      temperature: 0.3, // ✅ Lower temperature for more focused responses
-      max_tokens: 1000, // ✅ Reasonable response length
-    });
-
-    const aiResponse = completion.choices[0]?.message?.content;
-
-    console.log("AI Response:", aiResponse);
-
-    if (!aiResponse) {
-      throw new Error("No response from Groq AI");
-    }
-
-    return {
-      content: aiResponse,
-      sources: relevantChunks
-        .map((chunk) => chunk.document?.title || "Unknown")
-        .filter(Boolean),
-    };
-  } catch (error: any) {
-    console.error("❌ Groq API Error:", error);
-
-    // ✅ Fallback to template response if Groq fails
-    const fallbackResponse = `Based on the study materials I found, here's what I can tell you about your question: "${userMessage}"
-
-${context.substring(0, 800)}...
-
-${
-  relevantChunks.length > 1
-    ? `This information comes from ${relevantChunks.length} different sources in your study materials.`
-    : "This information comes from your study materials."
-}
-
-Would you like me to explain any specific part in more detail or help you with related concepts?
-
-(Note: AI response temporarily unavailable, showing context directly)`;
-
-    return {
-      content: fallbackResponse,
-      sources: relevantChunks
-        .map((chunk) => chunk.document?.title || "Unknown")
-        .filter(Boolean),
-    };
   }
 }
 

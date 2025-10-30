@@ -14,6 +14,7 @@ import { createClient as v_createClient } from "@/lib/vector_supabase/server";
 import doc_loader from "@/lib/rag-chatbot/load-doc";
 import create_doc_chunk from "@/lib/rag-chatbot/create-doc-chunk";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
+import createChunkSummary from "@/helpers/generate-chunk-summary";
 
 /**
  * POST /api/interview-experiences
@@ -131,9 +132,20 @@ export async function POST(request: NextRequest) {
     const chunks = await create_doc_chunk(documentContent);
     console.log(`   Created ${chunks.length} chunks`);
 
-    console.log("🧠 Generating embeddings...");
-    const documentEmbeddings = await embeddings.embedDocuments(chunks);
-    console.log(`   Generated ${documentEmbeddings.length} embeddings`);
+    // Run sequentially (safer for rate limits). Add tiny delay between calls.
+    const summaries: string[] = [];
+    for (let i = 0; i < chunks.length; i++) {
+      const s = await createChunkSummary(chunks[i]);
+      summaries.push(s);
+      await new Promise((r) => setTimeout(r, 150)); // small throttle
+    }
+
+    console.log("Summaries created : ", summaries);
+
+    // ✅ UPDATED: Generate embeddings for summaries instead of chunks
+    console.log("🧠 Generating embeddings for summaries...");
+    const summaryEmbeddings = await embeddings.embedDocuments(summaries);
+    console.log(`   Generated ${summaryEmbeddings.length} summary embeddings`);
 
     const { data: company_data } = await supabase
       .from("companies")
@@ -277,8 +289,9 @@ export async function POST(request: NextRequest) {
     console.log("🗄️ Storing embeddings in vector DB...");
     const chunksToInsert = chunks.map((chunk, index) => ({
       content: chunk,
+      summary: summaries[index],
       content_type: "interview_experience",
-      embedding: documentEmbeddings[index],
+      embedding: summaryEmbeddings[index],
       chunk_index: index,
       token_count: chunk.split(" ").length,
       metadata: {
@@ -292,6 +305,7 @@ export async function POST(request: NextRequest) {
         college_id: validatedData.college_id,
         batch: validatedData.batch,
         has_video_preview: !!video_media_id,
+        summary_length: summaries[index].length,
       },
     }));
 

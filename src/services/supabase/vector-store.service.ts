@@ -5,10 +5,11 @@ import {
   SimilarChunk,
   VectorChunk,
   VectorDocument,
-} from "@/types/vector-store.types";
+} from "@/types/vector-store-service.types";
 import { CHUNKS_CONTENT_TYPES } from "@/constants/chunks-content-types.constants";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import { ContentType } from "@/models/content-chunk.types";
+import createChunkSummary from "@/helpers/generate-chunk-summary";
 
 // Helper function for cosine similarity
 function cosineSimilarity(vecA: number[], vecB: number[]): number {
@@ -54,16 +55,18 @@ export const vectorStoreServerOperations = {
   ) {
     const supabase = await createClient();
 
-    const chunks = chunksWithEmbeddings.map((chunk) => ({
-      document_id: documentId, // ✅ String reference
-      document_title: documentTitle, // ✅ Cache title
-      content: chunk.content,
-      embedding: `[${chunk.embedding.join(",")}]`,
-      chunk_index: chunk.chunkIndex,
-      token_count: chunk.tokenCount || chunk.content.split(" ").length,
-      metadata: chunk.metadata || {},
-      created_at: new Date().toISOString(),
-    }));
+    // const chunks = chunksWithEmbeddings.map((chunk) => ({
+    //   document_id: documentId, // ✅ String reference
+    //   document_title: documentTitle, // ✅ Cache title
+    //   content: chunk.content,
+    //   embedding: `[${chunk.embedding.join(",")}]`,
+    //   chunk_index: chunk.chunkIndex,
+    //   token_count: chunk.tokenCount || chunk.content.split(" ").length,
+    //   metadata: chunk.metadata || {},
+    //   created_at: new Date().toISOString(),
+    // }));
+
+    const chunks = chunksWithEmbeddings;
 
     const { data, error } = await supabase
       .from("document_chunks")
@@ -84,11 +87,18 @@ export const vectorStoreServerOperations = {
     }
   ) => {
     const supabase = await createClient();
-    const queryEmbedding = await embeddings.embedQuery(query);
+    console.log("query : ", query);
+
+    const query_summary = await createChunkSummary(query);
+
+    console.log("📝 Generated query summary for embedding:", query_summary);
+    const queryEmbedding = await embeddings.embedQuery(query_summary);
+
+    console.log("Query embedding : ", queryEmbedding);
 
     const { data, error } = await supabase.rpc("match_content", {
       query_embedding: queryEmbedding,
-      match_threshold: options?.threshold || 0.7,
+      match_threshold: 1 - (options?.threshold || 0.7),
       match_count: options?.limit || 10,
       filter_content_type: options?.contentType || null,
     });

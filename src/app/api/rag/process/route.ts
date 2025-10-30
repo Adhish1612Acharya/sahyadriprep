@@ -5,6 +5,7 @@ import doc_loader from "@/lib/rag-chatbot/load-doc";
 import create_doc_chunk from "@/lib/rag-chatbot/create-doc-chunk";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import embedDocumentsWithHandling from "@/lib/rag-chatbot/embed-documents";
+import { InferenceClient } from "@huggingface/inference";
 
 export async function POST(request: NextRequest) {
   try {
@@ -94,11 +95,87 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Created ${chunks.length} chunks`);
 
-    // Step 4: Generate embeddings for chunks
-    console.log("🧠 Generating embeddings...");
+    // -----------------------
+    // NEW: Summarize each chunk using Hugging Face Inference
+    // -----------------------
+    console.log("📝 Summarizing chunks (Hugging Face)...");
+
+    const hfToken = process.env.HF_API_KEY;
+    const hfClient = new InferenceClient(hfToken);
+
+    async function summarizeChunk(text: string) {
+      const maxAttempts = 3;
+      let attempt = 0;
+      let backoff = 500;
+      const input = text.length > 8000 ? text.slice(0, 8000) : text;
+
+      while (attempt < maxAttempts) {
+        try {
+          const res = await hfClient.summarization({
+            model: "facebook/bart-large-cnn",
+            inputs: input,
+            // provider optional; keep hf-inference default
+            // parameters can be tuned if supported by your client/provider
+            parameters: { max_length: 150, min_length: 30, do_sample: false },
+            provider: "hf-inference",
+          });
+
+          // Handle different possible shapes of response
+          let summary = "";
+          if (Array.isArray(res) && res.length > 0) {
+            summary =
+              (res[0] as any).summary_text ||
+              (res[0] as any).generated_text ||
+              (res[0] as any).text ||
+              String(res[0]);
+          } else if (typeof res === "object" && res !== null) {
+            summary =
+              (res as any).summary_text ||
+              (res as any).generated_text ||
+              (res as any).text ||
+              JSON.stringify(res);
+          } else {
+            summary = String(res);
+          }
+
+          summary = summary.trim();
+          if (summary.length === 0) throw new Error("Empty summary returned");
+          return summary;
+        } catch (err: any) {
+          attempt += 1;
+          if (attempt >= maxAttempts) break;
+          console.warn(
+            `HF summarization attempt ${attempt} failed: ${
+              err?.message || err
+            }. retrying in ${backoff}ms`
+          );
+          await new Promise((r) => setTimeout(r, backoff));
+          backoff *= 2;
+        }
+      }
+
+      // Final fallback: short truncation as pseudo-summary
+      console.warn(
+        "HF summarization failed, using truncated fallback summary."
+      );
+      return text.trim().slice(0, 300) + (text.length > 300 ? "…" : "");
+    }
+
+    // Run sequentially (safer for rate limits). Add tiny delay between calls.
+    const summaries: string[] = [];
+    for (let i = 0; i < chunks.length; i++) {
+      const s = await summarizeChunk(chunks[i]);
+      summaries.push(s);
+      await new Promise((r) => setTimeout(r, 150)); // small throttle
+    }
+
+    console.log(`✅ Generated ${summaries.length} summaries`);
+
+    // Step 4: Generate embeddings for summaries (not raw chunks)
+    console.log("🧠 Generating embeddings for summaries...");
     const embeddings_array = await embedDocumentsWithHandling(
       embeddings,
-      chunks
+      summaries
     );
 
     console.log("Embeddings generated:", embeddings_array);
@@ -109,18 +186,18 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Generated ${embeddings_array.length} embeddings`);
 
-    // Step 5: Prepare chunks with embeddings
+    // Step 5: Prepare chunks with embeddings and include summary + original text
     const chunksWithEmbeddings = chunks.map((chunk, index) => ({
       content: chunk,
+      summary: summaries[index],
       embedding: embeddings_array[index],
-      chunkIndex: index,
+      chunk_index: index,
       tokenCount: chunk.split(" ").length,
       metadata: {
         chunk_length: chunk.length,
+        summary_length: summaries[index].length,
         word_count: chunk.split(" ").length,
-        // subject_id,
-        // module_id,
-        // exam_id,
+        // subject_id, module_id, exam_id can be added here
       },
     }));
 

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { vectorStoreServerOperations } from "@/services/supabase/vector-store.service";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
+import createChunkSummary from "@/helpers/generate-chunk-summary";
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,10 +50,16 @@ export async function POST(request: NextRequest) {
     console.log("🔍 Processing search query:", query);
     console.log("📊 Search parameters:", { limit, threshold, filters });
 
+    console.log("query : ", query);
+
+    const query_summary = await createChunkSummary(query);
+
+    console.log("📝 Generated query summary for embedding:", query_summary);
+
     // Step 1: Generate embedding for the search query
     console.log("🧠 Generating query embedding...");
     const startTime = Date.now();
-    const queryEmbedding = await embeddings.embedQuery(query);
+    const queryEmbedding = await embeddings.embedQuery(query_summary);
     const embeddingTime = Date.now() - startTime;
 
     console.log(`✅ Query embedding generated in ${embeddingTime}ms`);
@@ -144,45 +151,45 @@ export async function POST(request: NextRequest) {
 }
 
 // GET method for getting search suggestions or recent searches
-export async function GET(request: NextRequest) {
-  try {
-    const url = new URL(request.url);
-    const type = url.searchParams.get("type") || "suggestions";
+// export async function GET(request: NextRequest) {
+//   try {
+//     const url = new URL(request.url);
+//     const type = url.searchParams.get("type") || "suggestions";
 
-    if (type === "suggestions") {
-      // Return some sample search suggestions based on available documents
-      const { data, error } =
-        await vectorStoreServerOperations.vectorStoreServer
-          .from("documents")
-          .select("title, subject_id, module_id")
-          .limit(10);
+//     if (type === "suggestions") {
+//       // Return some sample search suggestions based on available documents
+//       const { data, error } =
+//         await vectorStoreServerOperations.vectorStoreServer
+//           .from("documents")
+//           .select("title, subject_id, module_id")
+//           .limit(10);
 
-      if (error) throw error;
+//       if (error) throw error;
 
-      const suggestions = [
-        "What is machine learning?",
-        "Explain data structures",
-        "How does recursion work?",
-        "What are the types of algorithms?",
-        "Explain object-oriented programming",
-        ...data.map((doc) => `Tell me about ${doc.title}`),
-      ];
+//       const suggestions = [
+//         "What is machine learning?",
+//         "Explain data structures",
+//         "How does recursion work?",
+//         "What are the types of algorithms?",
+//         "Explain object-oriented programming",
+//         ...data.map((doc) => `Tell me about ${doc.title}`),
+//       ];
 
-      return NextResponse.json({
-        success: true,
-        suggestions: suggestions.slice(0, 10),
-      });
-    }
+//       return NextResponse.json({
+//         success: true,
+//         suggestions: suggestions.slice(0, 10),
+//       });
+//     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Search endpoint is ready",
-    });
-  } catch (error: any) {
-    console.error("❌ Error in search GET:", error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
-  }
-}
+//     return NextResponse.json({
+//       success: true,
+//       message: "Search endpoint is ready",
+//     });
+//   } catch (error: any) {
+//     console.error("❌ Error in search GET:", error);
+//     return NextResponse.json(
+//       { success: false, error: error.message },
+//       { status: 500 }
+//     );
+//   }
+// }

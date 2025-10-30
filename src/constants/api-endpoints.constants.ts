@@ -65,11 +65,11 @@ export const CONTENT_CHUNK_ENDPOINTS = {
 // CHAT ENDPOINTS (RAG Chatbot)
 // ============================================
 export const CHAT_ENDPOINTS = {
-  BASE: `/chat`,
-  SESSIONS: `/chat/sessions`,
-  SESSION_BY_ID: (sessionId: string) => `/chat/sessions/${sessionId}`,
-  MESSAGES: (sessionId: string) => `/chat/sessions/${sessionId}/messages`,
-  SEND_MESSAGE: `/chat/send`,
+  BASE: `/rag/chat`,
+  SEND_MESSAGE: `/rag/chat`,
+  SESSIONS: `/rag/chat/sessions`,
+  SESSION_BY_ID: (sessionId: string) => `/rag/chat/sessions/${sessionId}`,
+  MESSAGES: (sessionId: string) => `/rag/chat/sessions/${sessionId}/messages`,
 } as const;
 
 // ============================================
@@ -121,6 +121,21 @@ export const IMPORTANT_TOPIC_ENDPOINTS = {
 } as const;
 
 // ============================================
+// YOUTUBE ENDPOINTS
+// ============================================
+
+export const YOUTUBE_ENDPOINTS = {
+  BASE: `/interview-experiences/youtube-videos`,
+  BY_ID: (id: string) => `/interview-experiences/youtube-videos/${id}`,
+  BY_COMPANY: (companyId: string) =>
+    `/interview-experiences/youtube-videos?company_id=${companyId}`,
+  BY_COLLEGE: (collegeId: string) =>
+    `/interview-experiences/youtube-videos?college_id=${collegeId}`,
+  PROCESS: (id: string) =>
+    `/interview-experiences/youtube-videos/${id}/process`,
+} as const;
+
+// ============================================
 // AGGREGATE ALL ENDPOINTS (for reference)
 // ============================================
 export const API_ENDPOINTS = {
@@ -136,4 +151,5 @@ export const API_ENDPOINTS = {
   COLLEGES: COLLEGE_ENDPOINTS,
   COMPANIES: COMPANY_ENDPOINTS,
   IMPORTANT_TOPICS: IMPORTANT_TOPIC_ENDPOINTS,
+  YOUTUBE: YOUTUBE_ENDPOINTS,
 } as const;
