@@ -17,6 +17,89 @@ import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import createChunkSummary from "@/helpers/generate-chunk-summary";
 
 /**
+ * GET /api/interview-experiences
+ * Fetch all interview experiences with optional filters
+ * Query params: company_id, college_id, batch, placed_year
+ */
+export async function GET(request: NextRequest) {
+  try {
+    console.log("🔍 Fetching interview experiences...");
+
+    const supabase = await createClient();
+    const { searchParams } = new URL(request.url);
+
+    // Extract optional filters
+    const company_id = searchParams.get("company_id");
+    const college_id = searchParams.get("college_id");
+    const batch = searchParams.get("batch");
+    const placed_year = searchParams.get("placed_year");
+
+    // Build query with filters
+    let query = supabase
+      .from("interview_experiences")
+      .select(
+        `
+        *,
+        company_details:company_id(id, name, logo_url, industry),
+        college_details:college_id(id, name)
+      `
+      )
+      .order("created_at", { ascending: false });
+
+    // Apply filters if provided
+    if (company_id) {
+      query = query.eq("company_id", company_id);
+    }
+    if (college_id) {
+      query = query.eq("college_id", college_id);
+    }
+    if (batch) {
+      query = query.eq("batch", batch);
+    }
+    if (placed_year) {
+      query = query.eq("placed_year", parseInt(placed_year));
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(
+        `Failed to fetch interview experiences: ${error.message}`
+      );
+    }
+
+    console.log(`✅ Fetched ${data.length} interview experiences`);
+
+    return NextResponse.json({
+      success: true,
+      count: data.length,
+      data,
+      filters: {
+        company_id: company_id || null,
+        college_id: college_id || null,
+        batch: batch || null,
+        placed_year: placed_year || null,
+      },
+    });
+  } catch (error: unknown) {
+    console.error("❌ Error fetching interview experiences:", error);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to fetch interview experiences";
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * POST /api/interview-experiences
  * Create a new interview experience (Admin upload)
  */

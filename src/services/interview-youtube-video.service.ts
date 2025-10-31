@@ -1,152 +1,7 @@
 import { axiosClient } from "@/lib/axiosClient";
 import { YOUTUBE_ENDPOINTS } from "@/constants/api-endpoints.constants";
 import { parseYouTubeDuration } from "@/helpers/youtube-video.helpers";
-
-/**
- * YouTube video metadata
- */
-export interface YouTubeVideo {
-  id: string;
-  video_id: string;
-  video_url: string;
-  title: string;
-  description: string | null;
-  thumbnail_url: string | null;
-  duration: number | null;
-  company_id: string;
-  college_id: string;
-  created_at: string;
-  updated_at: string;
-  companies?: {
-    id: string;
-    name: string;
-    logo_url: string | null;
-  };
-  colleges?: {
-    id: string;
-    name: string;
-  };
-}
-
-/**
- * Create YouTube video input
- */
-export interface CreateYouTubeVideoInput {
-  video_url: string;
-  company_id: string;
-  college_id: string;
-}
-
-/**
- * YouTube API response
- */
-export interface YouTubeAPIResponse {
-  video_id: string;
-  title: string;
-  description: string;
-  thumbnail_url: string;
-  duration: number;
-  channel_id: string;
-  published_at: string;
-}
-
-// ============================================
-// AI PROCESSING TYPES
-// ============================================
-
-/**
- * Process video input
- */
-export interface ProcessVideoInput {
-  video_id: string;
-  title: string;
-  description?: string;
-}
-
-/**
- * Transcript segment with timestamp
- */
-export interface TranscriptSegment {
-  text: string;
-  start: number;
-  duration: number;
-}
-
-/**
- * Full transcript data
- */
-export interface TranscriptData {
-  text: string;
-  segments: TranscriptSegment[];
-  duration: number;
-  language: string;
-}
-
-/**
- * AI-generated overview
- */
-export interface OverviewData {
-  summary: string;
-  key_points: string[];
-  topics: string[];
-  difficulty_level: "beginner" | "intermediate" | "advanced";
-  recommended_for: string[];
-}
-
-/**
- * Video segment with AI analysis
- */
-export interface VideoSegment {
-  segment_number: number;
-  title: string;
-  description: string;
-  start_time: number;
-  end_time: number;
-  key_concepts: string[];
-}
-
-/**
- * AI-generated flashcard
- */
-export interface Flashcard {
-  question: string;
-  answer: string;
-  difficulty: "easy" | "medium" | "hard";
-  category:
-    | "technical"
-    | "behavioral"
-    | "preparation"
-    | "tips"
-    | "company_culture";
-  timestamp: number | null;
-}
-
-/**
- * AI-generated tip
- */
-export interface VideoTip {
-  tip_text: string;
-  category:
-    | "preparation"
-    | "communication"
-    | "technical"
-    | "mindset"
-    | "follow_up";
-  importance: "critical" | "important" | "helpful";
-  context?: string;
-  timestamp: number | null;
-}
-
-/**
- * Complete AI processing response
- */
-export interface ProcessVideoResponse {
-  transcript: TranscriptData;
-  overview: OverviewData;
-  segments: VideoSegment[];
-  flashcards: Flashcard[];
-  tips: VideoTip[];
-}
+import { CreateYouTubeVideoInput, Flashcard, OverviewData, ProcessVideoInput, ProcessVideoResponse, VideoSegment, VideoTip, YouTubeAPIResponse, YouTubeVideo } from "@/types/services/interview-youtube-video.types";
 
 // ============================================
 // SERVICE
@@ -253,10 +108,33 @@ export const youtubeService = {
     try {
       const response = await axiosClient.post<{
         success: boolean;
-        data: ProcessVideoResponse;
+        data: {
+          video_id: string;
+          transcript: {
+            text: string;
+            segments_count: number;
+            duration: number;
+            language: string;
+          };
+          overview: any;
+          segments: {
+            count: number;
+            data: any[];
+          };
+          flashcards: {
+            count: number;
+            data: any[];
+          };
+          tips: {
+            count: number;
+            data: any[];
+          };
+        };
         metadata?: {
           processed_at: string;
-          processing_time: number;
+          processing_time_ms: number;
+          ai_model: string;
+          keys_used: Record<string, boolean>;
         };
       }>(YOUTUBE_ENDPOINTS.PROCESS(id), {
         video_id: input.video_id,
@@ -268,15 +146,28 @@ export const youtubeService = {
         throw new Error("Failed to process video");
       }
 
+      console.log("✅ AI processing completed for video", response.data);
+
       console.log("✅ Video processed successfully:", {
         transcript_length: response.data.data.transcript.text.length,
-        segments_count: response.data.data.segments.length,
-        flashcards_count: response.data.data.flashcards.length,
-        tips_count: response.data.data.tips.length,
+        segments_count: response.data.data.segments.count,
+        flashcards_count: response.data.data.flashcards.count,
+        tips_count: response.data.data.tips.count,
         metadata: response.data.metadata,
       });
 
-      return response.data.data;
+      // ✅ FIX: Return the correctly structured data
+      return {
+        overview: response.data.data.overview as OverviewData,
+        segments: response.data.data.segments.data as VideoSegment[],
+        flashcards: response.data.data.flashcards.data as Flashcard[],
+        tips: response.data.data.tips.data as VideoTip[],
+        transcript: {
+          text: response.data.data.transcript.text,
+          duration: response.data.data.transcript.duration,
+          language: response.data.data.transcript.language,
+        },
+      };
     } catch (error: any) {
       console.error("❌ Error processing video:", error);
 

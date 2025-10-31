@@ -31,13 +31,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// import { useToast } from "@/hooks/use-toast";
-import { interviewExperienceService } from "@/services/interview-experience.service";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle, AlertCircle } from "lucide-react";
+import { useInterviewExperiences } from "@/hooks/useInterviewExperiences.hook";
 
 // Form validation schema
 const formSchema = z.object({
   document: z
-    .instanceof(FileList)
+    // .instanceof(FileList)
+    .any()
     .refine((files) => files.length > 0, "PDF document is required")
     .refine(
       (files) => files[0]?.type === "application/pdf",
@@ -87,9 +89,8 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function UploadInterviewExperiencePage() {
   const router = useRouter();
-  //   const { toast } = useToast();
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const { createExperience } = useInterviewExperiences();
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -104,53 +105,40 @@ export default function UploadInterviewExperiencePage() {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      setIsUploading(true);
-      setUploadProgress(0);
-
       const documentFile = values.document[0];
       const videoFile = values.video_preview?.[0];
 
       console.log("📤 Uploading interview experience...");
 
-      const result = await interviewExperienceService.create({
-        document: documentFile,
-        video_preview: videoFile,
-        studentName: values.studentName || undefined,
-        college_id: values.college_id,
-        company_id: values.company_id,
-        batch: values.batch,
-        placedYear: values.placedYear ? parseInt(values.placedYear) : undefined,
-      });
+      createExperience.mutate(
+        {
+          document: documentFile,
+          video_preview: videoFile,
+          studentName: values.studentName || undefined,
+          college_id: values.college_id,
+          company_id: values.company_id,
+          batch: values.batch,
+          placedYear: values.placedYear
+            ? parseInt(values.placedYear)
+            : undefined,
+        },
+        {
+          onSuccess: (data) => {
+            console.log("✅ Upload successful:", data);
+            setShowSuccess(true);
 
-      console.log("✅ Upload successful:", result);
+            // Reset form
+            form.reset();
 
-      //   toast({
-      //     title: "Success! 🎉",
-      //     description: `Interview experience uploaded successfully. ${result.data.chunks_stored} chunks stored.`,
-      //     variant: "default",
-      //   });
-
-      // Reset form
-      form.reset();
-
-      // Redirect after 2 seconds
-      setTimeout(() => {
-        router.push("/admin/interview-experiences");
-      }, 2000);
+            // Redirect after 2 seconds
+            setTimeout(() => {
+              router.push("/admin/interview-experiences");
+            }, 2000);
+          },
+        }
+      );
     } catch (error) {
       console.error("❌ Upload failed:", error);
-
-      //   toast({
-      //     title: "Upload Failed",
-      //     description:
-      //       error instanceof Error
-      //         ? error.message
-      //         : "Failed to upload interview experience",
-      //     variant: "destructive",
-      //   });
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -167,6 +155,35 @@ export default function UploadInterviewExperiencePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Success Alert */}
+          {showSuccess && (
+            <Alert className="mb-6 border-green-500/50 bg-green-500/5">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <AlertDescription className="ml-2">
+                <p className="font-medium text-green-700 dark:text-green-400">
+                  ✅ Interview experience uploaded successfully!
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Redirecting to interview experiences list...
+                </p>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Error Alert */}
+          {createExperience.isError && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="ml-2">
+                <p className="font-medium">Upload Failed</p>
+                <p className="text-sm mt-1">
+                  {createExperience.error?.message ||
+                    "Failed to upload interview experience"}
+                </p>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* PDF Document Upload */}
@@ -185,7 +202,7 @@ export default function UploadInterviewExperiencePage() {
                           type="file"
                           accept=".pdf,application/pdf"
                           onChange={(e) => onChange(e.target.files)}
-                          disabled={isUploading}
+                          disabled={createExperience.isPending}
                           className="cursor-pointer"
                         />
                         <FileText className="h-5 w-5 text-muted-foreground" />
@@ -216,7 +233,7 @@ export default function UploadInterviewExperiencePage() {
                           type="file"
                           accept="video/mp4,video/webm,video/quicktime"
                           onChange={(e) => onChange(e.target.files)}
-                          disabled={isUploading}
+                          disabled={createExperience.isPending}
                           className="cursor-pointer"
                         />
                         <Video className="h-5 w-5 text-muted-foreground" />
@@ -244,7 +261,7 @@ export default function UploadInterviewExperiencePage() {
                       <Input
                         placeholder="e.g., John Doe"
                         {...field}
-                        disabled={isUploading}
+                        disabled={createExperience.isPending}
                       />
                     </FormControl>
                     <FormDescription>
@@ -267,7 +284,7 @@ export default function UploadInterviewExperiencePage() {
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      disabled={isUploading}
+                      disabled={createExperience.isPending}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -298,7 +315,7 @@ export default function UploadInterviewExperiencePage() {
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      disabled={isUploading}
+                      disabled={createExperience.isPending}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -330,7 +347,7 @@ export default function UploadInterviewExperiencePage() {
                       <Input
                         placeholder="e.g., 2023-2027"
                         {...field}
-                        disabled={isUploading}
+                        disabled={createExperience.isPending}
                       />
                     </FormControl>
                     <FormDescription>
@@ -353,7 +370,7 @@ export default function UploadInterviewExperiencePage() {
                         type="number"
                         placeholder="e.g., 2024"
                         {...field}
-                        disabled={isUploading}
+                        disabled={createExperience.isPending}
                       />
                     </FormControl>
                     <FormDescription>
@@ -365,7 +382,7 @@ export default function UploadInterviewExperiencePage() {
               />
 
               {/* Upload Progress */}
-              {isUploading && (
+              {createExperience.isPending && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -373,21 +390,17 @@ export default function UploadInterviewExperiencePage() {
                       Uploading and processing...
                     </span>
                   </div>
-                  {uploadProgress > 0 && (
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${uploadProgress}%` }}
-                      />
-                    </div>
-                  )}
                 </div>
               )}
 
               {/* Submit Button */}
               <div className="flex gap-4">
-                <Button type="submit" disabled={isUploading} className="flex-1">
-                  {isUploading ? (
+                <Button
+                  type="submit"
+                  disabled={createExperience.isPending}
+                  className="flex-1"
+                >
+                  {createExperience.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Uploading...
@@ -404,7 +417,7 @@ export default function UploadInterviewExperiencePage() {
                   type="button"
                   variant="outline"
                   onClick={() => router.push("/admin/interview-experiences")}
-                  disabled={isUploading}
+                  disabled={createExperience.isPending}
                 >
                   Cancel
                 </Button>

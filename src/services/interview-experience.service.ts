@@ -1,30 +1,10 @@
 import { axiosClient } from "@/lib/axiosClient";
 import { INTERVIEW_EXPERIENCE_ENDPOINTS } from "@/constants/api-endpoints.constants";
-
-export interface CreateInterviewExperienceInput {
-  document: File;
-  video_preview?: File;
-  studentName?: string;
-  college_id: string;
-  company_id: string;
-  batch: string;
-  placedYear?: number;
-}
-
-export interface InterviewExperienceResponse {
-  success: boolean;
-  message: string;
-  data: {
-    experience_id: string;
-    media_id: string;
-    video_media_id: string | null;
-    college_id: string;
-    company_id: string;
-    chunks_stored: number;
-    cloudinary_url: string;
-    video_url: string | null;
-  };
-}
+import {
+  CreateInterviewExperienceInput,
+  InterviewExperience,
+  InterviewExperienceResponse,
+} from "@/types/services/interview-experience.types";
 
 export const interviewExperienceService = {
   /**
@@ -74,11 +54,38 @@ export const interviewExperienceService = {
   },
 
   /**
-   * Get all interview experiences
+   * Get all interview experiences with optional filters
    */
-  getAll: async (): Promise<any[]> => {
-    const response = await axiosClient.get(INTERVIEW_EXPERIENCE_ENDPOINTS.BASE);
-    return response.data;
+  getAll: async (filters?: {
+    company_id?: string;
+    college_id?: string;
+    batch?: string;
+    placed_year?: number;
+  }): Promise<InterviewExperience[]> => {
+    try {
+      const params = new URLSearchParams();
+      if (filters?.company_id) params.append("company_id", filters.company_id);
+      if (filters?.college_id) params.append("college_id", filters.college_id);
+      if (filters?.batch) params.append("batch", filters.batch);
+      if (filters?.placed_year)
+        params.append("placed_year", filters.placed_year.toString());
+
+      const response = await axiosClient.get<{
+        success: boolean;
+        count: number;
+        data: InterviewExperience[];
+      }>(`/interview-experiences?${params.toString()}`);
+
+      // ✅ Return just the data array
+      return response.data.data;
+    } catch (error: any) {
+      console.error("❌ Error fetching interview experiences:", error);
+      throw new Error(
+        error.response?.data?.error ||
+          error.message ||
+          "Failed to fetch interview experiences"
+      );
+    }
   },
 
   /**
@@ -88,37 +95,40 @@ export const interviewExperienceService = {
     const response = await axiosClient.get(
       INTERVIEW_EXPERIENCE_ENDPOINTS.BY_ID(id)
     );
-    return response.data;
+    return response.data.data;
   },
 
   /**
    * Get by college
    */
-  getByCollege: async (collegeId: string): Promise<any[]> => {
+  getByCollege: async (collegeId: string): Promise<InterviewExperience[]> => {
     const response = await axiosClient.get(
       INTERVIEW_EXPERIENCE_ENDPOINTS.BY_COLLEGE(collegeId)
     );
-    return response.data;
+    // ✅ Return just the data array
+    return response.data.data || response.data;
   },
 
   /**
    * Get by company
    */
-  getByCompany: async (companyId: string): Promise<any[]> => {
+  getByCompany: async (companyId: string): Promise<InterviewExperience[]> => {
     const response = await axiosClient.get(
       INTERVIEW_EXPERIENCE_ENDPOINTS.BY_COMPANY(companyId)
     );
-    return response.data;
+    // ✅ Return just the data array
+    return response.data.data || response.data;
   },
 
   /**
    * Get by batch
    */
-  getByBatch: async (batch: string): Promise<any[]> => {
+  getByBatch: async (batch: string): Promise<InterviewExperience[]> => {
     const response = await axiosClient.get(
       INTERVIEW_EXPERIENCE_ENDPOINTS.BY_BATCH(batch)
     );
-    return response.data;
+    // ✅ Return just the data array
+    return response.data.data || response.data;
   },
 
   /**

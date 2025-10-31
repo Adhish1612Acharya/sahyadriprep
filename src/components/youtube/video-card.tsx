@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Play, Clock, Building2, Calendar } from "lucide-react";
-import { YouTubeVideo } from "@/services/interview-youtube-video.service";
+import { YouTubeVideo } from "@/types/services/interview-youtube-video.types";
 import { formatDuration } from "@/helpers/youtube-video.helpers";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";

@@ -120,3 +120,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* React PDF Styles */
+@layer base {
+  .react-pdf__Page {
+    @apply mx-auto;
+  }
+
+  .react-pdf__Page__textContent {
+    @apply border-none;
+  }
+
+  .react-pdf__Page__annotations {
+    @apply border-none;
+  }
+
+  .react-pdf__Page__canvas {
+    @apply mx-auto;
+  }
+}
