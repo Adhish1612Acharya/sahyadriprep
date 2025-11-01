@@ -46,11 +46,14 @@ import {
   AIFlashcardsPanel,
   AITipsPanel,
 } from "@/components/youtube/ai-panels";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function VideoDetailPage() {
   const params = useParams();
   const router = useRouter();
   const videoId = params.id as string;
+
+  const { isAdmin } = useAuth();
 
   const { useVideoQuery, deleteVideo, processVideo, useAIContentQuery } =
     useInterviewYouTubeVideos();
@@ -230,41 +233,42 @@ export default function VideoDetailPage() {
             </div>
           </div>
 
-          {/* Delete Button */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete this video. This action cannot be
-                  undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  disabled={deleteVideo.isPending}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {deleteVideo.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    "Delete"
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {isAdmin && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete this video. This action cannot
+                    be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    disabled={deleteVideo.isPending}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleteVideo.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      "Delete"
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
 
@@ -320,7 +324,24 @@ export default function VideoDetailPage() {
           {/* YouTube Player */}
           <Card>
             <CardContent className="p-0">
-              <div className="aspect-video bg-black rounded-t-lg overflow-hidden"></div>
+              <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
+                {videoId ? (
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${video.video_id}?rel=0`}
+                    title={video.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full"
+                  ></iframe>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white">
+                    <p>Invalid YouTube URL</p>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 

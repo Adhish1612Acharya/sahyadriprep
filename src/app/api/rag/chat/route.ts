@@ -2,6 +2,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { vectorStoreServerOperations } from "@/services/supabase/vector-store.service";
 import generateRAGResponse from "@/helpers/generate-rag-response.helpers";
+import {
+  formatChunkAsSource,
+  buildContextFromChunks,
+  groupAndDeduplicateSources,
+  type RAGSource,
+} from "@/helpers/format-rag-sources.helper";
 
 /**
  * POST /api/chat
@@ -49,49 +55,86 @@ export async function POST(request: NextRequest) {
 
     const startTime = Date.now();
 
-    // ✅ Step 1: Search interview experiences using new method
-    console.log("🔍 Searching interview experiences...");
+    // ✅ Step 1: Search all content types in parallel
+    console.log("🔍 Searching across all content types...");
     const searchStartTime = Date.now();
 
-    const relevantChunks =
-      await vectorStoreServerOperations.searchInterviewExperiences(
-        message,
-        search_limit
-      );
+    const [interviewChunks, transcriptChunks, titleChunks, descriptionChunks] =
+      await Promise.all([
+        vectorStoreServerOperations.searchInterviewExperiences(
+          message,
+          search_limit
+        ),
+        vectorStoreServerOperations.searchYouTubeVideosTranscript(
+          message,
+          search_limit
+        ),
+        vectorStoreServerOperations.searchYouTubeVideosTitle(
+          message,
+          search_limit
+        ),
+        vectorStoreServerOperations.searchYouTubeVideosDescription(
+          message,
+          search_limit
+        ),
+      ]);
+
+    // ✅ Combine all chunks and sort by similarity
+    const allChunks = [
+      ...interviewChunks,
+      ...transcriptChunks,
+      ...titleChunks,
+      ...descriptionChunks,
+    ].sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+
+    // Filter by similarity threshold and limit
+    const relevantChunks = allChunks
+      .filter((chunk) => (chunk.similarity || 0) >= similarity_threshold)
+      .slice(0, search_limit * 2); // Get more chunks for better context
 
     const searchTime = Date.now() - searchStartTime;
     console.log(`✅ Search completed in ${searchTime}ms`);
-    console.log(`📊 Found ${relevantChunks.length} relevant chunks`);
-    console.log("Releveant Chunks: ", relevantChunks);
+    console.log(`📊 Found ${relevantChunks.length} relevant chunks:`);
+    console.log(`   - ${interviewChunks.length} from interview documents`);
+    console.log(`   - ${transcriptChunks.length} from video transcripts`);
+    console.log(`   - ${titleChunks.length} from video titles`);
+    console.log(`   - ${descriptionChunks.length} from video descriptions`);
 
-    // ✅ Step 2: Build context from relevant chunks
-    const context = relevantChunks
-      .map((chunk: any, index: number) => {
-        const metadata = chunk.metadata || {};
-        const source =
-          metadata.document_title ||
-          metadata.company_name ||
-          metadata.student_name ||
-          "Interview Experience";
+    if (relevantChunks.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message:
+          "I couldn't find any relevant information in the database to answer your question. Please try rephrasing or asking about a different topic.",
+        metadata: {
+          context_used: false,
+          relevant_chunks_count: 0,
+          sources: [],
+          performance: {
+            search_time_ms: searchTime,
+            total_time_ms: Date.now() - startTime,
+          },
+        },
+      });
+    }
 
-        return `[Source ${index + 1}: ${source}]
-Company: ${metadata.company_name || "N/A"}
-Student: ${metadata.student_name || "Anonymous"}
-Batch: ${metadata.batch || "N/A"}
-Similarity: ${(chunk.similarity * 100).toFixed(1)}%
+    // ✅ Step 2: Build context for LLM
+    const context = buildContextFromChunks(relevantChunks);
+    console.log("📝 Context built:", {
+      length: context.length,
+      chunks: relevantChunks.length,
+    });
 
-Summary:
-${chunk.summary || "No summary available"}
+    // ✅ Step 3: Format sources for response
+    const sources: RAGSource[] = relevantChunks.map(formatChunkAsSource);
+    const groupedSources = groupAndDeduplicateSources(sources);
 
-Full Content:
-${chunk.content || "No content available"}`;
-      })
-      .join("\n\n---\n\n");
+    console.log("📚 Sources grouped:", {
+      interview_documents: groupedSources.interview_documents.length,
+      youtube_videos: groupedSources.youtube_videos.length,
+      youtube_timestamps: groupedSources.youtube_timestamps.length,
+    });
 
-    console.log("📝 Context length:", context.length);
-    console.log("Context: ", context);
-
-    // ✅ Step 3: Generate AI response with context
+    // ✅ Step 4: Generate AI response
     const responseStartTime = Date.now();
     const response = await generateRAGResponse(
       message,
@@ -103,81 +146,59 @@ ${chunk.content || "No content available"}`;
 
     console.log(`🤖 AI response generated in ${responseTime}ms`);
 
-    // // ✅ Step 4: Store chat messages (optional)
-    // let stored_message_id = null;
-    // if (session_id) {
-    //   try {
-    //     // Store user message
-    //     await vectorStoreServerOperations.addChatMessage({
-    //       session_id,
-    //       role: "user",
-    //       content: message,
-    //       metadata: {
-    //         timestamp: new Date().toISOString(),
-    //         search_limit,
-    //         similarity_threshold,
-    //       },
-    //     });
-
-    //     // Store assistant response
-    //     const stored_message = await vectorStoreServerOperations.addChatMessage(
-    //       {
-    //         session_id,
-    //         role: "assistant",
-    //         content: response.content,
-    //         metadata: {
-    //           relevant_chunks: relevantChunks.length,
-    //           context_used: context.length > 0,
-    //           sources: relevantChunks.map((chunk: any) => ({
-    //             content_id: chunk.id,
-    //             content_type: chunk.content_type,
-    //             similarity: chunk.similarity,
-    //             metadata: chunk.metadata,
-    //           })),
-    //           performance: {
-    //             search_time_ms: searchTime,
-    //             response_time_ms: responseTime,
-    //           },
-    //         },
-    //       }
-    //     );
-
-    //     stored_message_id = stored_message.id;
-
-    //     // Update session timestamp and title
-    //     await vectorStoreServerOperations.updateChatSession(session_id, {
-    //       title: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
-    //     });
-
-    //     console.log("💾 Chat messages stored successfully");
-    // } catch (sessionError) {
-    //   console.warn("Some error occurred", sessionError);
-    //   // Continue without storing - don't fail the whole request
-    // }
-
     const totalTime = Date.now() - startTime;
 
-    // ✅ Step 5: Return response
+    // ✅ Step 5: Return structured response
     return NextResponse.json({
       success: true,
       message: response.content,
-      metadata: {
-        context_used: context.length > 0,
-        relevant_chunks_count: relevantChunks.length,
-        sources: relevantChunks.map((chunk: any) => ({
-          content_type: chunk.content_type,
-          similarity: Math.round(chunk.similarity * 1000) / 1000,
-          company: chunk.metadata?.company_name || "N/A",
-          student: chunk.metadata?.student_name || "Anonymous",
-          batch: chunk.metadata?.batch || "N/A",
-          preview: chunk.content.substring(0, 150) + "...",
+      sources: {
+        interview_documents: groupedSources.interview_documents.map((doc) => ({
+          id: doc.id,
+          title: doc.title,
+          student_name: doc.student_name,
+          company: doc.company,
+          batch: doc.batch,
+          similarity: Math.round(doc.similarity * 1000) / 1000,
+          excerpt: doc.excerpt,
+          document_url: doc.document_url,
+          has_video_preview: doc.has_video_preview,
         })),
-        // session_info: session_id
-        //   ? {
-        //       session_id,
-        //       message_id: stored_message_id,
-        //     }
-        //   : null,
+        youtube_videos: groupedSources.youtube_videos.map((video) => ({
+          id: video.id,
+          title: video.title,
+          video_url: video.video_url,
+          thumbnail_url: video.thumbnail_url,
+          company: video.company,
+          similarity: Math.round(video.similarity * 1000) / 1000,
+          content_section: video.content_section,
+          excerpt: video.excerpt,
+        })),
+        youtube_timestamps: groupedSources.youtube_timestamps.map((ts) => ({
+          id: ts.id,
+          video_title: ts.title,
+          video_url: ts.video_url,
+          timestamp_url: ts.timestamp_url,
+          start_timestamp: ts.start_timestamp,
+          end_timestamp: ts.end_timestamp,
+          duration_seconds: ts.duration_seconds,
+          company: ts.company,
+          similarity: Math.round(ts.similarity * 1000) / 1000,
+          excerpt: ts.excerpt,
+        })),
+      },
+      metadata: {
+        context_used: true,
+        relevant_chunks_count: relevantChunks.length,
+        sources_breakdown: {
+          interview_documents: groupedSources.interview_documents.length,
+          youtube_videos: groupedSources.youtube_videos.length,
+          youtube_timestamps: groupedSources.youtube_timestamps.length,
+          total_unique_sources:
+            groupedSources.interview_documents.length +
+            groupedSources.youtube_videos.length +
+            groupedSources.youtube_timestamps.length,
+        },
         performance: {
           search_time_ms: searchTime,
           response_time_ms: responseTime,

@@ -1,57 +1,43 @@
 import groq from "@/lib/groq/groq";
 
-const generateRAGResponse = async (
+export default async function generateRAGResponse(
   userMessage: string,
   context: string,
-  relevantChunks: any[],
+  chunks: any[],
   conversationHistory: any[] = []
-): Promise<{ content: string; sources: string[] }> => {
-  // ✅ Check if we have context
-  if (context.trim().length === 0) {
-    return {
-      content: `I don't have any interview experience information related to "${userMessage}" in my knowledge base. 
-
-Could you try asking about:
-- Specific companies (e.g., "What was the Deloitte interview process?")
-- Interview rounds (e.g., "What happens in technical rounds?")
-- Interview tips (e.g., "How to prepare for coding interviews?")
-- Specific batches or students' experiences
-
-I can help you with questions about interview experiences that have been uploaded to the system.`,
-      sources: [],
-    };
-  }
-
+): Promise<{ content: string }> {
   try {
-    // ✅ Build conversation context
-    const conversationContext =
-      conversationHistory.length > 0
-        ? `Previous conversation:\n${conversationHistory
-            .slice(-4) // Last 4 messages
-            .map((msg: any) => `${msg.role}: ${msg.content}`)
-            .join("\n")}\n\n`
-        : "";
+    const systemPrompt = `You are an AI assistant specialized in helping students prepare for job interviews. You have access to a database of interview experiences from placed students and recorded interview sessions.
 
-    // ✅ Create RAG prompt
-    const ragPrompt = `You are an AI assistant helping students understand interview experiences from their peers. You have access to real interview experience documents from students who were placed in various companies.
+Your role:
+- Analyze the provided context from interview documents and YouTube videos
+- Answer questions based ONLY on the information in the context
+- Provide accurate, helpful interview preparation advice
+- Cite specific sources when providing information
+- Be concise but comprehensive
 
-${conversationContext}Context from interview experiences:
+Context Guidelines:
+- Interview documents contain written experiences from students
+- YouTube videos may have titles, descriptions, or transcript segments with timestamps
+- When referencing YouTube transcripts, mention the time range if available
+- If multiple sources say similar things, synthesize the information
+
+Response Format:
+- Start with a direct answer to the question
+- Provide relevant details from the context
+- Keep your response focused and well-structured
+- Do NOT invent information not present in the context
+- If the context doesn't contain relevant information, say so clearly
+
+Remember: Your answer should be based on the summaries and content provided in the context sources below.`;
+
+    const contextPrompt = `
+Available Context Sources:
 ${context}
 
 User Question: ${userMessage}
 
-Instructions:
-- Answer based ONLY on the provided interview experiences
-- Be specific about which company/student/batch the information comes from
-- If multiple sources mention the same thing, mention that
-- Use the similarity scores to prioritize information (higher is more relevant)
-- If the context doesn't fully answer the question, mention what information IS available
-- Be encouraging and helpful - this is for students preparing for interviews
-- Don't make up information not in the context
-- Format your response clearly with bullet points or numbered lists when appropriate
-- If technical terms are mentioned, explain them briefly
-
-Answer:`;
+Please provide a comprehensive answer based on the above sources. Reference specific sources when making claims (e.g., "According to Source 1..." or "As mentioned in the video at 5:23...").`;
 
     console.log("🤖 Calling Groq API...");
 
@@ -64,7 +50,7 @@ Answer:`;
         },
         {
           role: "user",
-          content: ragPrompt,
+          content: `${systemPrompt}\n\n${contextPrompt}`,
         },
       ],
       model: "llama-3.3-70b-versatile", // ✅ Best model for reasoning
@@ -81,67 +67,12 @@ Answer:`;
       throw new Error("No response from Groq AI");
     }
 
-    // ✅ Extract sources
-    const sources = Array.from(
-      new Set(
-        relevantChunks
-          .map((chunk: any) => {
-            const metadata = chunk.metadata || {};
-            return (
-              metadata.company_name ||
-              metadata.document_title ||
-              "Interview Experience"
-            );
-          })
-          .filter(Boolean)
-      )
-    );
-
     return {
       content: aiResponse,
-      sources,
     };
   } catch (error: any) {
     console.error("❌ Groq API Error:", error);
 
-    // ✅ Fallback to template response if Groq fails
-    const fallbackResponse = `Based on the interview experiences I found, here's what I can tell you:
-
-${context.substring(0, 1200)}...
-
-${
-  relevantChunks.length > 1
-    ? `📚 This information comes from ${relevantChunks.length} different interview experiences.`
-    : "📚 This information comes from an interview experience in our database."
-}
-
-${
-  relevantChunks[0]?.metadata?.company_name
-    ? `🏢 Company: ${relevantChunks[0].metadata.company_name}`
-    : ""
-}
-${
-  relevantChunks[0]?.metadata?.batch
-    ? `🎓 Batch: ${relevantChunks[0].metadata.batch}`
-    : ""
-}
-
-Would you like me to:
-- Explain any specific part in more detail?
-- Find more interview experiences from similar companies?
-- Help you prepare for specific interview rounds?
-
-⚠️ Note: AI-enhanced response temporarily unavailable, showing direct context from interview experiences.`;
-
-    return {
-      content: fallbackResponse,
-      sources: relevantChunks
-        .map(
-          (chunk: any) => chunk.metadata?.company_name || "Interview Experience"
-        )
-        .filter(Boolean),
-    };
+    throw error;
   }
-};
-
-export default generateRAGResponse;
+}

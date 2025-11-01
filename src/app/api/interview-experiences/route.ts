@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validate_pdf } from "@/helpers/validate-pdf.helpers";
 import { validate_video } from "@/helpers/validate-video.helpers";
-import { createInterviewExperienceSchema } from "@/schemas/interview-experience.schema";
+import { createInterviewExperienceSchema } from "@/lib/validations/interview-experience.schema";
 import { save_uploaded_file, cleanup_temp_files } from "@/helpers/file.helpers";
 import {
   uploadInterviewExperiencePDF,

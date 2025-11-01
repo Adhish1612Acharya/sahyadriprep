@@ -1,4 +1,5 @@
 import {
+  ChunkWithMetadata,
   TranscriptChunk,
   TranscriptData,
   TranscriptSegment,
@@ -184,57 +185,144 @@ export const fetchYouTubeTranscript = async (
 /**
  * Chunk transcript into smaller parts
  */
-export const chunkTranscriptByTime = (
+// export const chunkTranscriptByTime = (
+//   segments: TranscriptSegment[],
+//   chunkDurationMinutes: number = 5
+// ): TranscriptChunk[] => {
+//   const chunkDurationSeconds = chunkDurationMinutes * 60;
+//   const chunks: TranscriptChunk[] = [];
+
+//   let currentChunk: TranscriptSegment[] = [];
+//   let chunkStartTime = 0;
+//   let currentChunkDuration = 0;
+
+//   for (const segment of segments) {
+//     // If adding this segment exceeds chunk duration, save current chunk
+//     if (
+//       currentChunkDuration > 0 &&
+//       segment.start - chunkStartTime >= chunkDurationSeconds
+//     ) {
+//       const lastSegment = currentChunk[currentChunk.length - 1];
+//       chunks.push({
+//         text: currentChunk.map((s) => s.text).join(" "),
+//         start_time: chunkStartTime,
+//         end_time: lastSegment.start + lastSegment.duration,
+//         segment_count: currentChunk.length,
+//       });
+
+//       // Start new chunk
+//       currentChunk = [];
+//       chunkStartTime = segment.start;
+//       currentChunkDuration = 0;
+//     }
+
+//     currentChunk.push(segment);
+//     currentChunkDuration = segment.start - chunkStartTime + segment.duration;
+//   }
+
+//   // Add final chunk
+//   if (currentChunk.length > 0) {
+//     const lastSegment = currentChunk[currentChunk.length - 1];
+//     chunks.push({
+//       text: currentChunk.map((s) => s.text).join(" "),
+//       start_time: chunkStartTime,
+//       end_time: lastSegment.start + lastSegment.duration,
+//       segment_count: currentChunk.length,
+//     });
+//   }
+
+//   console.log(
+//     `✅ Created ${chunks.length} chunks of ~${chunkDurationMinutes} minutes each`
+//   );
+//   return chunks;
+// };
+
+/**
+ * Chunk transcript by token count for better semantic coherence
+ * @param segments - Array of transcript segments
+ * @param targetWords - Target word count per chunk (default: 200)
+ * @param maxWords - Maximum word count per chunk (default: 300)
+ * @returns Array of chunked transcript segments with metadata
+ */
+export function chunkTranscriptByTokens(
   segments: TranscriptSegment[],
-  chunkDurationMinutes: number = 5
-): TranscriptChunk[] => {
-  const chunkDurationSeconds = chunkDurationMinutes * 60;
-  const chunks: TranscriptChunk[] = [];
-
+  targetWords: number = 200,
+  maxWords: number = 300
+): ChunkWithMetadata[] {
+  const chunks: ChunkWithMetadata[] = [];
   let currentChunk: TranscriptSegment[] = [];
-  let chunkStartTime = 0;
-  let currentChunkDuration = 0;
+  let currentWordCount = 0;
 
-  for (const segment of segments) {
-    // If adding this segment exceeds chunk duration, save current chunk
-    if (
-      currentChunkDuration > 0 &&
-      segment.start - chunkStartTime >= chunkDurationSeconds
-    ) {
-      const lastSegment = currentChunk[currentChunk.length - 1];
-      chunks.push({
-        text: currentChunk.map((s) => s.text).join(" "),
-        start_time: chunkStartTime,
-        end_time: lastSegment.start + lastSegment.duration,
-        segment_count: currentChunk.length,
-      });
+  for (let i = 0; i < segments.length; i++) {
+    const segment = segments[i];
+    const segmentWords = segment.text
+      .split(/\s+/)
+      .filter((w) => w.length > 0).length;
 
-      // Start new chunk
-      currentChunk = [];
-      chunkStartTime = segment.start;
-      currentChunkDuration = 0;
+    // ✅ Decision logic:
+    // - If we've reached targetWords AND adding next segment exceeds maxWords, finalize chunk
+    // - If we've exceeded maxWords, always finalize chunk
+    const shouldFinalizeChunk =
+      currentChunk.length > 0 &&
+      ((currentWordCount >= targetWords &&
+        currentWordCount + segmentWords > maxWords) ||
+        currentWordCount + segmentWords > maxWords);
+
+    if (shouldFinalizeChunk) {
+      chunks.push(createChunkFromSegments(currentChunk, chunks.length));
+      currentChunk = [segment];
+      currentWordCount = segmentWords;
+    } else {
+      currentChunk.push(segment);
+      currentWordCount += segmentWords;
     }
-
-    currentChunk.push(segment);
-    currentChunkDuration = segment.start - chunkStartTime + segment.duration;
   }
 
-  // Add final chunk
+  // Add remaining chunk
   if (currentChunk.length > 0) {
-    const lastSegment = currentChunk[currentChunk.length - 1];
-    chunks.push({
-      text: currentChunk.map((s) => s.text).join(" "),
-      start_time: chunkStartTime,
-      end_time: lastSegment.start + lastSegment.duration,
-      segment_count: currentChunk.length,
-    });
+    chunks.push(createChunkFromSegments(currentChunk, chunks.length));
   }
 
   console.log(
-    `✅ Created ${chunks.length} chunks of ~${chunkDurationMinutes} minutes each`
+    `✅ Created ${chunks.length} chunks with target=${targetWords}, max=${maxWords} words`
   );
+  console.log(`📊 Chunk sizes: ${chunks.map((c) => c.word_count).join(", ")}`);
+
   return chunks;
-};
+}
+
+/**
+ * Create a chunk object from an array of segments
+ */
+function createChunkFromSegments(
+  segments: TranscriptSegment[],
+  chunkIndex: number
+): ChunkWithMetadata {
+  const firstSegment = segments[0];
+  const lastSegment = segments[segments.length - 1];
+
+  // Combine all segment texts
+  const combinedText = segments
+    .map((s) => s.text)
+    .join(" ")
+    .trim();
+
+  // Calculate word count
+  const wordCount = combinedText
+    .split(/\s+/)
+    .filter((w) => w.length > 0).length;
+
+  return {
+    text: combinedText,
+    start_time: firstSegment.start,
+    end_time: lastSegment.start + lastSegment.duration,
+    segment_start: firstSegment.index || 0,
+    segment_end: lastSegment.index || segments.length - 1,
+    segment_count: segments.length,
+    word_count: wordCount,
+    chunk_index: chunkIndex,
+  };
+}
 
 // ============================================
 // HELPER FUNCTIONS

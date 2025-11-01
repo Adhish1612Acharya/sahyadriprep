@@ -103,14 +103,6 @@ export const COLLEGE_ENDPOINTS = {
 } as const;
 
 // ============================================
-// COMPANY ENDPOINTS
-// ============================================
-export const COMPANY_ENDPOINTS = {
-  BASE: `/companies`,
-  BY_ID: (id: string) => `/companies/${id}`,
-} as const;
-
-// ============================================
 // IMPORTANT TOPIC ENDPOINTS
 // ============================================
 export const IMPORTANT_TOPIC_ENDPOINTS = {
@@ -134,6 +126,19 @@ export const YOUTUBE_ENDPOINTS = {
   PROCESS: (id: string) =>
     `/interview-experiences/youtube-videos/${id}/process`,
   AI: (id: string) => `/interview-experiences/youtube-videos/${id}/ai`,
+} as const;
+
+// ============================================
+// COMPANY ENDPOINTS
+// ============================================
+
+export const COMPANY_ENDPOINTS = {
+  BASE: "/companies",
+  BY_ID: (id: string) => `/companies/${id}`,
+  SEARCH: (query: string) => `/companies?search=${encodeURIComponent(query)}`,
+  BY_INDUSTRY: (industry: string) =>
+    `/companies?industry=${encodeURIComponent(industry)}`,
+  BY_COLLEGE: (collegeId: string) => `/companies?college_id=${collegeId}`,
 } as const;
 
 // ============================================

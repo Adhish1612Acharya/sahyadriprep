@@ -1,13 +1,34 @@
 // src/app/page.tsx
 "use client";
 
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowRight,
+  Award,
+  Building2,
+  CheckCircle,
+  GraduationCap,
+  MessageSquare,
+  Sparkles,
+  Target,
+  BarChart3,
+  BookOpen,
+} from "lucide-react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { LogoutButton } from "@/components/logout-button";
-import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-export default function Home() {
+export default function HomePage() {
   // ✅ Add state for user data
   const [user, setUser] = useState<any>(null);
   const [studentData, setStudentData] = useState<any>(null);
@@ -112,335 +133,367 @@ export default function Home() {
   };
 
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      {/* Header with user info or auth links */}
-      <header className="row-start-1 w-full flex justify-between items-center">
-        <div className="text-xl font-bold">SahyadriPrep</div>
-        <div className="flex gap-2">
-          {user ? (
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm font-medium">
-                  {studentData?.full_name ||
-                    user.user_metadata?.full_name ||
-                    "User"}
-                </p>
-                <p className="text-xs text-gray-600">{user.email}</p>
-              </div>
-              <LogoutButton />
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <Link
-                href="/login"
-                className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm h-10 px-4"
+    <div className="flex flex-col min-h-screen">
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-b from-primary/10 via-background to-background py-20 md:py-32">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-center text-center space-y-8">
+            <Badge variant="secondary" className="px-4 py-2">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Your Gateway to Career Success
+            </Badge>
+
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight max-w-4xl">
+              Ace Your Interviews with{" "}
+              <span className="text-primary">Real Experiences</span>
+            </h1>
+
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
+              Learn from thousands of interview experiences shared by students
+              from top colleges. Prepare smarter, not harder with AI-powered
+              insights and personalized guidance.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button size="lg" className="text-lg px-8" asChild>
+                <Link href="/interview-experiences">
+                  Explore Experiences
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-lg px-8"
+                asChild
               >
-                Login
-              </Link>
-              <Link
-                href="/signup"
-                className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm h-10 px-4"
-              >
-                Sign Up
-              </Link>
-            </div>
-          )}
-        </div>
-      </header>
-
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start max-w-4xl w-full">
-        {/* User Welcome Section */}
-        {user && (
-          <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-center">
-              Welcome Back!
-            </h2>
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-600 dark:text-gray-300">
-                  Name:
-                </span>
-                <span className="text-gray-900 dark:text-white">
-                  {studentData?.full_name ||
-                    user.user_metadata?.full_name ||
-                    "Not provided"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-600 dark:text-gray-300">
-                  Email:
-                </span>
-                <span className="text-gray-900 dark:text-white">
-                  {user.email}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-600 dark:text-gray-300">
-                  User ID:
-                </span>
-                <span className="text-gray-900 dark:text-white font-mono text-xs">
-                  {user.id.slice(0, 8)}...
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-600 dark:text-gray-300">
-                  Email Verified:
-                </span>
-                <span
-                  className={`${
-                    user.email_confirmed_at ? "text-green-600" : "text-red-600"
-                  } font-medium`}
-                >
-                  {user.email_confirmed_at ? "✓ Verified" : "✗ Not Verified"}
-                </span>
-              </div>
+                <Link href="/auth/signup">Get Started Free</Link>
+              </Button>
             </div>
 
-            {/* ✅ API Test Buttons */}
-            <div className="space-y-4">
-              {/* RAG Processing Test */}
-              <div>
-                <button
-                  onClick={testRagApi}
-                  disabled={isLoading}
-                  className={`w-full font-medium py-3 px-6 rounded-lg transition-colors ${
-                    isLoading
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-purple-600 hover:bg-purple-700 text-white"
-                  }`}
-                >
-                  {isLoading
-                    ? "🔄 Testing RAG Processing..."
-                    : "🧠 Test RAG Processing"}
-                </button>
-
-                {/* RAG API Result Display */}
-                {apiResult && (
-                  <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <h3 className="font-medium text-green-800 mb-2">
-                      ✅ RAG Processing Success!
-                    </h3>
-                    <div className="text-sm text-green-700">
-                      <p>
-                        <strong>Message:</strong> {apiResult.message}
-                      </p>
-                      {apiResult.data && (
-                        <div className="mt-2">
-                          <p>
-                            <strong>Chunks:</strong>{" "}
-                            {apiResult.data.processing?.chunks_created || 0}
-                          </p>
-                          <p>
-                            <strong>Embeddings:</strong>{" "}
-                            {apiResult.data.processing?.embeddings_generated ||
-                              0}
-                          </p>
-                          <p>
-                            <strong>Stored:</strong>{" "}
-                            {apiResult.data.processing?.chunks_stored || 0}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {apiError && (
-                  <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <h3 className="font-medium text-red-800 mb-2">
-                      ❌ RAG Processing Error
-                    </h3>
-                    <p className="text-sm text-red-700">{apiError}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Chat Test */}
-              <div>
-                {/* Test Message Input */}
-                <div className="mb-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Test Chat Message:
-                  </label>
-                  <input
-                    type="text"
-                    value={testMessage}
-                    onChange={(e) => setTestMessage(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter your test message..."
-                  />
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-12 w-full max-w-4xl">
+              <div className="flex flex-col items-center">
+                <div className="text-3xl md:text-4xl font-bold text-primary">
+                  500+
                 </div>
-
-                <button
-                  onClick={testChatApi}
-                  disabled={isChatLoading || !testMessage.trim()}
-                  className={`w-full font-medium py-3 px-6 rounded-lg transition-colors ${
-                    isChatLoading || !testMessage.trim()
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 text-white"
-                  }`}
-                >
-                  {isChatLoading ? "💬 Testing Chat..." : "💬 Test RAG Chat"}
-                </button>
-
-                {/* Chat API Result Display */}
-                {chatResult && (
-                  <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h3 className="font-medium text-blue-800 mb-2">
-                      ✅ Chat Response!
-                    </h3>
-                    <div className="text-sm text-blue-700 space-y-2">
-                      <div>
-                        <strong>Response:</strong>
-                        <p className="mt-1 text-gray-700 bg-white p-3 rounded border">
-                          {chatResult.message}
-                        </p>
-                      </div>
-
-                      {chatResult.metadata && (
-                        <div>
-                          <strong>Metadata:</strong>
-                          <ul className="mt-1 space-y-1">
-                            <li>
-                              📄 Relevant chunks:{" "}
-                              {chatResult.metadata.relevant_chunks_count}
-                            </li>
-                            <li>
-                              🎯 Context used:{" "}
-                              {chatResult.metadata.context_used ? "Yes" : "No"}
-                            </li>
-                            {chatResult.metadata.sources &&
-                              chatResult.metadata.sources.length > 0 && (
-                                <li>
-                                  📚 Sources:
-                                  <ul className="ml-4 mt-1">
-                                    {chatResult.metadata.sources.map(
-                                      (source: any, index: number) => (
-                                        <li key={index} className="text-xs">
-                                          • {source.document_title} (similarity:{" "}
-                                          {source.similarity})
-                                        </li>
-                                      )
-                                    )}
-                                  </ul>
-                                </li>
-                              )}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {chatError && (
-                  <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <h3 className="font-medium text-red-800 mb-2">
-                      ❌ Chat Error
-                    </h3>
-                    <p className="text-sm text-red-700">{chatError}</p>
-                  </div>
-                )}
+                <div className="text-sm text-muted-foreground">Experiences</div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="text-3xl md:text-4xl font-bold text-primary">
+                  100+
+                </div>
+                <div className="text-sm text-muted-foreground">Companies</div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="text-3xl md:text-4xl font-bold text-primary">
+                  50+
+                </div>
+                <div className="text-sm text-muted-foreground">Colleges</div>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="text-3xl md:text-4xl font-bold text-primary">
+                  1000+
+                </div>
+                <div className="text-sm text-muted-foreground">Students</div>
               </div>
             </div>
           </div>
-        )}
-
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
         </div>
-      </main>
+      </section>
 
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      {/* Features Section */}
+      <section className="py-20 md:py-32 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Everything You Need to Succeed
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Comprehensive tools and resources to help you prepare for your
+              dream job
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <Card className="border-2 hover:border-primary/50 transition-colors">
+              <CardHeader>
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <BookOpen className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Interview Experiences</CardTitle>
+                <CardDescription>
+                  Read detailed interview experiences from students who got
+                  placed in top companies
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Round-by-round breakdowns</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      Question patterns and topics
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      Tips and strategies that worked
+                    </span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Feature 2 */}
+            <Card className="border-2 hover:border-primary/50 transition-colors">
+              <CardHeader>
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <MessageSquare className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>AI Interview Coach</CardTitle>
+                <CardDescription>
+                  Get personalized guidance from our AI-powered chatbot trained
+                  on real experiences
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">24/7 instant answers</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">
+                      Company-specific preparation
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Mock interview practice</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Feature 3 */}
+            <Card className="border-2 hover:border-primary/50 transition-colors">
+              <CardHeader>
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Building2 className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Company Insights</CardTitle>
+                <CardDescription>
+                  Explore detailed profiles of companies with hiring trends and
+                  requirements
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Salary packages and roles</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Interview process breakdown</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Hiring statistics</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Feature 4 */}
+            <Card className="border-2 hover:border-primary/50 transition-colors">
+              <CardHeader>
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <GraduationCap className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>College Network</CardTitle>
+                <CardDescription>
+                  Connect with alumni and peers from your college who cracked
+                  top companies
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">College-wise placement data</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Alumni success stories</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Peer learning groups</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Feature 5 */}
+            <Card className="border-2 hover:border-primary/50 transition-colors">
+              <CardHeader>
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <BarChart3 className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Analytics & Insights</CardTitle>
+                <CardDescription>
+                  Track your preparation progress with detailed analytics and
+                  recommendations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Personalized study plans</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Progress tracking</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Weak area identification</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Feature 6 */}
+            <Card className="border-2 hover:border-primary/50 transition-colors">
+              <CardHeader>
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Award className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Video Tutorials</CardTitle>
+                <CardDescription>
+                  Learn from expert mentors through curated video content and
+                  mock interviews
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">DSA problem solving</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">System design concepts</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Behavioral interview tips</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 md:py-32">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              How SahyadriPrep Works
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Simple steps to kickstart your interview preparation journey
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Step 1 */}
+            <div className="flex flex-col items-center text-center">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">1</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Sign Up Free</h3>
+              <p className="text-muted-foreground">
+                Create your account in seconds and get instant access to all
+                resources
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex flex-col items-center text-center">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">2</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Explore & Learn</h3>
+              <p className="text-muted-foreground">
+                Browse through experiences, watch tutorials, and chat with our
+                AI coach
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex flex-col items-center text-center">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <span className="text-2xl font-bold text-primary">3</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Ace Your Interview</h3>
+              <p className="text-muted-foreground">
+                Apply your learnings and land your dream job with confidence
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 md:py-32 bg-gradient-to-b from-background to-primary/5">
+        <div className="container mx-auto px-4">
+          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+            <CardContent className="py-12 px-6 md:px-12">
+              <div className="flex flex-col items-center text-center space-y-6">
+                <Target className="h-16 w-16 text-primary" />
+                <h2 className="text-3xl md:text-4xl font-bold">
+                  Ready to Start Your Journey?
+                </h2>
+                <p className="text-lg text-muted-foreground max-w-2xl">
+                  Join thousands of students who are preparing smarter with
+                  SahyadriPrep. Get access to exclusive content and personalized
+                  guidance today.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                  <Button size="lg" className="text-lg px-8" asChild>
+                    <Link href="/auth/signup">
+                      Create Free Account
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="text-lg px-8"
+                    asChild
+                  >
+                    <Link href="/interview-experiences">
+                      Browse Experiences
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
     </div>
   );
 }

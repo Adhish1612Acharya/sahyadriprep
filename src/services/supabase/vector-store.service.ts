@@ -2,7 +2,6 @@ import { createClient } from "@/lib/vector_supabase/server";
 import {
   ChatMessage,
   ChatSession,
-  SimilarChunk,
   VectorChunk,
   VectorDocument,
 } from "@/types/vector-store-service.types";
@@ -10,14 +9,6 @@ import { CHUNKS_CONTENT_TYPES } from "@/constants/chunks-content-types.constants
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import { ContentType } from "@/models/content-chunk.types";
 import createChunkSummary from "@/helpers/generate-chunk-summary";
-
-// Helper function for cosine similarity
-function cosineSimilarity(vecA: number[], vecB: number[]): number {
-  const dotProduct = vecA.reduce((sum, a, idx) => sum + a * vecB[idx], 0);
-  const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
-  const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-  return dotProduct / (magnitudeA * magnitudeB);
-}
 
 // Server-side vector store operations
 export const vectorStoreServerOperations = {
@@ -121,84 +112,27 @@ export const vectorStoreServerOperations = {
   /**
    * Search YouTube videos only
    */
-  searchYouTubeVideos: async (query: string, limit = 10) => {
+  searchYouTubeVideosTranscript: async (query: string, limit = 10) => {
     return vectorStoreServerOperations.search(query, {
-      contentType: CHUNKS_CONTENT_TYPES.YOUTUBE_VIDEO,
+      contentType: CHUNKS_CONTENT_TYPES.YOUTUBE_VIDEO_TRANSCRIPT,
       threshold: 0.7,
       limit,
     });
   },
 
-  // ✅ Updated search with document info
-  async searchSimilarChunks(
-    queryEmbedding: number[],
-    options: {
-      limit?: number;
-      threshold?: number;
-      filters?: {
-        subject_id?: string;
-        module_id?: string;
-        exam_id?: string;
-        document_id?: string;
-      };
-    } = {}
-  ): Promise<SimilarChunk[]> {
-    const supabase = await createClient();
-    const { limit = 20, threshold = 0.3, filters = {} } = options;
-
-    try {
-      console.log("Searching with embedding:", queryEmbedding);
-      // Call vector_search_function RPC with parameters
-      const { data, error } = await supabase.rpc("vector_search_function", {
-        query_embedding: queryEmbedding,
-        match_threshold: 1 - threshold, // similarity threshold converted to pgvector distance
-        limit_count: limit,
-      });
-
-      console.log("Raw search results:", data, error);
-
-      if (error) throw new Error(`Vector search failed: ${error.message}`);
-
-      if (!data) return [];
-
-      // Apply additional filters client-side since RPC returns all matches below threshold
-      // const filteredResults = (data as any[])
-      //   .filter(chunk => {
-      //     if (filters.subject_id && chunk.metadata?.subject_id !== filters.subject_id) return false;
-      //     if (filters.module_id && chunk.metadata?.module_id !== filters.module_id) return false;
-      //     if (filters.exam_id && chunk.metadata?.exam_id !== filters.exam_id) return false;
-      //     if (filters.document_id && chunk.document_id !== filters.document_id) return false;
-      //     return true;
-      //   })
-      //   .map(chunk => {
-      //     try {
-      //       return {
-      //         ...chunk,
-      //         embedding: typeof chunk.embedding === 'string' ? JSON.parse(chunk.embedding) : chunk.embedding,
-      //         similarity: 1 - chunk.similarity_distance, // convert distance back to similarity
-      //         document: {
-      //           id: chunk.document_id,
-      //           title: chunk.document_title,
-      //           subject_id: chunk.metadata?.subject_id,
-      //           module_id: chunk.metadata?.module_id,
-      //           exam_id: chunk.metadata?.exam_id,
-      //         },
-      //       };
-      //     } catch {
-      //       console.warn("Failed to parse embedding for chunk:", chunk.id);
-      //       return null;
-      //     }
-      //   })
-      //   .filter(Boolean)
-      //   .filter(chunk => chunk.similarity >= threshold);
-
-      // return filteredResults as SimilarChunk[];
-
-      return data;
-    } catch (error: any) {
-      console.error("Error in searchSimilarChunks:", error);
-      throw new Error(`Vector search failed: ${error.message}`);
-    }
+  searchYouTubeVideosTitle: async (query: string, limit = 10) => {
+    return vectorStoreServerOperations.search(query, {
+      contentType: CHUNKS_CONTENT_TYPES.YOUTUBE_VIDEO_TITLE,
+      threshold: 0.7,
+      limit,
+    });
+  },
+  searchYouTubeVideosDescription: async (query: string, limit = 10) => {
+    return vectorStoreServerOperations.search(query, {
+      contentType: CHUNKS_CONTENT_TYPES.YOUTUBE_VIDEO_DESCRIPTION,
+      threshold: 0.7,
+      limit,
+    });
   },
 
   // Create chat session

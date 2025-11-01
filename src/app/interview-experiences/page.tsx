@@ -3,13 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useInterviewExperiences } from "@/hooks/useInterviewExperiences.hook";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useCompanies } from "@/hooks/useCompanies.hook";
+import { useAuth } from "@/contexts/auth-context"; // ✅ Import useAuth
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,51 +28,47 @@ import {
   FileText,
   Video,
   AlertCircle,
-  Loader2,
+  X,
 } from "lucide-react";
-
-type FilterType = "all" | "company" | "college" | "batch";
+import Image from "next/image";
 
 export default function InterviewExperiencesPage() {
   const router = useRouter();
-  const [filterType, setFilterType] = useState<FilterType>("all");
-  const [filterValue, setFilterValue] = useState("");
+  const { isAdmin } = useAuth(); // ✅ Get admin status from context
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("all");
+  const [batchFilter, setBatchFilter] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Fetch companies
+  const { useCompaniesQuery } = useCompanies();
+  const { data: companies = [], isLoading: isLoadingCompanies } =
+    useCompaniesQuery();
+
+  // Fetch experiences based on filters
   const {
     useExperiencesQuery,
     useExperiencesByCompanyQuery,
-    useExperiencesByCollegeQuery,
     useExperiencesByBatchQuery,
   } = useInterviewExperiences();
 
-  // Determine which query to use based on filter
+  // Determine which query to use
   const allQuery = useExperiencesQuery();
   const companyQuery = useExperiencesByCompanyQuery(
-    filterType === "company" && filterValue ? filterValue : null
+    selectedCompanyId !== "all" ? selectedCompanyId : null
   );
-  const collegeQuery = useExperiencesByCollegeQuery(
-    filterType === "college" && filterValue ? filterValue : null
-  );
-  const batchQuery = useExperiencesByBatchQuery(
-    filterType === "batch" && filterValue ? filterValue : null
-  );
+  const batchQuery = useExperiencesByBatchQuery(batchFilter || null);
 
-  // Select the active query
+  // Select the active query based on active filters
   const activeQuery =
-    filterType === "company"
+    selectedCompanyId !== "all"
       ? companyQuery
-      : filterType === "college"
-      ? collegeQuery
-      : filterType === "batch"
+      : batchFilter
       ? batchQuery
       : allQuery;
 
   const { data: experiences, isLoading, isError, error } = activeQuery;
 
-  console.log("Experiences Data:", experiences);
-
-  // Filter by search query
+  // Filter by search query (client-side)
   const filteredExperiences = experiences?.filter((exp: any) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -88,6 +80,17 @@ export default function InterviewExperiencesPage() {
     );
   });
 
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSelectedCompanyId("all");
+    setBatchFilter("");
+    setSearchQuery("");
+  };
+
+  // Check if any filter is active
+  const hasActiveFilters =
+    selectedCompanyId !== "all" || batchFilter || searchQuery;
+
   return (
     <div className="container mx-auto py-8 px-4">
       {/* Header */}
@@ -95,22 +98,40 @@ export default function InterviewExperiencesPage() {
         <div>
           <h1 className="text-3xl font-bold">Interview Experiences</h1>
           <p className="text-muted-foreground mt-1">
-            Manage and view all interview experiences
+            Browse documented experiences shared by placed students
           </p>
         </div>
-        <Button onClick={() => router.push("/admin/interview-experiences/add")}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Experience
-        </Button>
+        {/* ✅ Only show Add button for admins */}
+        {isAdmin && (
+          <Button
+            onClick={() => router.push("/admin/interview-experiences/add")}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Experience
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filters
+            </CardTitle>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Clear All Filters
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -123,62 +144,123 @@ export default function InterviewExperiencesPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
 
-            {/* Filter Type */}
-            <Select
-              value={filterType}
-              onValueChange={(val) => {
-                setFilterType(val as FilterType);
-                setFilterValue("");
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select filter type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Experiences</SelectItem>
-                <SelectItem value="company">By Company</SelectItem>
-                <SelectItem value="college">By College</SelectItem>
-                <SelectItem value="batch">By Batch</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Company Filter */}
+            <div className="relative">
+              <Select
+                value={selectedCompanyId}
+                onValueChange={setSelectedCompanyId}
+                disabled={isLoadingCompanies}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      isLoadingCompanies
+                        ? "Loading companies..."
+                        : "Filter by Company"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Companies</SelectItem>
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      <div className="flex items-center gap-2">
+                        {company.logo_url ? (
+                          <Image
+                            src={company.logo_url}
+                            alt={company.name}
+                            width={16}
+                            height={16}
+                            className="object-contain rounded"
+                            unoptimized
+                          />
+                        ) : (
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <span>{company.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedCompanyId !== "all" && (
+                <button
+                  onClick={() => setSelectedCompanyId("all")}
+                  className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
 
-            {/* Filter Value */}
-            {filterType !== "all" && (
+            {/* Batch Filter */}
+            <div className="relative">
               <Input
-                placeholder={
-                  filterType === "company"
-                    ? "Enter company UUID..."
-                    : filterType === "college"
-                    ? "Enter college UUID..."
-                    : "Enter batch (e.g., 2023-2027)..."
-                }
-                value={filterValue}
-                onChange={(e) => setFilterValue(e.target.value)}
+                placeholder="Filter by Batch (e.g., 2023-2027)"
+                value={batchFilter}
+                onChange={(e) => setBatchFilter(e.target.value)}
               />
-            )}
+              {batchFilter && (
+                <button
+                  onClick={() => setBatchFilter("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Active Filter Badge */}
-          {filterType !== "all" && filterValue && (
-            <div className="mt-4 flex items-center gap-2">
+          {/* Active Filters Display */}
+          {hasActiveFilters && (
+            <div className="mt-4 flex items-center gap-2 flex-wrap">
               <span className="text-sm text-muted-foreground">
-                Active filter:
+                Active filters:
               </span>
-              <Badge variant="secondary">
-                {filterType}: {filterValue}
-              </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setFilterType("all");
-                  setFilterValue("");
-                }}
-              >
-                Clear
-              </Button>
+              {searchQuery && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  Search: {searchQuery}
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="ml-1 hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {selectedCompanyId !== "all" && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  Company:{" "}
+                  {companies.find((c) => c.id === selectedCompanyId)?.name}
+                  <button
+                    onClick={() => setSelectedCompanyId("all")}
+                    className="ml-1 hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {batchFilter && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  Batch: {batchFilter}
+                  <button
+                    onClick={() => setBatchFilter("")}
+                    className="ml-1 hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
             </div>
           )}
         </CardContent>
@@ -213,8 +295,15 @@ export default function InterviewExperiencesPage() {
 
       {/* Results Count */}
       {!isLoading && !isError && (
-        <div className="mb-4 text-sm text-muted-foreground">
-          Showing {filteredExperiences?.length || 0} experience(s)
+        <div className="mb-4 flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {filteredExperiences?.length || 0} experience(s)
+          </div>
+          {hasActiveFilters && (
+            <Button variant="outline" size="sm" onClick={clearAllFilters}>
+              Reset Filters
+            </Button>
+          )}
         </div>
       )}
 
@@ -247,11 +336,11 @@ export default function InterviewExperiencesPage() {
                     <div className="flex flex-wrap gap-4 text-sm">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <span>{exp.company_details?.name}</span>
+                        <span>{exp.companies?.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <School className="h-4 w-4 text-muted-foreground" />
-                        <span>{exp.college_details?.name}</span>
+                        <span>{exp.colleges?.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -273,7 +362,7 @@ export default function InterviewExperiencesPage() {
                           className="flex items-center gap-1"
                         >
                           <FileText className="h-3 w-3" />
-                          PDF Available
+                          Document Available
                         </Badge>
                       )}
 
@@ -292,10 +381,13 @@ export default function InterviewExperiencesPage() {
                   {/* Company Logo */}
                   {exp.companies?.logo_url && (
                     <div className="ml-4">
-                      <img
+                      <Image
                         src={exp.companies.logo_url}
                         alt={exp.companies.name}
-                        className="h-16 w-16 object-contain rounded-lg border"
+                        width={64}
+                        height={64}
+                        className="object-contain rounded-lg border"
+                        unoptimized
                       />
                     </div>
                   )}
@@ -314,16 +406,26 @@ export default function InterviewExperiencesPage() {
                 No experiences found
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                {searchQuery || filterValue
+                {hasActiveFilters
                   ? "Try adjusting your filters"
-                  : "Get started by adding your first interview experience"}
+                  : "No interview experiences available yet"}
               </p>
-              <Button
-                onClick={() => router.push("/admin/interview-experiences/add")}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add First Experience
-              </Button>
+              {hasActiveFilters ? (
+                <Button onClick={clearAllFilters} variant="outline">
+                  Clear Filters
+                </Button>
+              ) : (
+                isAdmin && ( // ✅ Only show for admins in empty state
+                  <Button
+                    onClick={() =>
+                      router.push("/admin/interview-experiences/add")
+                    }
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add First Experience
+                  </Button>
+                )
+              )}
             </CardContent>
           </Card>
         )

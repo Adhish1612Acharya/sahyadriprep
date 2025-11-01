@@ -27,11 +27,14 @@ import {
   User,
 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function InterviewExperienceDetailPage() {
   const params = useParams();
   const router = useRouter();
   const experienceId = params.id as string;
+
+  const { isAdmin } = useAuth();
 
   const { useExperienceQuery, deleteExperience } = useInterviewExperiences();
   const {
@@ -102,18 +105,20 @@ export default function InterviewExperienceDetailPage() {
           Back to List
         </Button>
 
-        <Button
-          variant="destructive"
-          onClick={() => setShowDeleteConfirm(true)}
-          disabled={deleteExperience.isPending}
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="destructive"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={deleteExperience.isPending}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
+        )}
       </div>
 
       {/* Delete Confirmation */}
-      {showDeleteConfirm && (
+      {showDeleteConfirm && isAdmin && (
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">

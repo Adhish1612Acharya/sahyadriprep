@@ -31,8 +31,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Upload, Youtube, CheckCircle, Info } from "lucide-react";
+import {
+  Loader2,
+  Upload,
+  Youtube,
+  CheckCircle,
+  Info,
+  Building2,
+} from "lucide-react";
 import { useInterviewYouTubeVideos } from "@/hooks/useYouTubeVideos.hook";
+import { useCompanies } from "@/hooks/useCompanies.hook";
 // import { useToast } from "@/hooks/use-toast";
 
 // ============================================
@@ -59,8 +67,13 @@ type UploadYouTubeVideoFormData = z.infer<typeof uploadYouTubeVideoSchema>;
 
 export default function UploadYouTubeVideoPage() {
   const router = useRouter();
-//   const { toast } = useToast();
+  //   const { toast } = useToast();
   const { createVideo } = useInterviewYouTubeVideos();
+
+  // Fetch companies using the custom hook
+  const { useCompaniesQuery } = useCompanies();
+  const { data: companies = [], isLoading: isLoadingCompanies } =
+    useCompaniesQuery();
 
   // ============================================
   // FORM SETUP
@@ -168,7 +181,7 @@ export default function UploadYouTubeVideoPage() {
                 )}
               />
 
-              {/* Company Select Field */}
+              {/* Company Select Field - Dynamic */}
               <FormField
                 control={form.control}
                 name="company_id"
@@ -180,17 +193,54 @@ export default function UploadYouTubeVideoPage() {
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      disabled={createVideo.isPending}
+                      disabled={createVideo.isPending || isLoadingCompanies}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a company" />
+                          <SelectValue
+                            placeholder={
+                              isLoadingCompanies
+                                ? "Loading companies..."
+                                : "Select a company"
+                            }
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="36429a2a-eb1b-46ff-bbe5-ac2a99c002b2">
-                          Deloitte
-                        </SelectItem>
+                        {isLoadingCompanies ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            <span className="ml-2 text-sm text-muted-foreground">
+                              Loading companies...
+                            </span>
+                          </div>
+                        ) : companies.length === 0 ? (
+                          <div className="py-4 px-2 text-center text-sm text-muted-foreground">
+                            No companies found. Please add companies first.
+                          </div>
+                        ) : (
+                          companies.map((company) => (
+                            <SelectItem key={company.id} value={company.id}>
+                              <div className="flex items-center gap-2">
+                                {company.logo_url ? (
+                                  <img
+                                    src={company.logo_url}
+                                    alt={company.name}
+                                    className="h-5 w-5 rounded object-contain"
+                                  />
+                                ) : (
+                                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                                )}
+                                <span>{company.name}</span>
+                                {company.industry && (
+                                  <span className="text-xs text-muted-foreground">
+                                    ({company.industry})
+                                  </span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormDescription>
@@ -259,7 +309,11 @@ export default function UploadYouTubeVideoPage() {
                 type="submit"
                 className="w-full"
                 size="lg"
-                disabled={createVideo.isPending || createVideo.isSuccess}
+                disabled={
+                  createVideo.isPending ||
+                  createVideo.isSuccess ||
+                  isLoadingCompanies
+                }
               >
                 {createVideo.isPending ? (
                   <>
@@ -300,6 +354,10 @@ export default function UploadYouTubeVideoPage() {
           <p>
             <strong>Processing Time:</strong> Typically 30-60 seconds depending
             on video length
+          </p>
+          <p>
+            <strong>Company Selection:</strong> Only companies from your college
+            are shown
           </p>
         </CardContent>
       </Card>

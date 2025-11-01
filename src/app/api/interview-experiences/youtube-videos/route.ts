@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as v_createclient } from "@/lib/vector_supabase/server";
 import {
-  chunkTranscriptByTime,
+  chunkTranscriptByTokens,
   extractYouTubeVideoId,
   fetchYouTubeMetadata,
   fetchYouTubeTranscript,
@@ -11,6 +11,7 @@ import {
 import createChunkSummary from "@/helpers/generate-chunk-summary";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import embedDocumentsWithHandling from "@/lib/rag-chatbot/embed-documents";
+import { requireAdmin, hasCollegeAccess } from "@/helpers/auth.helpers"; // ✅ Import auth helpers
 
 /**
  * GET /api/interview-experiences/youtube-videos
@@ -71,10 +72,20 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/interview-experiences/youtube-videos
- * Create a new YouTube video
+ * Create a new YouTube video (Admin only)
  */
 export async function POST(request: NextRequest) {
   try {
+    // ✅ 1. Check if user is admin
+    const { error: authError, user, role } = await requireAdmin();
+
+    if (authError) {
+      return authError; // Return 401 or 403 response
+    }
+
+    console.log(`🔐 Admin user authenticated: ${user!.email} (${role})`);
+
+    // ✅ 2. Parse request body
     const body = await request.json();
     const { video_url, company_id, college_id } = body;
 
@@ -86,6 +97,20 @@ export async function POST(request: NextRequest) {
           error: "video_url, company_id, and college_id are required",
         },
         { status: 400 }
+      );
+    }
+
+    // ✅ 3. Check if user has access to this college
+    const hasAccess = await hasCollegeAccess(user!.id, college_id);
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized",
+          message: "You don't have permission to add videos for this college",
+        },
+        { status: 403 }
       );
     }
 
@@ -145,6 +170,7 @@ export async function POST(request: NextRequest) {
         duration: metadata.duration,
         company_id,
         college_id,
+        created_by: user!.id, // ✅ Track who created it
       })
       .select(
         `
@@ -161,7 +187,7 @@ export async function POST(request: NextRequest) {
 
     console.log("✅ YouTube video created:", video_data.id);
 
-    // ✅ NEW: Process transcript and create embeddings
+    // ✅ Process transcript and create embeddings
     try {
       console.log("📝 Processing transcript for embeddings...");
 
@@ -170,26 +196,35 @@ export async function POST(request: NextRequest) {
 
       console.log(
         "ℹ️ Fetched transcript segments:",
-        transcriptSegments || null
+        transcriptSegments?.segments?.length || 0
       );
 
-      if (transcriptSegments && transcriptSegments.segments.length === 0) {
+      if (!transcriptSegments || transcriptSegments.segments.length === 0) {
         console.warn("⚠️ No transcript available for this video");
       } else {
-        // 2. Chunk transcript into 5-minute segments
-        const transcriptChunks = chunkTranscriptByTime(
-          transcriptSegments?.segments || [],
-          5
+        // ✅ 2. Smart chunking by token count (200-300 words per chunk)
+        const transcriptChunks = chunkTranscriptByTokens(
+          transcriptSegments.segments,
+          200, // Target 200 words per chunk
+          300 // Max 300 words per chunk
         );
-
-        console.log("Transcript chunks : ", transcriptChunks);
 
         console.log(
-          `📊 Processing ${transcriptChunks.length} transcript chunks...`
+          `📊 Created ${transcriptChunks.length} smart chunks from ${transcriptSegments.segments.length} segments`
         );
+        console.log("Sample chunk:", {
+          chunk_index: transcriptChunks[0]?.chunk_index,
+          word_count: transcriptChunks[0]?.word_count,
+          segment_count: transcriptChunks[0]?.segment_count,
+          time_range: `${formatTimestamp(
+            transcriptChunks[0]?.start_time
+          )} - ${formatTimestamp(transcriptChunks[0]?.end_time)}`,
+        });
 
         // 3. Generate summaries for each transcript chunk
         const transcriptSummaries: string[] = [];
+        console.log("🧠 Generating summaries for transcript chunks...");
+
         for (const chunk of transcriptChunks) {
           const summary = await createChunkSummary(chunk.text);
           transcriptSummaries.push(summary);
@@ -200,43 +235,36 @@ export async function POST(request: NextRequest) {
           `✅ Generated ${transcriptSummaries.length} transcript summaries`
         );
 
-        console.log("Transcript Summaries : ", transcriptSummaries);
-
-        // ✅ NEW: 4. Process Title and Description separately
+        // 4. Process Title and Description separately
         console.log("📝 Processing video title and description...");
 
-        // Generate summary for title (if long)
+        // Generate summary for title
         const titleSummary =
           video_data.title.length > 200
             ? await createChunkSummary(video_data.title)
             : video_data.title;
 
-        console.log("Title Summary : ", titleSummary);
-
-        // Generate summary for description (if exists and long)
+        // Generate summary for description
         let descriptionSummary =
           video_data.description || "No description available";
         if (video_data.description && video_data.description.length > 500) {
           descriptionSummary = await createChunkSummary(video_data.description);
-          await new Promise((r) => setTimeout(r, 150)); // Rate limiting
+          await new Promise((r) => setTimeout(r, 150));
         }
-
-        console.log("Description Summary : ", descriptionSummary);
 
         console.log("✅ Generated title and description summaries");
 
-        // 5. Generate embeddings for ALL content (title, description, transcript summaries)
+        // 5. Generate embeddings for ALL content
         const allSummaries = [
           titleSummary,
           descriptionSummary,
           ...transcriptSummaries,
         ];
 
-        console.log("ℹ️ All Summaries : ", allSummaries);
-
         console.log(
-          `🧠 Generating embeddings for ${allSummaries.length} items...`
+          `🧠 Generating embeddings for ${allSummaries.length} items (1 title + 1 description + ${transcriptSummaries.length} transcript chunks)...`
         );
+
         const allEmbeddings = await embedDocumentsWithHandling(
           embeddings,
           allSummaries
@@ -244,10 +272,10 @@ export async function POST(request: NextRequest) {
 
         console.log(`✅ Generated ${allEmbeddings.length} embeddings`);
 
-        // 6. Prepare chunks for insertion
+        // ✅ 6. Prepare chunks for insertion with enhanced metadata
         const chunksToInsert = [];
 
-        // ✅ Insert Title chunk
+        // Insert Title chunk
         chunksToInsert.push({
           content: video_data.title,
           summary: titleSummary,
@@ -256,27 +284,20 @@ export async function POST(request: NextRequest) {
           chunk_index: 0,
           token_count: video_data.title.split(" ").length,
           metadata: {
-            // Video identifiers
             youtube_video_id: video_data.id,
             video_id: video_data.video_id,
             video_url: video_data.video_url,
             video_title: video_data.title,
-
-            // Company & College
             company_id: video_data.company_id,
             college_id: video_data.college_id,
-
-            // Content type specific
             content_section: "title",
-            total_video_chunks: transcriptChunks.length + 2, // +2 for title and description
-
-            // Additional metadata
+            total_video_chunks: transcriptChunks.length + 2,
             summary_length: titleSummary.length,
             content_length: video_data.title.length,
           },
         });
 
-        // ✅ Insert Description chunk
+        // Insert Description chunk
         chunksToInsert.push({
           content: video_data.description || "No description available",
           summary: descriptionSummary,
@@ -285,61 +306,64 @@ export async function POST(request: NextRequest) {
           chunk_index: 1,
           token_count: (video_data.description || "").split(" ").length,
           metadata: {
-            // Video identifiers
             youtube_video_id: video_data.id,
             video_id: video_data.video_id,
             video_url: video_data.video_url,
             video_title: video_data.title,
-
-            // Company & College
             company_id: video_data.company_id,
             college_id: video_data.college_id,
-
-            // Content type specific
             content_section: "description",
             total_video_chunks: transcriptChunks.length + 2,
-
-            // Additional metadata
             summary_length: descriptionSummary.length,
             content_length: (video_data.description || "").length,
           },
         });
 
-        // ✅ Insert Transcript chunks
+        // ✅ Insert Transcript chunks with enhanced metadata
         transcriptChunks.forEach((chunk, index) => {
+          const timestampUrl = `${video_data.video_url}&t=${Math.floor(
+            chunk.start_time
+          )}s`;
+
           chunksToInsert.push({
             content: chunk.text,
             summary: transcriptSummaries[index],
             content_type: "youtube_video_transcript",
-            embedding: allEmbeddings[index + 2], // +2 because title and description come first
+            embedding: allEmbeddings[index + 2],
             chunk_index: index + 2,
-            token_count: chunk.text.split(" ").length,
+            token_count: chunk.word_count,
             metadata: {
               // Video identifiers
               youtube_video_id: video_data.id,
               video_id: video_data.video_id,
               video_url: video_data.video_url,
               video_title: video_data.title,
-
-              // Company & College
               company_id: video_data.company_id,
               college_id: video_data.college_id,
 
-              // Timestamp information (transcript specific)
+              // ✅ Precise timestamp references
               start_time: chunk.start_time,
               end_time: chunk.end_time,
-              start_time_formatted: formatTimestamp(chunk.start_time),
-              end_time_formatted: formatTimestamp(chunk.end_time),
+              start_timestamp: formatTimestamp(chunk.start_time),
+              end_timestamp: formatTimestamp(chunk.end_time),
               duration_seconds: chunk.end_time - chunk.start_time,
 
-              // Content type specific
-              content_section: "transcript",
-              segment_count: chunk.segment_count,
-              total_video_chunks: transcriptChunks.length + 2,
-              transcript_chunk_number: index + 1,
-              total_transcript_chunks: transcriptChunks.length,
+              // ✅ Clickable YouTube link with timestamp
+              timestamp_url: timestampUrl,
 
-              // Additional metadata
+              // ✅ Segment references
+              segment_start: chunk.segment_start,
+              segment_end: chunk.segment_end,
+              segment_count: chunk.segment_count,
+
+              // Content section info
+              content_section: "transcript",
+              chunk_number: index + 1,
+              total_transcript_chunks: transcriptChunks.length,
+              total_video_chunks: transcriptChunks.length + 2,
+
+              // Content metrics
+              word_count: chunk.word_count,
               summary_length: transcriptSummaries[index].length,
               content_length: chunk.text.length,
             },
@@ -353,16 +377,25 @@ export async function POST(request: NextRequest) {
 
         if (chunksError) {
           console.error("❌ Error storing chunks:", chunksError.message);
-          // Don't fail the whole request, just log the error
         } else {
           console.log(
-            `✅ Stored ${chunksToInsert.length} chunks in vector DB (1 title + 1 description + ${transcriptChunks.length} transcript)`
+            `✅ Stored ${chunksToInsert.length} chunks in vector DB:`
+          );
+          console.log(`   - 1 title chunk`);
+          console.log(`   - 1 description chunk`);
+          console.log(
+            `   - ${transcriptChunks.length} transcript chunks (${transcriptSegments.segments.length} original segments)`
+          );
+          console.log(
+            `   - Average ${Math.round(
+              transcriptChunks.reduce((sum, c) => sum + c.word_count, 0) /
+                transcriptChunks.length
+            )} words per chunk`
           );
         }
       }
     } catch (transcriptError: any) {
       console.error("⚠️ Transcript processing failed:", transcriptError);
-      // Don't fail the whole request if transcript fails
     }
 
     return NextResponse.json(
