@@ -15,6 +15,7 @@ import doc_loader from "@/lib/rag-chatbot/load-doc";
 import create_doc_chunk from "@/lib/rag-chatbot/create-doc-chunk";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import createChunkSummary from "@/helpers/generate-chunk-summary";
+import { generateSummariesInBatches } from "@/helpers/batch-summary.helpers";
 
 /**
  * GET /api/interview-experiences
@@ -215,15 +216,15 @@ export async function POST(request: NextRequest) {
     const chunks = await create_doc_chunk(documentContent);
     console.log(`   Created ${chunks.length} chunks`);
 
-    // Run sequentially (safer for rate limits). Add tiny delay between calls.
-    const summaries: string[] = [];
-    for (let i = 0; i < chunks.length; i++) {
-      const s = await createChunkSummary(chunks[i]);
-      summaries.push(s);
-      await new Promise((r) => setTimeout(r, 150)); // small throttle
-    }
+    //Batch processing with intelligent rate limiting
+    const summaries = await generateSummariesInBatches(chunks, {
+      batchSize: 5, // Process 5 at a time
+      delayBetweenBatches: 7000, // 7 seconds between batches (safe for 10/min limit)
+      delayBetweenRequests: 500, // 0.5 seconds within batch
+      maxRetries: 2, // Retry each chunk up to 2 times
+    });
 
-    console.log("Summaries created : ", summaries);
+    console.log(`✅ Generated ${summaries.length} summaries`);
 
     // ✅ UPDATED: Generate embeddings for summaries instead of chunks
     console.log("🧠 Generating embeddings for summaries...");

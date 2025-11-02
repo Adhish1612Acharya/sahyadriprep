@@ -12,6 +12,7 @@ import createChunkSummary from "@/helpers/generate-chunk-summary";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import embedDocumentsWithHandling from "@/lib/rag-chatbot/embed-documents";
 import { requireAdmin, hasCollegeAccess } from "@/helpers/auth.helpers"; // ✅ Import auth helpers
+import { generateSummariesInBatches } from "@/helpers/batch-summary.helpers";
 
 /**
  * GET /api/interview-experiences/youtube-videos
@@ -212,49 +213,48 @@ export async function POST(request: NextRequest) {
         console.log(
           `📊 Created ${transcriptChunks.length} smart chunks from ${transcriptSegments.segments.length} segments`
         );
-        console.log("Sample chunk:", {
-          chunk_index: transcriptChunks[0]?.chunk_index,
-          word_count: transcriptChunks[0]?.word_count,
-          segment_count: transcriptChunks[0]?.segment_count,
-          time_range: `${formatTimestamp(
-            transcriptChunks[0]?.start_time
-          )} - ${formatTimestamp(transcriptChunks[0]?.end_time)}`,
-        });
-
-        // 3. Generate summaries for each transcript chunk
-        const transcriptSummaries: string[] = [];
-        console.log("🧠 Generating summaries for transcript chunks...");
-
-        for (const chunk of transcriptChunks) {
-          const summary = await createChunkSummary(chunk.text);
-          transcriptSummaries.push(summary);
-          await new Promise((r) => setTimeout(r, 150)); // Rate limiting
-        }
-
-        console.log(
-          `✅ Generated ${transcriptSummaries.length} transcript summaries`
-        );
-
-        // 4. Process Title and Description separately
+        // ✅ 3. Process Title and Description
         console.log("📝 Processing video title and description...");
 
-        // Generate summary for title
+        // Generate summary for title (if needed)
         const titleSummary =
           video_data.title.length > 200
             ? await createChunkSummary(video_data.title)
             : video_data.title;
 
-        // Generate summary for description
+        // Generate summary for description (if needed)
         let descriptionSummary =
           video_data.description || "No description available";
         if (video_data.description && video_data.description.length > 500) {
           descriptionSummary = await createChunkSummary(video_data.description);
-          await new Promise((r) => setTimeout(r, 150));
         }
 
         console.log("✅ Generated title and description summaries");
 
-        // 5. Generate embeddings for ALL content
+        // ✅ 4. Generate summaries for transcript chunks in batches
+        console.log(
+          `🧠 Generating summaries for ${transcriptChunks.length} transcript chunks...`
+        );
+
+
+
+        // ✅ NEW: Batch processing with intelligent rate limiting
+        const transcriptTexts = transcriptChunks.map((chunk) => chunk.text);
+        const transcriptSummaries = await generateSummariesInBatches(
+          transcriptTexts,
+          {
+            batchSize: 5, // Process 5 chunks at a time
+            delayBetweenBatches: 7000, // 7 seconds between batches
+            delayBetweenRequests: 500, // 0.5 seconds within batch
+            maxRetries: 2, // Retry each chunk up to 2 times
+          }
+        );
+
+        console.log(
+          `✅ Generated ${transcriptSummaries.length} transcript summaries`
+        );
+
+        // ✅ 5. Generate embeddings for ALL content
         const allSummaries = [
           titleSummary,
           descriptionSummary,

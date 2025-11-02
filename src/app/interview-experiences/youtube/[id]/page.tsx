@@ -23,11 +23,10 @@ import {
   ListChecks,
   AlertCircle,
   CheckCircle,
-  PlayCircle,
 } from "lucide-react";
 import { formatDuration } from "@/helpers/youtube-video.helpers";
 import { formatDistanceToNow } from "date-fns";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +45,7 @@ import {
   AIFlashcardsPanel,
   AITipsPanel,
 } from "@/components/youtube/ai-panels";
+import { YouTubePlayerController } from "@/components/youtube/youtube-player-controller"; // ✅ NEW
 import { useAuth } from "@/contexts/auth-context";
 
 export default function VideoDetailPage() {
@@ -63,42 +63,33 @@ export default function VideoDetailPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [aiData, setAiData] = useState<ProcessVideoResponse | null>(null);
   const [showAIContent, setShowAIContent] = useState(false);
-  const [enableAIQuery, setEnableAIQuery] = useState(false); // ✅ NEW: Control query execution
+  const [enableAIQuery, setEnableAIQuery] = useState(false);
+  const [currentVideoTime, setCurrentVideoTime] = useState(0); // ✅ NEW: Track current playback time
 
-  // ✅ FIX: Pass videoId and enableAIQuery flag
   const {
     data: savedAI,
     isLoading: isAIContentLoading,
     refetch: refetchAI,
   } = useAIContentQuery(videoId, enableAIQuery);
 
-  // ✅ NEW: Ref for the iframe to control playback
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  // ✅ NEW: Handle jump to timestamp (now controlled by YouTubePlayerController)
+  const [jumpToTimestamp, setJumpToTimestamp] = useState<number | null>(null);
 
-  // ✅ NEW: Function to jump to timestamp
-  const jumpToTimestamp = (seconds: number) => {
-    if (iframeRef.current && video) {
-      const newSrc = `https://www.youtube.com/embed/${
-        video.video_id
-      }?start=${Math.floor(seconds)}&autoplay=1`;
-      iframeRef.current.src = newSrc;
-      iframeRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
+  const handleJumpTo = (seconds: number) => {
+    setJumpToTimestamp(seconds);
+    // The YouTubePlayerController will handle the actual jump
   };
 
-  // ✅ UPDATED: Handle "Get AI Insights" button click
   const handleGetAIInsights = async () => {
     if (!video) return;
 
     setShowAIContent(true);
 
-    // If video is already processed, fetch from DB
     if (video.ai_process_done) {
       try {
-        setEnableAIQuery(true); // ✅ Enable the query
+        setEnableAIQuery(true);
         const result = await refetchAI();
 
-        console.log("Fetched AI content from DB:", result);
         if (result.data) {
           const hydrated = {
             overview: result.data.overview?.data ?? null,
@@ -112,7 +103,6 @@ export default function VideoDetailPage() {
         console.error("Failed to fetch AI content:", e);
       }
     } else {
-      // If not processed, trigger AI processing
       processVideo.mutate(
         {
           id: video.id,
@@ -122,10 +112,6 @@ export default function VideoDetailPage() {
         },
         {
           onSuccess: (data) => {
-            console.log("Raw process response:", data);
-
-            // ✅ FIX: The response from processVideo already returns the correct structure
-            // data = { overview: {...}, segments: [...], flashcards: [...], tips: [...] }
             setAiData(data);
             setShowAIContent(true);
           },
@@ -134,7 +120,6 @@ export default function VideoDetailPage() {
     }
   };
 
-  // ✅ UPDATED: Handle "Regenerate" button click (always calls processVideo)
   const handleRegenerate = () => {
     if (!video) return;
 
@@ -147,9 +132,6 @@ export default function VideoDetailPage() {
       },
       {
         onSuccess: (data) => {
-          console.log("Regenerate response:", data);
-
-          // ✅ FIX: The response from processVideo already returns the correct structure
           setAiData(data);
           setShowAIContent(true);
         },
@@ -179,7 +161,7 @@ export default function VideoDetailPage() {
         <AlertCircle className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
         <h2 className="text-2xl font-bold mb-2">Video not found</h2>
         <p className="text-muted-foreground mb-4">
-          The video youre looking for doesnt exist or has been removed.
+          The video you're looking for doesn't exist or has been removed.
         </p>
         <Button onClick={() => router.push("/interview-experiences/youtube")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -321,29 +303,14 @@ export default function VideoDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content - Video Player */}
         <div className="lg:col-span-2 space-y-6">
-          {/* YouTube Player */}
-          <Card>
-            <CardContent className="p-0">
-              <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
-                {videoId ? (
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    src={`https://www.youtube.com/embed/${video.video_id}?rel=0`}
-                    title={video.title}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    className="w-full h-full"
-                  ></iframe>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white">
-                    <p>Invalid YouTube URL</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          {/* ✅ NEW: YouTube Player with Segment Controls */}
+          <YouTubePlayerController
+            videoId={video.video_id}
+            title={video.title}
+            segments={aiData?.segments || []}
+            currentTime={currentVideoTime}
+            onTimeUpdate={setCurrentVideoTime}
+          />
 
           {/* Description */}
           {video.description && (
@@ -399,7 +366,7 @@ export default function VideoDetailPage() {
                   <TabsContent value="segments" className="mt-4">
                     <AISegmentsPanel
                       data={aiData?.segments}
-                      onJumpTo={jumpToTimestamp}
+                      onJumpTo={handleJumpTo}
                     />
                   </TabsContent>
 
@@ -413,7 +380,7 @@ export default function VideoDetailPage() {
                             }))
                           : undefined
                       }
-                      onJumpTo={jumpToTimestamp}
+                      onJumpTo={handleJumpTo}
                     />
                   </TabsContent>
 
@@ -430,7 +397,7 @@ export default function VideoDetailPage() {
                             })) as any)
                           : undefined
                       }
-                      onJumpTo={jumpToTimestamp}
+                      onJumpTo={handleJumpTo}
                     />
                   </TabsContent>
                 </Tabs>
@@ -439,9 +406,9 @@ export default function VideoDetailPage() {
           )}
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar - Same as before */}
         <div className="space-y-6">
-          {/* Video Info */}
+          {/* Video Info Card */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Video Information</CardTitle>

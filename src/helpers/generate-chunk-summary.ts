@@ -60,25 +60,27 @@
 
 // export default createChunkSummary;
 
-import { callGemini, callGeminiText } from "@/lib/gemini/gemini";
+import { callGeminiText } from "@/lib/gemini/gemini";
 
+/**
+ * Generate a summary for a text chunk using Gemini API
+ * Note: Retry logic is handled by the batch processing wrapper
+ *
+ * @param text - Text chunk to summarize
+ * @returns Summary string or fallback summary
+ */
 const createChunkSummary = async (text: string): Promise<string> => {
-  const maxAttempts = 3;
-  let attempt = 0;
-  let backoff = 500;
-
   const input = text.length > 8000 ? text.slice(0, 8000) : text;
 
-  while (attempt < maxAttempts) {
-    try {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_CHUNK_SUMMARY_GENERATE;
-      if (!apiKey) {
-        throw new Error(
-          "NEXT_PUBLIC_GEMINI_API_CHUNK_SUMMARY_GENERATE is not set"
-        );
-      }
+  try {
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_CHUNK_SUMMARY_GENERATE;
+    if (!apiKey) {
+      throw new Error(
+        "NEXT_PUBLIC_GEMINI_API_CHUNK_SUMMARY_GENERATE is not set"
+      );
+    }
 
-      const prompt = `You are creating a summary for a text chunk in a Retrieval-Augmented Generation (RAG) system. This summary will be used to help retrieve relevant information when users ask questions.
+    const prompt = `You are creating a summary for a text chunk in a Retrieval-Augmented Generation (RAG) system. This summary will be used to help retrieve relevant information when users ask questions.
 
 Your task:
 1. Summarize the key topics, concepts, and information in this text chunk
@@ -92,62 +94,55 @@ ${input}
 
 Summary for RAG retrieval:`;
 
-      // ✅ Use callGeminiText for plain text response (not JSON)
-      let summary = await callGeminiText(prompt, apiKey);
+    // Generate summary using Gemini
+    let summary = await callGeminiText(prompt, apiKey);
 
-      console.log("Generated summary (type):", typeof summary);
-      console.log("Generated summary (value):", summary);
-
-      // ✅ Handle if it's accidentally JSON
-      if (typeof summary === "object" && summary !== null) {
-        // If it's an object with a summary property
-        summary = (summary as any).summary || JSON.stringify(summary);
-      }
-
-      // ✅ Ensure it's a string
-      summary = String(summary);
-
-      // Clean up the response
-      summary = summary
-        .replace(/^Summary:\s*/i, "")
-        .replace(/^Summary for RAG retrieval:\s*/i, "")
-        .replace(/^["']|["']$/g, "")
-        .trim();
-
-      // Validate summary
-      if (!summary || summary.length < 50) {
-        throw new Error(`Invalid summary: too short (${summary.length} chars)`);
-      }
-
-      console.log("✅ Final cleaned summary:", summary);
-      return summary;
-    } catch (err: any) {
-      attempt += 1;
-
-      if (attempt >= maxAttempts) {
-        console.error(
-          "❌ Gemini summarization failed after max attempts:",
-          err
-        );
-        break;
-      }
-
-      console.warn(
-        `⚠️ Retry ${attempt}/${maxAttempts} in ${backoff}ms: ${err?.message}`
-      );
-      await new Promise((r) => setTimeout(r, backoff));
-      backoff *= 2;
+    // Handle if it's accidentally JSON
+    if (typeof summary === "object" && summary !== null) {
+      summary = (summary as any).summary || JSON.stringify(summary);
     }
-  }
 
-  // Fallback: Extract first few sentences as summary
-  console.warn("⚠️ Gemini summarization failed, using fallback summary.");
+    // Ensure it's a string
+    summary = String(summary);
+
+    // Clean up the response
+    summary = summary
+      .replace(/^Summary:\s*/i, "")
+      .replace(/^Summary for RAG retrieval:\s*/i, "")
+      .replace(/^["']|["']$/g, "")
+      .trim();
+
+    // Validate summary
+    if (!summary || summary.length < 50) {
+      throw new Error(`Invalid summary: too short (${summary.length} chars)`);
+    }
+
+    return summary;
+  } catch (err: any) {
+    // Log error and throw to let batch processor handle retry
+    console.error("❌ Error generating summary:", err.message);
+    throw err; // ✅ Throw to let batch processor retry
+  }
+};
+
+/**
+ * Generate a fallback summary by extracting first sentences
+ * Used when Gemini API fails after all retries
+ *
+ * @param text - Text to summarize
+ * @returns Fallback summary
+ */
+export function createFallbackSummary(text: string): string {
+  const input = text.length > 8000 ? text.slice(0, 8000) : text;
+
+  // Extract first few sentences
   const sentences = input.match(/[^.!?]+[.!?]+/g) || [];
   const fallbackSummary = sentences.slice(0, 2).join(" ").trim();
+
   return (
     fallbackSummary ||
     input.trim().slice(0, 300) + (input.length > 300 ? "…" : "")
   );
-};
+}
 
 export default createChunkSummary;
