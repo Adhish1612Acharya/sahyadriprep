@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { deleteFromCloudinary } from "@/lib/cloudinary/delete";
 import { createClient as v_createClient } from "@/lib/vector_supabase/server";
+import { isUserSuperAdmin, requireAdmin } from "@/helpers/auth.helpers";
 
 /**
  * GET /api/interview-experiences/[id]
@@ -74,27 +75,38 @@ export async function GET(
 /**
  * DELETE /api/interview-experiences/[id]
  * Delete an interview experience and its associated media
+ * Requires: Owner (created_by) or super_admin
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     console.log(`🗑️ Deleting interview experience: ${id}`);
+
+    // ✅ Step 1: Check authentication and admin role
+    const authResult = await requireAdmin();
+
+    if (authResult.error) {
+      return authResult.error;
+    }
+
+    const { user, role } = authResult;
+    console.log(`✅ Authenticated as ${role}: ${user.email}`);
 
     const supabase = await createClient();
     const v_supabase = await v_createClient();
 
-    // Step 1: Fetch the interview experience to get media IDs
+    // ✅ Step 2: Fetch the interview experience to check ownership
     const { data: experience, error: fetchError } = await supabase
       .from("interview_experiences")
       .select(
         `
         *,
-        document_media:document_media_id(id, url),
-        video_media:video_media_id(id, url)
+        document_media:document_media_id(id, url, public_id),
+        video_media:video_media_id(id, url, public_id)
       `
       )
       .eq("id", id)
@@ -116,12 +128,34 @@ export async function DELETE(
       );
     }
 
-    // Step 2: Delete vector embeddings from vector database
+    // ✅ Step 3: Check ownership (only owner or super admin can delete)
+    const isOwner = experience.created_by === user.id;
+    const isSuperAdminUser = await isUserSuperAdmin(user.id);
+
+    if (!isOwner && !isSuperAdminUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Forbidden",
+          message:
+            "You can only delete interview experiences that you created. Super admins can delete any experience.",
+        },
+        { status: 403 }
+      );
+    }
+
+    console.log(
+      `🗑️ User ${user.email} (${role}) is deleting experience: ${
+        experience.student_name || "Unknown"
+      }`
+    );
+
+    // ✅ Step 4: Delete vector embeddings from vector database
     console.log("🗑️ Deleting vector embeddings...");
     const { error: vectorDeleteError } = await v_supabase
-      .from("interview_experience_embeddings")
+      .from("content_chunks")
       .delete()
-      .eq("interview_experience_id", id);
+      .eq("metadata->>interview_experience_id", id);
 
     if (vectorDeleteError) {
       console.error("❌ Error deleting vector embeddings:", vectorDeleteError);
@@ -130,29 +164,50 @@ export async function DELETE(
       console.log("✅ Vector embeddings deleted");
     }
 
-    // Step 3: Delete from Cloudinary
-    const filesToDelete: string[] = [];
+    // ✅ Step 5: Delete from Cloudinary
+    const cloudinaryDeletions: Array<{
+      publicId: string;
+      resourceType: "image" | "video" | "raw";
+    }> = [];
 
-    if (experience.document_media?.url) {
-      filesToDelete.push(experience.document_media.url);
+    if (experience.document_media?.public_id) {
+      cloudinaryDeletions.push({
+        publicId: experience.document_media.public_id,
+        resourceType: "raw",
+      });
     }
 
-    if (experience.video_media?.url) {
-      filesToDelete.push(experience.video_media.url);
+    if (experience.video_media?.public_id) {
+      cloudinaryDeletions.push({
+        publicId: experience.video_media.public_id,
+        resourceType: "video",
+      });
     }
 
-    if (filesToDelete.length > 0) {
+    if (cloudinaryDeletions.length > 0) {
       console.log(
-        `🗑️ Deleting ${filesToDelete.length} files from Cloudinary...`
+        `🗑️ Deleting ${cloudinaryDeletions.length} files from Cloudinary...`
       );
 
-      for (const url of filesToDelete) {
+      for (const asset of cloudinaryDeletions) {
         try {
-          await deleteFromCloudinary(url);
-          console.log(`✅ Deleted from Cloudinary: ${url}`);
+          const deleteResult = await deleteFromCloudinary(
+            asset.publicId,
+            asset.resourceType
+          );
+
+          if (deleteResult.success) {
+            console.log(
+              `✅ Deleted from Cloudinary: ${asset.resourceType} - ${asset.publicId}`
+            );
+          } else {
+            console.warn(
+              `⚠️ Failed to delete from Cloudinary: ${asset.publicId} - ${deleteResult.error}`
+            );
+          }
         } catch (cloudinaryError) {
           console.error(
-            `❌ Failed to delete from Cloudinary: ${url}`,
+            `❌ Error deleting from Cloudinary: ${asset.publicId}`,
             cloudinaryError
           );
           // Continue with deletion even if Cloudinary deletion fails
@@ -160,7 +215,7 @@ export async function DELETE(
       }
     }
 
-    // Step 4: Delete media records from database
+    // ✅ Step 6: Delete media records from database
     if (experience.document_media_id) {
       const { error: docMediaError } = await supabase
         .from("media")
@@ -187,7 +242,7 @@ export async function DELETE(
       }
     }
 
-    // Step 5: Delete the interview experience record
+    // ✅ Step 7: Delete the interview experience record
     const { error: deleteError } = await supabase
       .from("interview_experiences")
       .delete()
@@ -207,6 +262,9 @@ export async function DELETE(
       data: {
         id,
         deleted_at: new Date().toISOString(),
+        deleted_by: user.email,
+        deleted_by_role: role,
+        was_owner: isOwner,
       },
     });
   } catch (error: unknown) {
@@ -230,20 +288,77 @@ export async function DELETE(
 /**
  * PATCH /api/interview-experiences/[id]
  * Update an interview experience (metadata only, not files)
+ * Requires: Owner (created_by) or super_admin
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
-    const body = await request.json();
+    const { id } = await params;
 
     console.log(`📝 Updating interview experience: ${id}`);
 
+    // ✅ Step 1: Check authentication and admin role
+    const authResult = await requireAdmin();
+
+    if (authResult.error) {
+      return authResult.error;
+    }
+
+    const { user, role } = authResult;
+    console.log(`✅ Authenticated as ${role}: ${user.email}`);
+
     const supabase = await createClient();
 
-    // Validate and prepare update data
+    // ✅ Step 2: Fetch the interview experience to check ownership
+    const { data: existingExperience, error: fetchError } = await supabase
+      .from("interview_experiences")
+      .select("id, created_by, student_name")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      if (fetchError.code === "PGRST116") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Interview experience not found",
+          },
+          { status: 404 }
+        );
+      }
+
+      throw new Error(
+        `Failed to fetch interview experience: ${fetchError.message}`
+      );
+    }
+
+    // ✅ Step 3: Check ownership (only owner or super admin can update)
+    const isOwner = existingExperience.created_by === user.id;
+    const isSuperAdminUser = await isUserSuperAdmin(user.id);
+
+    if (!isOwner && !isSuperAdminUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Forbidden",
+          message:
+            "You can only update interview experiences that you created. Super admins can update any experience.",
+        },
+        { status: 403 }
+      );
+    }
+
+    console.log(
+      `📝 User ${user.email} (${role}) is updating experience: ${
+        existingExperience.student_name || "Unknown"
+      }`
+    );
+
+    // ✅ Step 4: Parse and validate update data
+    const body = await request.json();
+
     const updateData: any = {};
 
     if (body.student_name !== undefined) {
@@ -270,7 +385,7 @@ export async function PATCH(
 
     updateData.updated_at = new Date().toISOString();
 
-    // Update the interview experience
+    // ✅ Step 5: Update the interview experience
     const { data, error } = await supabase
       .from("interview_experiences")
       .update(updateData)
@@ -287,16 +402,6 @@ export async function PATCH(
       .single();
 
     if (error) {
-      if (error.code === "PGRST116") {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Interview experience not found",
-          },
-          { status: 404 }
-        );
-      }
-
       throw new Error(
         `Failed to update interview experience: ${error.message}`
       );
@@ -308,6 +413,9 @@ export async function PATCH(
       success: true,
       message: "Interview experience updated successfully",
       data,
+      updated_by: user.email,
+      updated_by_role: role,
+      was_owner: isOwner,
     });
   } catch (error: unknown) {
     console.error("❌ Error updating interview experience:", error);

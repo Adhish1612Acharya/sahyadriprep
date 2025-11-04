@@ -69,23 +69,37 @@ export const vectorStoreServerOperations = {
     return data as VectorChunk[];
   },
 
+  /**
+   * ✅ Updated search method - accepts optional pre-generated summary
+   */
   search: async (
     query: string,
     options?: {
       contentType?: ContentType;
       threshold?: number;
       limit?: number;
+      querySummary?: string; // ✅ NEW: Accept pre-generated summary
     }
   ) => {
     const supabase = await createClient();
-    console.log("query : ", query);
+    console.log("🔍 Search query:", query);
 
-    const query_summary = await createChunkSummary(query);
+    // ✅ Use provided summary or generate new one
+    let query_summary: string;
 
-    console.log("📝 Generated query summary for embedding:", query_summary);
+    if (options?.querySummary) {
+      console.log("📝 Using pre-generated query summary");
+      query_summary = options.querySummary;
+    } else {
+      console.log("🧠 Generating new query summary...");
+      query_summary = await createChunkSummary(query);
+      console.log(
+        "✅ Generated query summary:",
+        query_summary.substring(0, 100) + "..."
+      );
+    }
+
     const queryEmbedding = await embeddings.embedQuery(query_summary);
-
-    console.log("Query embedding : ", queryEmbedding);
 
     const { data, error } = await supabase.rpc("match_content", {
       query_embedding: queryEmbedding,
@@ -99,39 +113,66 @@ export const vectorStoreServerOperations = {
   },
 
   /**
-   * Search interview experiences only
+   * ✅ Updated: Search interview experiences with optional summary
    */
-  searchInterviewExperiences: async (query: string, limit = 10) => {
+  searchInterviewExperiences: async (
+    query: string,
+    limit = 10,
+    querySummary?: string // ✅ NEW parameter
+  ) => {
     return vectorStoreServerOperations.search(query, {
       contentType: CHUNKS_CONTENT_TYPES.INTERVIEW_EXPERIENCE,
       threshold: 0.75,
       limit,
+      querySummary, // ✅ Pass through
     });
   },
 
   /**
-   * Search YouTube videos only
+   * ✅ Updated: Search YouTube transcript with optional summary
    */
-  searchYouTubeVideosTranscript: async (query: string, limit = 10) => {
+  searchYouTubeVideosTranscript: async (
+    query: string,
+    limit = 10,
+    querySummary?: string // ✅ NEW parameter
+  ) => {
     return vectorStoreServerOperations.search(query, {
       contentType: CHUNKS_CONTENT_TYPES.YOUTUBE_VIDEO_TRANSCRIPT,
       threshold: 0.7,
       limit,
+      querySummary, // ✅ Pass through
     });
   },
 
-  searchYouTubeVideosTitle: async (query: string, limit = 10) => {
+  /**
+   * ✅ Updated: Search YouTube title with optional summary
+   */
+  searchYouTubeVideosTitle: async (
+    query: string,
+    limit = 10,
+    querySummary?: string // ✅ NEW parameter
+  ) => {
     return vectorStoreServerOperations.search(query, {
       contentType: CHUNKS_CONTENT_TYPES.YOUTUBE_VIDEO_TITLE,
       threshold: 0.7,
       limit,
+      querySummary, // ✅ Pass through
     });
   },
-  searchYouTubeVideosDescription: async (query: string, limit = 10) => {
+
+  /**
+   * ✅ Updated: Search YouTube description with optional summary
+   */
+  searchYouTubeVideosDescription: async (
+    query: string,
+    limit = 10,
+    querySummary?: string // ✅ NEW parameter
+  ) => {
     return vectorStoreServerOperations.search(query, {
       contentType: CHUNKS_CONTENT_TYPES.YOUTUBE_VIDEO_DESCRIPTION,
       threshold: 0.7,
       limit,
+      querySummary, // ✅ Pass through
     });
   },
 

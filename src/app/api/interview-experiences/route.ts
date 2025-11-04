@@ -7,7 +7,7 @@ import {
   uploadInterviewExperiencePDF,
   uploadInterviewExperienceVideo,
 } from "@/lib/cloudinary/upload";
-import { deleteFromCloudinary } from "@/lib/cloudinary/delete"; // ✅ NEW
+import { deleteFromCloudinary } from "@/lib/cloudinary/delete";
 import { UPLOAD_DIRECTORIES } from "@/constants/upload-directories.constants";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as v_createClient } from "@/lib/vector_supabase/server";
@@ -16,6 +16,7 @@ import create_doc_chunk from "@/lib/rag-chatbot/create-doc-chunk";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import createChunkSummary from "@/helpers/generate-chunk-summary";
 import { generateSummariesInBatches } from "@/helpers/batch-summary.helpers";
+import { requireAdmin, hasCollegeAccess } from "@/helpers/auth.helpers";
 
 /**
  * GET /api/interview-experiences
@@ -103,29 +104,43 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/interview-experiences
  * Create a new interview experience (Admin upload)
+ * Requires: college_admin or super_admin role
  */
 export async function POST(request: NextRequest) {
   const tempFiles: string[] = [];
   const uploadedCloudinaryAssets: Array<{
     publicId: string;
     resourceType: "image" | "video" | "raw";
-  }> = []; // ✅ Track uploaded Cloudinary assets
+  }> = [];
 
   try {
     console.log("🚀 Starting interview experience upload...");
 
+    // ✅ Step 1: Check authentication and admin role
+    const authResult = await requireAdmin();
+
+    if (authResult.error) {
+      return authResult.error;
+    }
+
+    const { user, role } = authResult;
+    console.log(`✅ Authenticated as ${role}: ${user!.email}`);
+
     const supabase = await createClient();
     const vector_supabase = await v_createClient();
 
-    // ✅ Step 1: Parse FormData
+    // ✅ Step 2: Parse FormData
     const formData = await request.formData();
     const file = formData.get("document") as File | null;
     const videoFile = formData.get("video_preview") as File | null;
 
-    // ✅ Step 2: Validate file exists and is PDF
+    // ✅ Step 3: Validate file exists and is PDF
     if (!file) {
       return NextResponse.json(
-        { error: "Document file is required" },
+        {
+          success: false,
+          error: "Document file is required",
+        },
         { status: 400 }
       );
     }
@@ -133,7 +148,10 @@ export async function POST(request: NextRequest) {
     const fileValidation = validate_pdf(file);
     if (!fileValidation.valid) {
       return NextResponse.json(
-        { error: fileValidation.error },
+        {
+          success: false,
+          error: fileValidation.error,
+        },
         { status: 400 }
       );
     }
@@ -142,12 +160,15 @@ export async function POST(request: NextRequest) {
       `📄 Received PDF: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`
     );
 
-    // ✅ Step 2.5: Validate video if provided
+    // ✅ Step 4: Validate video if provided
     if (videoFile) {
       const videoValidation = validate_video(videoFile);
       if (!videoValidation.valid) {
         return NextResponse.json(
-          { error: videoValidation.error },
+          {
+            success: false,
+            error: videoValidation.error,
+          },
           { status: 400 }
         );
       }
@@ -160,7 +181,59 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ✅ Step 3: Save files temporarily
+    // ✅ Step 5: Validate form data with Zod
+    const rawData = {
+      student_name: formData.get("studentName") as string | null,
+      college_id: formData.get("college_id") as string,
+      batch: formData.get("batch") as string,
+      placed_year: formData.get("placedYear")
+        ? parseInt(formData.get("placedYear") as string)
+        : undefined,
+      company_id: formData.get("company_id") as string,
+      source: "admin_upload",
+    };
+
+    const validationResult = createInterviewExperienceSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Validation failed",
+          details: validationResult.error.format(),
+        },
+        { status: 400 }
+      );
+    }
+
+    const validatedData = validationResult.data;
+    console.log("✅ Validation passed");
+
+    // ✅ Step 6: Check if college admin has access to this college
+    if (role === "college_admin") {
+      const hasAccess = await hasCollegeAccess(
+        user!.id,
+        validatedData.college_id
+      );
+
+      if (!hasAccess) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Unauthorized",
+            message:
+              "You do not have permission to upload interview experiences for this college",
+          },
+          { status: 403 }
+        );
+      }
+
+      console.log(
+        `✅ College admin has access to college: ${validatedData.college_id}`
+      );
+    }
+
+    // ✅ Step 7: Save files temporarily
     const tempFilePath = await save_uploaded_file(file, {
       subdirectory: UPLOAD_DIRECTORIES.INTERVIEW_EXPERIENCES,
     });
@@ -180,35 +253,7 @@ export async function POST(request: NextRequest) {
       console.log(`💾 Saved Video to temp: ${tempVideoPath}`);
     }
 
-    // ✅ Step 4: Validate form data with Zod
-    const rawData = {
-      student_name: formData.get("studentName") as string | null,
-      college_id: formData.get("college_id") as string,
-      batch: formData.get("batch") as string,
-      placed_year: formData.get("placedYear")
-        ? parseInt(formData.get("placedYear") as string)
-        : undefined,
-      company_id: formData.get("company_id") as string,
-      source: "admin_upload",
-    };
-
-    const validationResult = createInterviewExperienceSchema.safeParse(rawData);
-
-    if (!validationResult.success) {
-      await cleanup_temp_files(tempFiles);
-      return NextResponse.json(
-        {
-          error: "Validation failed",
-          details: validationResult.error.format(),
-        },
-        { status: 400 }
-      );
-    }
-
-    const validatedData = validationResult.data;
-    console.log("✅ Validation passed");
-
-    // ✅ Step 5: Process PDF (Load, Chunk, Embed)
+    // ✅ Step 8: Process PDF (Load, Chunk, Embed)
     console.log("📖 Loading PDF content...");
     const documentContent = await doc_loader(tempFilePath);
 
@@ -216,33 +261,30 @@ export async function POST(request: NextRequest) {
     const chunks = await create_doc_chunk(documentContent);
     console.log(`   Created ${chunks.length} chunks`);
 
-    //Batch processing with intelligent rate limiting
+    // Batch processing with intelligent rate limiting
+    console.log("🧠 Generating summaries for chunks...");
     const summaries = await generateSummariesInBatches(chunks, {
-      batchSize: 5, // Process 5 at a time
-      delayBetweenBatches: 7000, // 7 seconds between batches (safe for 10/min limit)
-      delayBetweenRequests: 500, // 0.5 seconds within batch
-      maxRetries: 2, // Retry each chunk up to 2 times
+      batchSize: 5,
+      delayBetweenBatches: 7000,
+      delayBetweenRequests: 500,
+      maxRetries: 2,
     });
 
     console.log(`✅ Generated ${summaries.length} summaries`);
 
-    // ✅ UPDATED: Generate embeddings for summaries instead of chunks
+    // Generate embeddings for summaries
     console.log("🧠 Generating embeddings for summaries...");
     const summaryEmbeddings = await embeddings.embedDocuments(summaries);
     console.log(`   Generated ${summaryEmbeddings.length} summary embeddings`);
 
+    // Get company name
     const { data: company_data } = await supabase
       .from("companies")
       .select("name")
       .eq("id", validatedData.company_id)
       .single();
 
-    // ✅ Step 6: Get current user (for created_by)
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    // ✅ Step 7: Upload PDF to Cloudinary
+    // ✅ Step 9: Upload PDF to Cloudinary
     console.log("☁️ Uploading PDF to Cloudinary...");
     const cloudinaryResult = await uploadInterviewExperiencePDF(tempFilePath, {
       student_name: validatedData.student_name,
@@ -256,7 +298,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ✅ Track uploaded PDF for cleanup on error
     uploadedCloudinaryAssets.push({
       publicId: cloudinaryResult.publicId!,
       resourceType: "raw",
@@ -264,7 +305,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`   ✅ PDF Uploaded: ${cloudinaryResult.secureUrl}`);
 
-    // ✅ Step 7.5: Upload Video to Cloudinary (if provided)
+    // ✅ Step 10: Upload Video to Cloudinary (if provided)
     let videoCloudinaryResult = null;
     let video_media_id = null;
 
@@ -281,9 +322,7 @@ export async function POST(request: NextRequest) {
 
       if (!videoCloudinaryResult.success) {
         console.warn(`⚠️ Video upload failed: ${videoCloudinaryResult.error}`);
-        // Continue anyway - video is optional
       } else {
-        // ✅ Track uploaded video for cleanup on error
         uploadedCloudinaryAssets.push({
           publicId: videoCloudinaryResult.publicId!,
           resourceType: "video",
@@ -301,7 +340,7 @@ export async function POST(request: NextRequest) {
               file_name: videoFile.name,
               file_type: videoCloudinaryResult.format,
               file_size: videoCloudinaryResult.bytes,
-              uploaded_by: user?.id,
+              uploaded_by: user!.id,
             })
             .select("id")
             .single();
@@ -317,7 +356,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ✅ Step 8: Create PDF media record
+    // ✅ Step 11: Create PDF media record
     console.log("💿 Creating PDF media record...");
     const { data: media_data, error: media_error } = await supabase
       .from("media")
@@ -327,7 +366,7 @@ export async function POST(request: NextRequest) {
         file_name: file.name,
         file_type: cloudinaryResult.format,
         file_size: cloudinaryResult.bytes,
-        uploaded_by: user?.id,
+        uploaded_by: user!.id,
       })
       .select("id")
       .single();
@@ -341,7 +380,7 @@ export async function POST(request: NextRequest) {
     const media_id = media_data.id;
     console.log(`   PDF Media created: ${media_id}`);
 
-    // ✅ Step 9: Create interview experience record
+    // ✅ Step 12: Create interview experience record
     console.log("📝 Creating interview experience...");
     const { data: experienceData, error: experienceError } = await supabase
       .from("interview_experiences")
@@ -352,10 +391,10 @@ export async function POST(request: NextRequest) {
         company_id: validatedData.company_id,
         batch: validatedData.batch,
         placed_year: validatedData.placed_year,
-        document_media_id: media_id, // ✅ Fixed column name
+        document_media_id: media_id,
         video_media_id: video_media_id,
         source: "admin_upload",
-        created_by: user?.id,
+        created_by: user!.id,
       })
       .select("id")
       .single();
@@ -369,7 +408,7 @@ export async function POST(request: NextRequest) {
     const experience_id = experienceData.id;
     console.log(`   Experience created: ${experience_id}`);
 
-    // ✅ Step 10: Store embeddings in vector DB
+    // ✅ Step 13: Store embeddings in vector DB
     console.log("🗄️ Storing embeddings in vector DB...");
     const chunksToInsert = chunks.map((chunk, index) => ({
       content: chunk,
@@ -403,7 +442,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`   ✅ Stored ${chunksToInsert.length} chunks`);
 
-    // ✅ Step 11: Cleanup temp files
+    // ✅ Step 14: Cleanup temp files
     await cleanup_temp_files(tempFiles);
     console.log("🗑️ Cleaned up temp files");
 
@@ -421,6 +460,8 @@ export async function POST(request: NextRequest) {
           chunks_stored: chunks.length,
           cloudinary_url: cloudinaryResult.secureUrl,
           video_url: videoCloudinaryResult?.secureUrl || null,
+          created_by: user!.email,
+          role: role,
         },
       },
       { status: 201 }

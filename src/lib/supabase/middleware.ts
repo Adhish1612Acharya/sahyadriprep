@@ -110,9 +110,10 @@ export async function updateSession(request: NextRequest) {
   const publicPaths = [
     "/", // Home page
     "/auth/login", // Login page
-    "/auth/signup", // Signup page
+    "/auth/sign-up", // Signup page
     "/auth/callback", // OAuth callback
     "/error", // Error page
+    "/api/auth/sign-up"
   ];
 
   // ✅ Check if current path is public

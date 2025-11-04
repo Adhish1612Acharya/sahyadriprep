@@ -30,30 +30,47 @@ export function useRagChatbot() {
       const userMessage: ChatMessage = {
         role: "user",
         content: variables.message,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, userMessage]);
       setIsTyping(true);
     },
     onSuccess: (data, variables) => {
-      // Add assistant response
+      // ✅ Add assistant response with sources
       const assistantMessage: ChatMessage = {
         role: "assistant",
         content: data.message,
-        timestamp: new Date().toISOString(),
+        sources: data.sources, // ✅ Include sources from response
+        timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
       setIsTyping(false);
 
       // Log performance
-      console.log("📊 Chat Performance:", data.metadata.performance);
+      console.log("📊 Chat Performance:", data.metadata?.performance);
+      console.log("📚 Sources:", {
+        interview_documents: data.sources?.interview_documents.length || 0,
+        youtube_videos: data.sources?.youtube_videos.length || 0,
+        youtube_timestamps: data.sources?.youtube_timestamps.length || 0,
+      });
     },
     onError: (error: Error) => {
       // Remove optimistic user message on error
       setMessages((prev) => prev.slice(0, -1));
       setIsTyping(false);
+
+      // Add error message
+      const errorMessage: ChatMessage = {
+        role: "assistant",
+        content: `Sorry, I encountered an error: ${
+          error.message || "Failed to send message"
+        }`,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
 
       // toast({
       //   title: "Error",
@@ -82,7 +99,10 @@ export function useRagChatbot() {
 
       sendMessageMutation.mutate({
         message: message.trim(),
-        conversation_history: messages,
+        conversation_history: messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
         search_limit: options?.search_limit,
         similarity_threshold: options?.similarity_threshold,
       });

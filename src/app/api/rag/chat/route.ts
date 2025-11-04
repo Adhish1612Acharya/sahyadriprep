@@ -8,6 +8,7 @@ import {
   groupAndDeduplicateSources,
   type RAGSource,
 } from "@/helpers/format-rag-sources.helper";
+import createChunkSummary from "@/helpers/generate-chunk-summary"; // ✅ Import
 
 /**
  * POST /api/chat
@@ -18,11 +19,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       message,
-      // session_id,
-      // user_id,
       conversation_history = [],
       search_limit = 5,
-      similarity_threshold = 0.75,
+      similarity_threshold = 0.5,
     } = body;
 
     // ✅ Validation
@@ -55,27 +54,51 @@ export async function POST(request: NextRequest) {
 
     const startTime = Date.now();
 
-    // ✅ Step 1: Search all content types in parallel
+    // ✅ Step 1: Generate query summary ONCE
+    console.log("🧠 Generating query summary...");
+    let querySummary: string;
+
+    try {
+      querySummary = await createChunkSummary(message);
+      console.log(
+        "✅ Query summary generated:",
+        querySummary.substring(0, 100) + "..."
+      );
+    } catch (summaryError: any) {
+      console.warn(
+        "⚠️ Failed to generate query summary, using original query:",
+        summaryError.message
+      );
+      // Fallback to original message if summary generation fails
+      querySummary = message;
+    }
+
+    // ✅ Step 2: Search all content types in parallel with the SAME summary
     console.log("🔍 Searching across all content types...");
     const searchStartTime = Date.now();
 
     const [interviewChunks, transcriptChunks, titleChunks, descriptionChunks] =
       await Promise.all([
+        // ✅ CORRECT: Pass message as query, querySummary as third parameter
         vectorStoreServerOperations.searchInterviewExperiences(
-          message,
-          search_limit
+          message, // ✅ Original query for logging/context
+          search_limit, // ✅ Limit
+          querySummary // ✅ Pre-generated summary
         ),
         vectorStoreServerOperations.searchYouTubeVideosTranscript(
-          message,
-          search_limit
+          message, // ✅ Original query
+          search_limit, // ✅ Limit
+          querySummary // ✅ Pre-generated summary
         ),
         vectorStoreServerOperations.searchYouTubeVideosTitle(
-          message,
-          search_limit
+          message, // ✅ Original query
+          search_limit, // ✅ Limit
+          querySummary // ✅ Pre-generated summary
         ),
         vectorStoreServerOperations.searchYouTubeVideosDescription(
-          message,
-          search_limit
+          message, // ✅ Original query
+          search_limit, // ✅ Limit
+          querySummary // ✅ Pre-generated summary
         ),
       ]);
 
@@ -86,6 +109,8 @@ export async function POST(request: NextRequest) {
       ...titleChunks,
       ...descriptionChunks,
     ].sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+
+    console.log("All chunks : ", allChunks);
 
     // Filter by similarity threshold and limit
     const relevantChunks = allChunks
@@ -117,16 +142,22 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // ✅ Step 2: Build context for LLM
+    // ✅ Step 3: Build context for LLM
     const context = buildContextFromChunks(relevantChunks);
     console.log("📝 Context built:", {
       length: context.length,
       chunks: relevantChunks.length,
     });
 
-    // ✅ Step 3: Format sources for response
+    // ✅ Step 4: Format sources for response
     const sources: RAGSource[] = relevantChunks.map(formatChunkAsSource);
+
+    console.log("🔖 Sources formatted:", sources.length);
+    console.log("Sources : ", sources);
+
     const groupedSources = groupAndDeduplicateSources(sources);
+
+    console.log("Deduplicated sources:", groupedSources);
 
     console.log("📚 Sources grouped:", {
       interview_documents: groupedSources.interview_documents.length,
@@ -134,7 +165,7 @@ export async function POST(request: NextRequest) {
       youtube_timestamps: groupedSources.youtube_timestamps.length,
     });
 
-    // ✅ Step 4: Generate AI response
+    // ✅ Step 5: Generate AI response
     const responseStartTime = Date.now();
     const response = await generateRAGResponse(
       message,
@@ -148,7 +179,7 @@ export async function POST(request: NextRequest) {
 
     const totalTime = Date.now() - startTime;
 
-    // ✅ Step 5: Return structured response
+    // ✅ Step 6: Return structured response
     return NextResponse.json({
       success: true,
       message: response.content,

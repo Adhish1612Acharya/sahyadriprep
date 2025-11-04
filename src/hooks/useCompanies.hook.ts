@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { companyService } from "@/services/company.service";
 import { CompanyInput, CompanyUpdate } from "@/lib/validations/company.schema";
-import { CompanyFilters } from "@/types/services/company.service";
+import { CompanyFilters } from "@/types/services/company.types";
 // import { useToast } from "@/hooks/use-toast";
 
 export const useCompanies = (filters?: CompanyFilters) => {

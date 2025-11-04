@@ -257,7 +257,7 @@ export function Navbar() {
                 >
                   Sign in
                 </Button>
-                <Button onClick={() => router.push("/auth/signup")}>
+                <Button onClick={() => router.push("/auth/sign-up")}>
                   Sign up
                 </Button>
               </div>
@@ -320,7 +320,7 @@ export function Navbar() {
                       </Button>
                       <Button
                         onClick={() => {
-                          router.push("/auth/signup");
+                          router.push("/auth/sign-up");
                           setIsOpen(false);
                         }}
                         className="w-full"

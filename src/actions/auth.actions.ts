@@ -61,13 +61,21 @@ export async function signInWithEmail(formData: {
   return { success: true, data };
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(options?: {
+  role?: "student" | "college_admin";
+  college_id?: string | null;
+}) {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      // Pass role and college_id as query params (will be in user_metadata after auth)
+      queryParams: {
+        role: options?.role || "student",
+        college_id: options?.college_id || "",
+      },
     },
   });
 

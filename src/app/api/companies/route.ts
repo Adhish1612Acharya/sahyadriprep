@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { companySchema } from "@/lib/validations/company.schema";
+import { requireAdmin } from "@/helpers/auth.helpers";
 
 // GET - Fetch all companies (authenticated users only)
 export async function GET(request: NextRequest) {
@@ -109,6 +110,13 @@ export async function GET(request: NextRequest) {
 // POST - Add new company (college_admin or super_admin only)
 export async function POST(request: NextRequest) {
   try {
+    // ✅ Step 1: Check authentication and admin role
+    const authResult = await requireAdmin();
+
+    if (authResult.error) {
+      return authResult.error;
+    }
+
     const supabase = await createClient();
 
     // 1. Check authentication

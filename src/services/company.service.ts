@@ -4,7 +4,7 @@ import {
   Company,
   CompanyFilters,
   CompanyStats,
-} from "@/types/services/company.service";
+} from "@/types/services/company.types";
 import { CompanyInput, CompanyUpdate } from "@/lib/validations/company.schema";
 
 // ============================================

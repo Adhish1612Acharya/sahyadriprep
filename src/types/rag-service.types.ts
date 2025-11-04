@@ -1,10 +1,13 @@
+import { SourcesDisplay } from "./rag-source-display.types";
+
 /**
  * Chat message type
  */
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
-  timestamp?: string;
+  sources?: SourcesDisplay; // ✅ Add sources to message
+  timestamp?: Date;
 }
 
 /**
@@ -12,7 +15,10 @@ export interface ChatMessage {
  */
 export interface ChatRequest {
   message: string;
-  conversation_history?: ChatMessage[];
+  conversation_history?: Array<{
+    role: "user" | "assistant";
+    content: string;
+  }>;
   search_limit?: number;
   similarity_threshold?: number;
 }
@@ -23,21 +29,21 @@ export interface ChatRequest {
 export interface ChatResponse {
   success: boolean;
   message: string;
-  metadata: {
+  sources?: SourcesDisplay; // ✅ Add sources to response
+  metadata?: {
     context_used: boolean;
     relevant_chunks_count: number;
-    sources: Array<{
-      content_type: string;
-      similarity: number;
-      company: string;
-      student: string;
-      batch: string;
-      preview: string;
-    }>;
+    sources_breakdown: {
+      interview_documents: number;
+      youtube_videos: number;
+      youtube_timestamps: number;
+      total_unique_sources: number;
+    };
     performance: {
       search_time_ms: number;
       response_time_ms: number;
       total_time_ms: number;
     };
   };
+  error?: string;
 }

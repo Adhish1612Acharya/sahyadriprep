@@ -88,10 +88,12 @@ export const USER_ENDPOINTS = {
 export const AUTH_ENDPOINTS = {
   LOGIN: `/auth/login`,
   LOGOUT: `/auth/logout`,
+  SIGNUP: `/auth/sign-up`,
   REGISTER: `/auth/register`,
   REFRESH: `/auth/refresh`,
   FORGOT_PASSWORD: `/auth/forgot-password`,
   RESET_PASSWORD: `/auth/reset-password`,
+  VERIFY_COLLEGE: `/auth/verify-college`,
 } as const;
 
 // ============================================

@@ -37,7 +37,7 @@ export function formatChunkAsSource(chunk: any): RAGSource {
   // Common fields
   const baseSource: Partial<RAGSource> = {
     id:
-      chunk.id || metadata.youtube_video_id || metadata.interview_experience_id,
+      metadata.youtube_video_id || metadata.interview_experience_id || chunk.id,
     similarity: chunk.similarity || 0,
     excerpt:
       chunk.content?.substring(0, 200) +
@@ -51,10 +51,9 @@ export function formatChunkAsSource(chunk: any): RAGSource {
       type: "youtube_video",
       title: metadata.video_title || "YouTube Video",
       video_url: metadata.video_url,
-      thumbnail_url: metadata.thumbnail_url,
       content_section: metadata.content_section,
-      company: metadata.company_name,
-      college: metadata.college_name,
+      company_id: metadata.company_id,
+      college_id: metadata.college_id,
 
       // Transcript-specific fields
       ...(contentType === "youtube_video_transcript" && {
@@ -73,9 +72,9 @@ export function formatChunkAsSource(chunk: any): RAGSource {
     title: metadata.document_title || "Interview Experience",
     student_name: metadata.student_name,
     batch: metadata.batch,
-    company: metadata.company_name,
-    college: metadata.college_name,
-    document_url: metadata.document_url,
+    company_id: metadata.company_id,
+    college_id: metadata.college_id,
+    document_url: metadata.document_media_id,
     has_video_preview: metadata.has_video_preview,
   } as RAGSource;
 }

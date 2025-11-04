@@ -1,7 +1,7 @@
 "use client";
 
 import { useInterviewYouTubeVideos } from "@/hooks/useYouTubeVideos.hook";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { formatDuration } from "@/helpers/youtube-video.helpers";
 import { formatDistanceToNow } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,11 +45,12 @@ import {
   AIFlashcardsPanel,
   AITipsPanel,
 } from "@/components/youtube/ai-panels";
-import { YouTubePlayerController } from "@/components/youtube/youtube-player-controller"; // ✅ NEW
+import { YouTubePlayerController } from "@/components/youtube/youtube-player-controller";
 import { useAuth } from "@/contexts/auth-context";
 
 export default function VideoDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const videoId = params.id as string;
 
@@ -64,7 +65,13 @@ export default function VideoDetailPage() {
   const [aiData, setAiData] = useState<ProcessVideoResponse | null>(null);
   const [showAIContent, setShowAIContent] = useState(false);
   const [enableAIQuery, setEnableAIQuery] = useState(false);
-  const [currentVideoTime, setCurrentVideoTime] = useState(0); // ✅ NEW: Track current playback time
+  const [currentVideoTime, setCurrentVideoTime] = useState(0);
+  const [jumpToTimestamp, setJumpToTimestamp] = useState<number | null>(null);
+  const [playerReady, setPlayerReady] = useState(false); // ✅ Track player readiness
+
+  // ✅ Get timestamp from URL
+  const timestampParam = searchParams.get("t");
+  const initialTimestamp = timestampParam ? parseInt(timestampParam, 10) : null;
 
   const {
     data: savedAI,
@@ -72,12 +79,36 @@ export default function VideoDetailPage() {
     refetch: refetchAI,
   } = useAIContentQuery(videoId, enableAIQuery);
 
-  // ✅ NEW: Handle jump to timestamp (now controlled by YouTubePlayerController)
-  const [jumpToTimestamp, setJumpToTimestamp] = useState<number | null>(null);
+  // ✅ Jump to timestamp when page loads AND player is ready
+  useEffect(() => {
+    if (initialTimestamp !== null && playerReady) {
+      console.log("🎯 Jumping to initial timestamp:", initialTimestamp);
+      setJumpToTimestamp(initialTimestamp);
 
+      // Reset after the jump has been processed
+      const timer = setTimeout(() => {
+        setJumpToTimestamp(null);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [initialTimestamp, playerReady]);
+
+  // ✅ Callback when player is ready
+  const handlePlayerReady = () => {
+    console.log("✅ YouTube player is ready");
+    setPlayerReady(true);
+  };
+
+  // ✅ Update handleJumpTo to properly trigger the jump
   const handleJumpTo = (seconds: number) => {
+    console.log("🎯 Jump requested to:", seconds);
     setJumpToTimestamp(seconds);
-    // The YouTubePlayerController will handle the actual jump
+
+    // Reset after a short delay to allow multiple jumps to the same timestamp
+    setTimeout(() => {
+      setJumpToTimestamp(null);
+    }, 500);
   };
 
   const handleGetAIInsights = async () => {
@@ -161,7 +192,7 @@ export default function VideoDetailPage() {
         <AlertCircle className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
         <h2 className="text-2xl font-bold mb-2">Video not found</h2>
         <p className="text-muted-foreground mb-4">
-          The video you're looking for doesn't exist or has been removed.
+          The video youre looking for doesnt exist or has been removed.
         </p>
         <Button onClick={() => router.push("/interview-experiences/youtube")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -303,13 +334,22 @@ export default function VideoDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content - Video Player */}
         <div className="lg:col-span-2 space-y-6">
-          {/* ✅ NEW: YouTube Player with Segment Controls */}
+          {/* ✅ Pass all required props including onPlayerReady */}
           <YouTubePlayerController
             videoId={video.video_id}
             title={video.title}
-            segments={aiData?.segments || []}
+            segments={
+              aiData?.segments
+                ? aiData.segments.map((s: any) => ({
+                    ...s,
+                    summary: s.summary ?? "",
+                  }))
+                : []
+            }
             currentTime={currentVideoTime}
             onTimeUpdate={setCurrentVideoTime}
+            jumpToTimestamp={jumpToTimestamp}
+            onPlayerReady={handlePlayerReady} // ✅ Add this callback
           />
 
           {/* Description */}
@@ -406,7 +446,7 @@ export default function VideoDetailPage() {
           )}
         </div>
 
-        {/* Sidebar - Same as before */}
+        {/* Sidebar */}
         <div className="space-y-6">
           {/* Video Info Card */}
           <Card>

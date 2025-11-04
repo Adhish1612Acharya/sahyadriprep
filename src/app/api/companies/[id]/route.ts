@@ -1,14 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin, hasCollegeAccess } from "@/helpers/auth.helpers";
 
 // GET - Fetch single company by ID (public access)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { data, error } = await supabase
       .from("companies")
@@ -22,27 +23,32 @@ export async function GET(
       `
       )
       .eq("id", id)
-      //   .eq("created_by", user.id)
       .single();
 
     if (error) {
       if (error.code === "PGRST116") {
         return NextResponse.json(
-          { error: "Company not found" },
+          { success: false, error: "Company not found" },
           { status: 404 }
         );
       }
       return NextResponse.json(
-        { error: "Failed to fetch company" },
+        { success: false, error: "Failed to fetch company" },
         { status: 500 }
       );
     }
 
-    return NextResponse.json(data, { status: 200 });
-  } catch (error) {
-    console.error("Unexpected error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        success: true,
+        data,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("❌ Unexpected error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -51,78 +57,67 @@ export async function GET(
 // PATCH - Update company (college_admin or super_admin only)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const { id } = params;
+    const { id } = await params;
 
-    // 1. Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    console.log(`📝 Updating company: ${id}`);
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - Please login" },
-        { status: 401 }
-      );
+    // ✅ Step 1: Check authentication and admin role
+    const authResult = await requireAdmin();
+
+    if (authResult.error) {
+      return authResult.error;
     }
 
-    // 2. Check user role
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
+    const { user, role } = authResult;
+    console.log(`✅ Authenticated as ${role}: ${user.email}`);
+
+    const supabase = await createClient();
+
+    // ✅ Step 2: Fetch the company to check ownership
+    const { data: company, error: fetchError } = await supabase
+      .from("companies")
+      .select("id, name, college_id, created_by")
+      .eq("id", id)
       .single();
 
-    if (profileError || !profile) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
-    }
-
-    if (profile.role !== "college_admin" && profile.role !== "super_admin") {
-      return NextResponse.json(
-        { error: "Forbidden - Only college admins can update companies" },
-        { status: 403 }
-      );
-    }
-
-    // 3. For college_admin, verify they own this company
-    if (profile.role === "college_admin") {
-      const { data: company } = await supabase
-        .from("companies")
-        .select("college_id, created_by")
-        .eq("id", id)
-        .single();
-
-      if (!company) {
+    if (fetchError) {
+      if (fetchError.code === "PGRST116") {
         return NextResponse.json(
-          { error: "Company not found" },
+          { success: false, error: "Company not found" },
           { status: 404 }
         );
       }
+      throw new Error(`Failed to fetch company: ${fetchError.message}`);
+    }
 
-      // Get admin's college_id
-      const { data: adminProfile } = await supabase
-        .from("college_admin_profiles")
-        .select("college_id")
-        .eq("id", user.id)
-        .single();
+    // ✅ Step 3: Check college access for college_admin
+    if (role === "college_admin") {
+      const hasAccess = await hasCollegeAccess(user.id, company.college_id);
 
-      // Check if company belongs to admin's college
-      if (company.college_id !== adminProfile?.college_id) {
+      if (!hasAccess) {
         return NextResponse.json(
           {
-            error:
-              "Forbidden - You can only update companies from your college",
+            success: false,
+            error: "Forbidden",
+            message: "You can only update companies from your college",
           },
           { status: 403 }
         );
       }
+
+      console.log(
+        `✅ College admin has access to college: ${company.college_id}`
+      );
     }
 
-    // 4. Parse request body
+    console.log(
+      `📝 User ${user?.email} (${role}) is updating company: ${company.name}`
+    );
+
+    // ✅ Step 4: Parse and validate request body
     const body = await request.json();
     const {
       name,
@@ -137,7 +132,7 @@ export async function PATCH(
     // Validate if name is provided
     if (name !== undefined && name.trim() === "") {
       return NextResponse.json(
-        { error: "Company name cannot be empty" },
+        { success: false, error: "Company name cannot be empty" },
         { status: 400 }
       );
     }
@@ -147,7 +142,10 @@ export async function PATCH(
       const rating = parseFloat(glassdoor_rating);
       if (isNaN(rating) || rating < 0 || rating > 5) {
         return NextResponse.json(
-          { error: "Glassdoor rating must be between 0 and 5" },
+          {
+            success: false,
+            error: "Glassdoor rating must be between 0 and 5",
+          },
           { status: 400 }
         );
       }
@@ -157,12 +155,15 @@ export async function PATCH(
     const validSizes = ["startup", "small", "medium", "large", "enterprise"];
     if (company_size && !validSizes.includes(company_size)) {
       return NextResponse.json(
-        { error: `Company size must be one of: ${validSizes.join(", ")}` },
+        {
+          success: false,
+          error: `Company size must be one of: ${validSizes.join(", ")}`,
+        },
         { status: 400 }
       );
     }
 
-    // 5. Update company
+    // ✅ Step 5: Build update data
     const updateData: any = {};
     if (name !== undefined) updateData.name = name.trim();
     if (logo_url !== undefined) updateData.logo_url = logo_url?.trim() || null;
@@ -176,9 +177,15 @@ export async function PATCH(
         ? parseFloat(glassdoor_rating)
         : null;
 
-    // ✅ updated_at will be auto-updated by trigger
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { success: false, error: "No valid fields to update" },
+        { status: 400 }
+      );
+    }
 
-    const { data: company, error: updateError } = await supabase
+    // ✅ Step 6: Update company
+    const { data: updatedCompany, error: updateError } = await supabase
       .from("companies")
       .update(updateData)
       .eq("id", id)
@@ -194,32 +201,41 @@ export async function PATCH(
       .single();
 
     if (updateError) {
-      console.error("Error updating company:", updateError);
+      console.error("❌ Error updating company:", updateError);
 
       if (updateError.code === "23505") {
         return NextResponse.json(
-          { error: "A company with this name already exists" },
+          { success: false, error: "A company with this name already exists" },
           { status: 409 }
         );
       }
 
-      return NextResponse.json(
-        { error: "Failed to update company" },
-        { status: 500 }
-      );
+      throw new Error(`Failed to update company: ${updateError.message}`);
     }
+
+    console.log(`✅ Company updated: ${id}`);
 
     return NextResponse.json(
       {
+        success: true,
         message: "Company updated successfully",
-        data: company,
+        data: updatedCompany,
+        updated_by: user?.email,
+        updated_by_role: role,
       },
       { status: 200 }
     );
-  } catch (error) {
-    console.error("Unexpected error:", error);
+  } catch (error: unknown) {
+    console.error("❌ Error updating company:", error);
+
+    const message =
+      error instanceof Error ? error.message : "Failed to update company";
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        success: false,
+        error: message,
+      },
       { status: 500 }
     );
   }
@@ -228,99 +244,150 @@ export async function PATCH(
 // DELETE - Delete company (college_admin or super_admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const { id } = params;
+    const { id } = await params;
 
-    // 1. Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    console.log(`🗑️ Deleting company: ${id}`);
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - Please login" },
-        { status: 401 }
-      );
+    // ✅ Step 1: Check authentication and admin role
+    const authResult = await requireAdmin();
+
+    if (authResult.error) {
+      return authResult.error;
     }
 
-    // 2. Check user role
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
+    const { user, role } = authResult;
+    console.log(`✅ Authenticated as ${role}: ${user.email}`);
+
+    const supabase = await createClient();
+
+    // ✅ Step 2: Fetch the company to check ownership
+    const { data: company, error: fetchError } = await supabase
+      .from("companies")
+      .select("id, name, college_id, created_by")
+      .eq("id", id)
       .single();
 
-    if (profileError || !profile) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
-    }
-
-    if (profile.role !== "college_admin" && profile.role !== "super_admin") {
-      return NextResponse.json(
-        { error: "Forbidden - Only college admins can delete companies" },
-        { status: 403 }
-      );
-    }
-
-    // 3. For college_admin, verify they own this company
-    if (profile.role === "college_admin") {
-      const { data: company } = await supabase
-        .from("companies")
-        .select("college_id")
-        .eq("id", id)
-        .single();
-
-      if (!company) {
+    if (fetchError) {
+      if (fetchError.code === "PGRST116") {
         return NextResponse.json(
-          { error: "Company not found" },
+          { success: false, error: "Company not found" },
           { status: 404 }
         );
       }
+      throw new Error(`Failed to fetch company: ${fetchError.message}`);
+    }
 
-      // Get admin's college_id
-      const { data: adminProfile } = await supabase
-        .from("college_admin_profiles")
-        .select("college_id")
-        .eq("id", user.id)
-        .single();
+    // ✅ Step 3: Check college access for college_admin
+    if (role === "college_admin") {
+      const hasAccess = await hasCollegeAccess(user.id, company.college_id);
 
-      // Check if company belongs to admin's college
-      if (company.college_id !== adminProfile?.college_id) {
+      if (!hasAccess) {
         return NextResponse.json(
           {
-            error:
-              "Forbidden - You can only delete companies from your college",
+            success: false,
+            error: "Forbidden",
+            message: "You can only delete companies from your college",
           },
           { status: 403 }
         );
       }
+
+      console.log(
+        `✅ College admin has access to college: ${company.college_id}`
+      );
     }
 
-    // 4. Delete company
+    console.log(
+      `🗑️ User ${user.email} (${role}) is deleting company: ${company.name}`
+    );
+
+    // ✅ Step 4: Check for dependencies (interview experiences, YouTube videos)
+    const { data: interviewExperiences, error: experiencesError } =
+      await supabase
+        .from("interview_experiences")
+        .select("id")
+        .eq("company_id", id)
+        .limit(1);
+
+    if (experiencesError) {
+      throw new Error(
+        `Failed to check interview experiences: ${experiencesError.message}`
+      );
+    }
+
+    if (interviewExperiences && interviewExperiences.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Cannot delete company",
+          message:
+            "This company has associated interview experiences. Please delete them first.",
+        },
+        { status: 409 }
+      );
+    }
+
+    const { data: youtubeVideos, error: videosError } = await supabase
+      .from("youtube_videos")
+      .select("id")
+      .eq("company_id", id)
+      .limit(1);
+
+    if (videosError) {
+      throw new Error(`Failed to check YouTube videos: ${videosError.message}`);
+    }
+
+    if (youtubeVideos && youtubeVideos.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Cannot delete company",
+          message:
+            "This company has associated YouTube videos. Please delete them first.",
+        },
+        { status: 409 }
+      );
+    }
+
+    // ✅ Step 5: Delete company
     const { error: deleteError } = await supabase
       .from("companies")
       .delete()
       .eq("id", id);
 
     if (deleteError) {
-      console.error("Error deleting company:", deleteError);
-      return NextResponse.json(
-        { error: "Failed to delete company" },
-        { status: 500 }
-      );
+      throw new Error(`Failed to delete company: ${deleteError.message}`);
     }
 
+    console.log(`✅ Company deleted: ${id}`);
+
     return NextResponse.json(
-      { message: "Company deleted successfully" },
+      {
+        success: true,
+        message: "Company deleted successfully",
+        data: {
+          id,
+          deleted_at: new Date().toISOString(),
+          deleted_by: user.email,
+          deleted_by_role: role,
+        },
+      },
       { status: 200 }
     );
-  } catch (error) {
-    console.error("Unexpected error:", error);
+  } catch (error: unknown) {
+    console.error("❌ Error deleting company:", error);
+
+    const message =
+      error instanceof Error ? error.message : "Failed to delete company";
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        success: false,
+        error: message,
+      },
       { status: 500 }
     );
   }

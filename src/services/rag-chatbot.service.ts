@@ -16,9 +16,12 @@ export const ragChatbotService = {
         message: request.message,
         conversation_history: request.conversation_history || [],
         search_limit: request.search_limit || 5,
-        similarity_threshold: request.similarity_threshold || 0.75,
+        similarity_threshold:0.35
+        //  request.similarity_threshold || 0.75,
       }
     );
+
+    console.log("Response : ", response.data);
 
     return response.data;
   },

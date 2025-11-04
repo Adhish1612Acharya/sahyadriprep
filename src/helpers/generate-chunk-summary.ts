@@ -97,6 +97,8 @@ Summary for RAG retrieval:`;
     // Generate summary using Gemini
     let summary = await callGeminiText(prompt, apiKey);
 
+    console.log("Summary : ", summary);
+
     // Handle if it's accidentally JSON
     if (typeof summary === "object" && summary !== null) {
       summary = (summary as any).summary || JSON.stringify(summary);
