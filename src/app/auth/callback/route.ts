@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import {
   deleteAuthUserById,
   isEmailAllowedForCollege,
+  syncProfileToMetadata,
+  updateUserMetadata,
 } from "@/helpers/auth.helpers";
 
 export async function GET(request: Request) {
@@ -97,23 +99,64 @@ export async function GET(request: Request) {
 
         console.log(`✅ Profile created for user: ${user.id} (${role})`);
 
+        // ✅ Step 5.1: Sync profile to metadata cache
+        const syncResult = await updateUserMetadata(user.id, {
+          role: role,
+          college_id: collegeId,
+          profile_completed: false,
+        });
+
+        if (!syncResult.success) {
+          console.warn(
+            "⚠️ Failed to sync profile to metadata:",
+            syncResult.error
+          );
+          // Don't fail the OAuth flow, metadata will sync on next login
+        } else {
+          console.log(`✅ Profile metadata synced for user: ${user.id}`);
+        }
+
         return NextResponse.redirect(
           new URL("/auth/complete-profile", requestUrl.origin)
         );
       }
 
-      // ✅ Step 6: Existing user - check if profile is completed
+      // ✅ Step 6: Existing user - sync profile to metadata if needed
+      const metadataRole = user.user_metadata?.role;
+      const metadataProfileCompleted = user.user_metadata?.profile_completed;
+
+      // Check if metadata is out of sync
+      if (
+        metadataRole !== profile.role ||
+        metadataProfileCompleted !== profile.profile_completed
+      ) {
+        console.log(`🔄 Metadata out of sync for user ${user.id}, syncing...`);
+
+        const syncResult = await syncProfileToMetadata(user.id);
+
+        if (!syncResult.success) {
+          console.warn(
+            "⚠️ Failed to sync profile to metadata:",
+            syncResult.error
+          );
+          // Don't fail the OAuth flow
+        } else {
+          console.log(`✅ Profile metadata synced for user: ${user.id}`);
+        }
+      }
+
+      // ✅ Step 7: Check if profile is completed
       if (!profile.profile_completed) {
         return NextResponse.redirect(
           new URL("/auth/complete-profile", requestUrl.origin)
         );
       }
 
-      // ✅ Step 7: Profile completed - redirect based on role
+      // ✅ Step 8: Profile completed - redirect based on role
       const redirectMap = {
         student: "/",
-        college_admin: "/",
-        super_admin: "/admin",
+        college_admin: "/admin/dashboard",
+        super_admin: "/admin/dashboard",
       };
 
       const redirectTo =

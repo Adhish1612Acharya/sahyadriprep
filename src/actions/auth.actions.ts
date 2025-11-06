@@ -1,47 +1,14 @@
 "use server";
 
+import { syncProfileToMetadata } from "@/helpers/auth.helpers";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-export async function signUpWithEmail(formData: {
-  email: string;
-  password: string;
-  role: "student" | "college_admin";
-}) {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase.auth.signUp({
-    email: formData.email,
-    password: formData.password,
-    options: {
-      data: {
-        role: formData.role,
-      },
-    },
-  });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  if (data.user) {
-    // Create profile entry
-    const { error: profileError } = await supabase.from("profiles").insert({
-      id: data.user.id,
-      role: formData.role,
-      profile_completed: false,
-    });
-
-    if (profileError) {
-      return { error: profileError.message };
-    }
-  }
-
-  revalidatePath("/", "layout");
-  return { success: true, data };
-}
-
+/**
+ * Sign in with email and password
+ * Syncs profile to metadata after successful login
+ */
 export async function signInWithEmail(formData: {
   email: string;
   password: string;
@@ -55,6 +22,21 @@ export async function signInWithEmail(formData: {
 
   if (error) {
     return { error: error.message };
+  }
+
+  // ✅ Sync profile to metadata cache after successful login
+  if (data.user) {
+    const syncResult = await syncProfileToMetadata(data.user.id);
+
+    if (!syncResult.success) {
+      console.warn(
+        "⚠️ Failed to sync profile to metadata on login:",
+        syncResult.error
+      );
+      // Don't fail the login, metadata will sync on next request
+    } else {
+      console.log(`✅ Profile metadata synced on login: ${data.user.id}`);
+    }
   }
 
   revalidatePath("/", "layout");
@@ -147,6 +129,18 @@ export async function completeStudentProfile(formData: {
     return { error: updateError.message };
   }
 
+  const syncResult = await syncProfileToMetadata(user.id);
+
+  if (!syncResult.success) {
+    console.warn(
+      "⚠️ Failed to sync profile to metadata on login:",
+      syncResult.error
+    );
+    // Don't fail the login, metadata will sync on next request
+  } else {
+    console.log(`✅ Profile metadata synced on login: ${user.id}`);
+  }
+
   revalidatePath("/", "layout");
   return { success: true };
 }
@@ -197,6 +191,18 @@ export async function completeAdminProfile(formData: {
     return { error: updateError.message };
   }
 
+  const syncResult = await syncProfileToMetadata(user.id);
+
+  if (!syncResult.success) {
+    console.warn(
+      "⚠️ Failed to sync profile to metadata on login:",
+      syncResult.error
+    );
+    // Don't fail the login, metadata will sync on next request
+  } else {
+    console.log(`✅ Profile metadata synced on login: ${user.id}`);
+  }
+
   revalidatePath("/", "layout");
   return { success: true };
 }
@@ -237,4 +243,129 @@ export async function checkProfileCompletion() {
     redirectTo:
       redirectMap[profile.role as keyof typeof redirectMap] || "/dashboard",
   };
+}
+
+/**
+ * Send password reset email
+ */
+export async function sendPasswordResetEmail(email: string) {
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
+    });
+
+    if (error) {
+      console.error("❌ Password reset email error:", error);
+      return { error: error.message };
+    }
+
+    console.log("✅ Password reset email sent to:", email);
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ Unexpected error in sendPasswordResetEmail:", error);
+    return { error: error.message || "Failed to send reset email" };
+  }
+}
+
+/**
+ * Update password (for logged-in users)
+ */
+export async function updatePassword(newPassword: string) {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: "Not authenticated" };
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      console.error("❌ Password update error:", error);
+      return { error: error.message };
+    }
+
+    console.log("✅ Password updated for user:", user.id);
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ Unexpected error in updatePassword:", error);
+    return { error: error.message || "Failed to update password" };
+  }
+}
+
+/**
+ * Reset password with token (from email link)
+ */
+export async function resetPasswordWithToken(
+  newPassword: string,
+  confirmPassword: string
+) {
+  try {
+    if (newPassword !== confirmPassword) {
+      return { error: "Passwords do not match" };
+    }
+
+    if (newPassword.length < 8) {
+      return { error: "Password must be at least 8 characters long" };
+    }
+
+    const supabase = await createClient();
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      console.error("❌ Password reset error:", error);
+      return { error: error.message };
+    }
+
+    console.log("✅ Password reset successfully");
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ Unexpected error in resetPasswordWithToken:", error);
+    return { error: error.message || "Failed to reset password" };
+  }
+}
+
+/**
+ * Verify if user has valid reset token
+ */
+export async function verifyResetToken() {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      return { valid: false, error: "Invalid or expired reset link" };
+    }
+
+    // Check if this is a password recovery session
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      return { valid: false, error: "No active session" };
+    }
+
+    return { valid: true, user };
+  } catch (error: any) {
+    console.error("❌ Error verifying reset token:", error);
+    return { valid: false, error: error.message };
+  }
 }

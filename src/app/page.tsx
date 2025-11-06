@@ -1,4 +1,3 @@
-// src/app/page.tsx
 "use client";
 
 import Link from "next/link";
@@ -23,115 +22,8 @@ import {
   BarChart3,
   BookOpen,
 } from "lucide-react";
-import Image from "next/image";
-import { createClient } from "@/lib/supabase/client";
-import { LogoutButton } from "@/components/logout-button";
-import { useEffect, useState } from "react";
 
 export default function HomePage() {
-  // ✅ Add state for user data
-  const [user, setUser] = useState<any>(null);
-  const [studentData, setStudentData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [apiResult, setApiResult] = useState<any>(null);
-  const [apiError, setApiError] = useState<string | null>(null);
-
-  // ✅ Chat test state
-  const [isChatLoading, setIsChatLoading] = useState(false);
-  const [chatResult, setChatResult] = useState<any>(null);
-  const [chatError, setChatError] = useState<string | null>(null);
-  const [testMessage, setTestMessage] = useState("What is machine learning?");
-
-  // ✅ Move user fetching to useEffect
-  useEffect(() => {
-    const initializeUser = async () => {
-      const supabase = createClient();
-
-      // Get the current user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      setUser(user);
-
-      // If user exists, get additional profile data from students table
-      if (user) {
-        const { data } = await supabase
-          .from("students")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-        setStudentData(data);
-      }
-    };
-
-    initializeUser();
-  }, []);
-
-  // ✅ Test RAG processing API
-  const testRagApi = async () => {
-    setIsLoading(true);
-    setApiError(null);
-    setApiResult(null);
-
-    try {
-      console.log("🚀 Testing RAG API...");
-
-      const response = await fetch("/api/rag/process", {
-        method: "POST",
-        body: JSON.stringify({}),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setApiResult(data);
-      console.log("✅ RAG API Response:", data);
-    } catch (error: any) {
-      console.error("❌ RAG API Error:", error);
-      setApiError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ✅ Test Chat API
-  const testChatApi = async () => {
-    setIsChatLoading(true);
-    setChatError(null);
-    setChatResult(null);
-
-    try {
-      console.log("💬 Testing Chat API with message:", testMessage);
-
-      const response = await fetch("/api/rag/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setChatResult(data);
-      console.log("✅ Chat API Response:", data);
-    } catch (error: any) {
-      console.error("❌ Chat API Error:", error);
-      setChatError(error.message);
-    } finally {
-      setIsChatLoading(false);
-    }
-  };
-
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}

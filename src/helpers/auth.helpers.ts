@@ -432,3 +432,97 @@ export async function enforceCollegeEmailOrReject(
   }
   return null;
 }
+
+/**
+ * Update user metadata (cached profile data)
+ * This updates the auth.users table user_metadata field
+ * Used to cache profile data and avoid DB queries in middleware
+ *
+ * @param userId - Auth user ID
+ * @param metadata - Metadata to update
+ * @returns Success status or error
+ */
+export async function updateUserMetadata(
+  userId: string,
+  metadata: {
+    role: "student" | "college_admin" | "super_admin";
+    college_id?: string | null;
+    profile_completed: boolean;
+    [key: string]: any; // Allow additional fields
+  }
+) {
+  try {
+    const supabaseAdmin = createAdminClient();
+
+    console.log(`📝 Updating user metadata for: ${userId}`, metadata);
+
+    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
+      userId,
+      {
+        user_metadata: metadata,
+      }
+    );
+
+    if (error) {
+      console.error("❌ updateUserMetadata error:", error);
+      return { success: false, error };
+    }
+
+    console.log(`✅ User metadata updated: ${userId}`);
+
+    return {
+      success: true,
+      user: data.user,
+    };
+  } catch (e: any) {
+    console.error("❌ Unexpected error in updateUserMetadata:", e);
+    return { success: false, error: e };
+  }
+}
+
+/**
+ * Sync profile data to user metadata (cache)
+ * Fetches profile from DB and updates auth user metadata
+ * Call this after updating profile in DB
+ *
+ * @param userId - Auth user ID
+ * @returns Success status or error
+ */
+export async function syncProfileToMetadata(
+  userId: string
+): Promise<{ success: boolean; error?: any; profile?: any }> {
+  try {
+    const supabase = await createClient();
+
+    console.log(`🔄 Syncing profile to metadata for: ${userId}`);
+
+    // Fetch current profile from DB
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role, profile_completed")
+      .eq("id", userId)
+      .single();
+
+    if (profileError || !profile) {
+      console.error("❌ Failed to fetch profile:", profileError);
+      return { success: false, error: profileError };
+    }
+
+    // Update user metadata with profile data
+    const result = await updateUserMetadata(userId, {
+      role: profile.role,
+      profile_completed: profile.profile_completed,
+    });
+
+    if (!result.success) {
+      return result;
+    }
+
+    console.log(`✅ Profile synced to metadata: ${userId}`);
+
+    return { success: true, profile };
+  } catch (e: any) {
+    console.error("❌ Unexpected error in syncProfileToMetadata:", e);
+    return { success: false, error: e };
+  }
+}

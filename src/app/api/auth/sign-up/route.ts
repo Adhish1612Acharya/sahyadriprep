@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   enforceCollegeEmailOrReject,
   createUserWithProfile,
+  syncProfileToMetadata,
 } from "@/helpers/auth.helpers";
 import { z } from "zod";
 
@@ -66,8 +67,23 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`✅ User created successfully: ${result?.user?.email}`);
+    // ✅ Step 3: Sync profile to metadata cache
+    if (result.user?.id) {
+      const syncResult = await syncProfileToMetadata(result.user.id);
 
-    // ✅ Step 3: Return success
+      if (!syncResult.success) {
+        console.warn(
+          "⚠️ Failed to sync profile to metadata:",
+          syncResult.error ? syncResult.error : "Unknown error"
+        );
+        // Don't fail the signup, just log the warning
+        // The metadata will be synced on next login or profile update
+      } else {
+        console.log(`✅ Profile metadata synced for user: ${result.user.id}`);
+      }
+    }
+
+    // ✅ Step 4: Return success
     return NextResponse.json(
       {
         success: true,

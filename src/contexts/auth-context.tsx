@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Function to fetch profile data based on role
+  // ✅ Optimized: Fetch profile data based on role
   const fetchProfileData = async (
     userId: string,
     userRole: string,
@@ -41,33 +41,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ) => {
     const supabase = createClient();
 
-    if (userRole === "student") {
-      const { data: studentData, error } = await supabase
-        .from("student_profiles")
-        .select("full_name, avatar_url, college_id, batch, branch")
-        .eq("id", userId)
-        .single();
+    try {
+      console.log(`📋 Fetching ${userRole} profile for: ${userId}`);
 
-      if (!error && studentData) {
-        setProfileData(studentData);
-      } else {
-        console.error("Error fetching student profile:", error);
-      }
-    } else if (userRole === "college_admin") {
-      const { data: adminData, error } = await supabase
-        .from("college_admin_profiles")
-        .select("full_name, avatar_url, college_id, designation")
-        .eq("id", userId)
-        .single();
+      if (userRole === "student") {
+        const { data: studentData, error } = await supabase
+          .from("student_profiles")
+          .select("full_name, avatar_url, college_id, batch, branch")
+          .eq("id", userId)
+          .single();
 
-      if (!error && adminData) {
-        setProfileData(adminData);
-      } else {
-        console.error("Error fetching admin profile:", error);
+        if (!error && studentData) {
+          console.log("✅ Student profile loaded:", studentData.full_name);
+          setProfileData(studentData);
+        } else {
+          console.error("❌ Error fetching student profile:", error);
+          // Fallback to basic data
+          setProfileData({
+            full_name: userMetadata?.full_name || "Student",
+            avatar_url: userMetadata?.avatar_url,
+          });
+        }
+      } else if (userRole === "college_admin") {
+        const { data: adminData, error } = await supabase
+          .from("college_admin_profiles")
+          .select("full_name, avatar_url, college_id, designation")
+          .eq("id", userId)
+          .single();
+
+        if (!error && adminData) {
+          console.log("✅ Admin profile loaded:", adminData.full_name);
+          setProfileData(adminData);
+        } else {
+          console.error("❌ Error fetching admin profile:", error);
+          // Fallback to basic data
+          setProfileData({
+            full_name: userMetadata?.full_name || "Admin",
+            avatar_url: userMetadata?.avatar_url,
+          });
+        }
+      } else if (userRole === "super_admin") {
+        console.log("✅ Super admin profile set");
+        setProfileData({
+          full_name: userMetadata?.full_name || "Super Admin",
+          avatar_url: userMetadata?.avatar_url,
+        });
       }
-    } else if (userRole === "super_admin") {
+    } catch (error) {
+      console.error("❌ Error in fetchProfileData:", error);
+      // Set fallback data even on error
       setProfileData({
-        full_name: userMetadata?.full_name || "Super Admin",
+        full_name: userMetadata?.full_name || "User",
         avatar_url: userMetadata?.avatar_url,
       });
     }
@@ -75,81 +99,183 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const supabase = createClient();
+    let mounted = true;
 
-    // Get initial user
+    // ✅ Get initial user
     const getUser = async () => {
       try {
+        console.log("🔍 Auth Context: Fetching user...");
+
         const {
           data: { user },
+          error: userError,
         } = await supabase.auth.getUser();
+
+        if (userError) {
+          console.error("❌ Auth Context: Error fetching user:", userError);
+          if (mounted) {
+            setIsLoading(false);
+          }
+          return;
+        }
+
+        if (!mounted) return;
 
         setUser(user);
 
         if (user) {
-          // Fetch user role from profiles table
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", user.id)
-            .single();
+          console.log("✅ Auth Context: User found:", user.id);
 
-          if (profile) {
-            const userRole = profile.role as
+          // ✅ OPTIMIZATION 1: Use cached metadata first
+          const roleFromMetadata = user.user_metadata?.role;
+          const profileCompletedFromMetadata =
+            user.user_metadata?.profile_completed;
+
+          console.log("📦 Cached metadata:", {
+            role: roleFromMetadata,
+            profile_completed: profileCompletedFromMetadata,
+          });
+
+          if (roleFromMetadata) {
+            // ✅ Use cached role (no DB query!)
+            const userRole = roleFromMetadata as
               | "student"
               | "college_admin"
               | "super_admin";
             setRole(userRole);
-            await fetchProfileData(user.id, userRole, user.user_metadata);
+
+            // ✅ FIX: Set isLoading to false IMMEDIATELY after setting role
+            if (mounted) {
+              setIsLoading(false);
+            }
+
+            // Fetch profile data in background (non-blocking)
+            fetchProfileData(user.id, userRole, user.user_metadata);
           } else {
-            console.error("No profile found for user");
+            // ⚠️ Fallback: Fetch from DB if metadata missing
+            console.warn("⚠️ Metadata missing, fetching from DB");
+            const { data: profile, error: profileError } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", user.id)
+              .single();
+
+            if (profileError) {
+              console.error("❌ Error fetching profile:", profileError);
+            } else if (profile && mounted) {
+              const userRole = profile.role as
+                | "student"
+                | "college_admin"
+                | "super_admin";
+              setRole(userRole);
+
+              // ✅ FIX: Set isLoading to false after setting role
+              if (mounted) {
+                setIsLoading(false);
+              }
+
+              // Fetch profile data in background (non-blocking)
+              fetchProfileData(user.id, userRole, user.user_metadata);
+            }
           }
+        } else {
+          console.log("ℹ️ Auth Context: No user found");
         }
       } catch (error) {
-        console.error("Error fetching user:", error);
+        console.error("❌ Auth Context: Unexpected error:", error);
       } finally {
-        setIsLoading(false);
+        // ✅ Always set loading to false in finally block
+        if (mounted) {
+          console.log("✅ Auth Context: Loading complete");
+          setIsLoading(false);
+        }
       }
     };
 
     getUser();
 
-    // Listen for auth changes
+    // ✅ Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("🔄 Auth state changed:", event);
+
+      if (!mounted) return;
+
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
+        // ✅ OPTIMIZATION 2: Use cached metadata on auth change
+        const roleFromMetadata = session.user.user_metadata?.role;
 
-        if (profile) {
-          const userRole = profile.role as
+        if (roleFromMetadata) {
+          const userRole = roleFromMetadata as
             | "student"
             | "college_admin"
             | "super_admin";
           setRole(userRole);
-          await fetchProfileData(
+
+          // ✅ FIX: Set isLoading to false IMMEDIATELY
+          if (mounted) {
+            setIsLoading(false);
+          }
+
+          // Fetch profile data in background (non-blocking)
+          fetchProfileData(
             session.user.id,
             userRole,
             session.user.user_metadata
           );
         } else {
-          setRole(null);
-          setProfileData(null);
+          // Fallback to DB
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", session.user.id)
+            .single();
+
+          if (profile && mounted) {
+            const userRole = profile.role as
+              | "student"
+              | "college_admin"
+              | "super_admin";
+            setRole(userRole);
+
+            // ✅ FIX: Set isLoading to false after setting role
+            if (mounted) {
+              setIsLoading(false);
+            }
+
+            // Fetch profile data in background (non-blocking)
+            fetchProfileData(
+              session.user.id,
+              userRole,
+              session.user.user_metadata
+            );
+          } else {
+            setRole(null);
+            setProfileData(null);
+            // ✅ Set loading to false even if no profile found
+            if (mounted) {
+              setIsLoading(false);
+            }
+          }
         }
       } else {
         setRole(null);
         setProfileData(null);
+        // ✅ Set loading to false for signed out state
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-
-      setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // ✅ Cleanup
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const value = {

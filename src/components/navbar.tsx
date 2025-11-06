@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -24,10 +24,10 @@ import {
   FileText,
   Video,
   Building2,
-  Loader2, // ✅ Import Loader2
+  Loader2,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/contexts/auth-context";
+import { signOut } from "@/actions/auth.actions";
 
 // Navigation items for different user states
 const publicNavigationItems = [
@@ -95,25 +95,39 @@ const adminNavigationItems = [
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false); // ✅ Add loading state
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = createClient();
 
   const { user, role, profileData, isLoading, isAdmin } = useAuth();
 
+  // ✅ Fix hydration issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // ✅ Debug logging
+  useEffect(() => {
+    console.log("🔍 Navbar Debug:", {
+      isLoading,
+      hasUser: !!user,
+      role,
+      profileData,
+      mounted,
+    });
+  }, [isLoading, user, role, profileData, mounted]);
+
   const handleSignOut = async () => {
-    setIsSigningOut(true); // ✅ Start loading
+    setIsSigningOut(true);
     try {
-      await supabase.auth.signOut();
+      await signOut();
       setIsOpen(false);
-      router.push("/");
-      router.refresh();
     } catch (error) {
       console.error("Error signing out:", error);
-    } finally {
-      setIsSigningOut(false); // ✅ Stop loading
+      setIsSigningOut(false); // Re-enable if error
     }
+    // Note: Don't set isSigningOut to false here as redirect will happen
   };
 
   const isActive = (href: string) => pathname === href;
@@ -132,7 +146,8 @@ export function Navbar() {
       : names[0][0].toUpperCase();
   };
 
-  if (isLoading) {
+  // ✅ Show loading state only on initial mount
+  if (!mounted || isLoading) {
     return (
       <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4">
@@ -140,6 +155,9 @@ export function Navbar() {
             <div className="flex items-center gap-2">
               <GraduationCap className="h-6 w-6" />
               <span className="font-bold text-lg">SahyadriPrep</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           </div>
         </div>
@@ -189,7 +207,7 @@ export function Navbar() {
                     <Button
                       variant="ghost"
                       className="relative h-10 w-10 rounded-full"
-                      disabled={isSigningOut} // ✅ Disable while signing out
+                      disabled={isSigningOut}
                     >
                       <Avatar>
                         <AvatarImage
@@ -219,14 +237,14 @@ export function Navbar() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => router.push("/profile")}
-                      disabled={isSigningOut} // ✅ Disable while signing out
+                      disabled={isSigningOut}
                     >
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => router.push("/settings")}
-                      disabled={isSigningOut} // ✅ Disable while signing out
+                      disabled={isSigningOut}
                     >
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
@@ -234,9 +252,8 @@ export function Navbar() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={handleSignOut}
-                      disabled={isSigningOut} // ✅ Disable while signing out
+                      disabled={isSigningOut}
                     >
-                      {/* ✅ Show loader or logout icon */}
                       {isSigningOut ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       ) : (
@@ -266,11 +283,7 @@ export function Navbar() {
             {/* Mobile Menu */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild className="md:hidden">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={isSigningOut} // ✅ Disable while signing out
-                >
+                <Button variant="ghost" size="icon" disabled={isSigningOut}>
                   <Menu className="h-6 w-6" />
                   <span className="sr-only">Toggle menu</span>
                 </Button>
@@ -343,7 +356,7 @@ export function Navbar() {
                             router.push(item.href);
                             setIsOpen(false);
                           }}
-                          disabled={isSigningOut} // ✅ Disable while signing out
+                          disabled={isSigningOut}
                         >
                           <Icon className="h-4 w-4" />
                           {item.name}
@@ -364,7 +377,7 @@ export function Navbar() {
                             router.push("/profile");
                             setIsOpen(false);
                           }}
-                          disabled={isSigningOut} // ✅ Disable while signing out
+                          disabled={isSigningOut}
                         >
                           <User className="h-4 w-4" />
                           Profile
@@ -376,7 +389,7 @@ export function Navbar() {
                             router.push("/settings");
                             setIsOpen(false);
                           }}
-                          disabled={isSigningOut} // ✅ Disable while signing out
+                          disabled={isSigningOut}
                         >
                           <Settings className="h-4 w-4" />
                           Settings
@@ -385,9 +398,8 @@ export function Navbar() {
                           variant="ghost"
                           className="justify-start gap-2 text-destructive"
                           onClick={handleSignOut}
-                          disabled={isSigningOut} // ✅ Disable while signing out
+                          disabled={isSigningOut}
                         >
-                          {/* ✅ Show loader or logout icon */}
                           {isSigningOut ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
