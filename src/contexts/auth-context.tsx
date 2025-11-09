@@ -56,7 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfileData(studentData);
         } else {
           console.error("❌ Error fetching student profile:", error);
-          // Fallback to basic data
           setProfileData({
             full_name: userMetadata?.full_name || "Student",
             avatar_url: userMetadata?.avatar_url,
@@ -74,7 +73,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfileData(adminData);
         } else {
           console.error("❌ Error fetching admin profile:", error);
-          // Fallback to basic data
           setProfileData({
             full_name: userMetadata?.full_name || "Admin",
             avatar_url: userMetadata?.avatar_url,
@@ -89,7 +87,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error("❌ Error in fetchProfileData:", error);
-      // Set fallback data even on error
       setProfileData({
         full_name: userMetadata?.full_name || "User",
         avatar_url: userMetadata?.avatar_url,
@@ -114,7 +111,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (userError) {
           console.error("❌ Auth Context: Error fetching user:", userError);
           if (mounted) {
-            setIsLoading(false);
+            setUser(null);
+            setRole(null);
+            setProfileData(null);
+            setIsLoading(false); // ✅ CRITICAL: Set to false on error
           }
           return;
         }
@@ -126,28 +126,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (user) {
           console.log("✅ Auth Context: User found:", user.id);
 
-          // ✅ OPTIMIZATION 1: Use cached metadata first
           const roleFromMetadata = user.user_metadata?.role;
-          const profileCompletedFromMetadata =
-            user.user_metadata?.profile_completed;
 
           console.log("📦 Cached metadata:", {
             role: roleFromMetadata,
-            profile_completed: profileCompletedFromMetadata,
           });
 
           if (roleFromMetadata) {
-            // ✅ Use cached role (no DB query!)
             const userRole = roleFromMetadata as
               | "student"
               | "college_admin"
               | "super_admin";
             setRole(userRole);
-
-            // ✅ FIX: Set isLoading to false IMMEDIATELY after setting role
-            if (mounted) {
-              setIsLoading(false);
-            }
+            setIsLoading(false); // ✅ Set to false IMMEDIATELY
 
             // Fetch profile data in background (non-blocking)
             fetchProfileData(user.id, userRole, user.user_metadata);
@@ -162,32 +153,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (profileError) {
               console.error("❌ Error fetching profile:", profileError);
+              setRole(null);
+              setProfileData(null);
+              setIsLoading(false); // ✅ CRITICAL: Set to false on error
             } else if (profile && mounted) {
               const userRole = profile.role as
                 | "student"
                 | "college_admin"
                 | "super_admin";
               setRole(userRole);
+              setIsLoading(false); // ✅ Set to false after setting role
 
-              // ✅ FIX: Set isLoading to false after setting role
-              if (mounted) {
-                setIsLoading(false);
-              }
-
-              // Fetch profile data in background (non-blocking)
+              // Fetch profile data in background
               fetchProfileData(user.id, userRole, user.user_metadata);
+            } else {
+              // ✅ CRITICAL: Handle case where profile doesn't exist
+              setRole(null);
+              setProfileData(null);
+              setIsLoading(false);
             }
           }
         } else {
           console.log("ℹ️ Auth Context: No user found");
+          setRole(null);
+          setProfileData(null);
+          setIsLoading(false); // ✅ CRITICAL: Set to false when no user
         }
       } catch (error) {
         console.error("❌ Auth Context: Unexpected error:", error);
-      } finally {
-        // ✅ Always set loading to false in finally block
         if (mounted) {
-          console.log("✅ Auth Context: Loading complete");
-          setIsLoading(false);
+          setUser(null);
+          setRole(null);
+          setProfileData(null);
+          setIsLoading(false); // ✅ CRITICAL: Set to false on exception
         }
       }
     };
@@ -202,10 +200,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!mounted) return;
 
+      // ✅ IMPORTANT: Set loading to true during state change
+      setIsLoading(true);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // ✅ OPTIMIZATION 2: Use cached metadata on auth change
         const roleFromMetadata = session.user.user_metadata?.role;
 
         if (roleFromMetadata) {
@@ -214,13 +213,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             | "college_admin"
             | "super_admin";
           setRole(userRole);
+          setIsLoading(false); // ✅ Set to false IMMEDIATELY
 
-          // ✅ FIX: Set isLoading to false IMMEDIATELY
-          if (mounted) {
-            setIsLoading(false);
-          }
-
-          // Fetch profile data in background (non-blocking)
+          // Fetch profile data in background
           fetchProfileData(
             session.user.id,
             userRole,
@@ -228,25 +223,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           );
         } else {
           // Fallback to DB
-          const { data: profile } = await supabase
+          const { data: profile, error } = await supabase
             .from("profiles")
             .select("role")
             .eq("id", session.user.id)
             .single();
 
-          if (profile && mounted) {
+          if (error) {
+            console.error("❌ Error fetching role:", error);
+            setRole(null);
+            setProfileData(null);
+            setIsLoading(false); // ✅ Set to false on error
+          } else if (profile && mounted) {
             const userRole = profile.role as
               | "student"
               | "college_admin"
               | "super_admin";
             setRole(userRole);
+            setIsLoading(false); // ✅ Set to false after setting role
 
-            // ✅ FIX: Set isLoading to false after setting role
-            if (mounted) {
-              setIsLoading(false);
-            }
-
-            // Fetch profile data in background (non-blocking)
+            // Fetch profile data in background
             fetchProfileData(
               session.user.id,
               userRole,
@@ -255,19 +251,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else {
             setRole(null);
             setProfileData(null);
-            // ✅ Set loading to false even if no profile found
-            if (mounted) {
-              setIsLoading(false);
-            }
+            setIsLoading(false); // ✅ Set to false when no profile
           }
         }
       } else {
+        // ✅ Signed out
+        console.log("✅ User signed out");
         setRole(null);
         setProfileData(null);
-        // ✅ Set loading to false for signed out state
-        if (mounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false); // ✅ CRITICAL: Set to false on sign out
       }
     });
 

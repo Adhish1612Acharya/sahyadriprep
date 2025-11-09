@@ -1,6 +1,6 @@
 "use server";
 
-import { syncProfileToMetadata } from "@/helpers/auth.helpers";
+import { syncProfileToMetadata } from "@/helpers/auth/auth.helpers";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -24,9 +24,11 @@ export async function signInWithEmail(formData: {
     return { error: error.message };
   }
 
+  let syncResult;
+
   // ✅ Sync profile to metadata cache after successful login
   if (data.user) {
-    const syncResult = await syncProfileToMetadata(data.user.id);
+    syncResult = await syncProfileToMetadata(data.user.id);
 
     if (!syncResult.success) {
       console.warn(
@@ -39,8 +41,18 @@ export async function signInWithEmail(formData: {
     }
   }
 
-  revalidatePath("/", "layout");
-  return { success: true, data };
+  // ✅ Redirect based on role
+  const redirectMap = {
+    student: "/",
+    college_admin: "/admin/dashboard",
+    super_admin: "/admin/dashboard",
+  };
+
+  const profile = syncResult?.profile;
+
+  const redirectTo =
+    redirectMap[profile.role as keyof typeof redirectMap] || "/";
+  redirect(redirectTo); // ✅ Server-side redirect
 }
 
 export async function signInWithGoogle(options?: {
@@ -74,9 +86,18 @@ export async function signInWithGoogle(options?: {
 
 export async function signOut() {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    console.error("❌ Sign out error:", error);
+    return { error: error.message };
+  }
+
+  console.log("✅ Server sign out successful");
+
   revalidatePath("/", "layout");
-  redirect("/");
+  return { success: true };
 }
 
 export async function completeStudentProfile(formData: {
@@ -142,7 +163,9 @@ export async function completeStudentProfile(formData: {
   }
 
   revalidatePath("/", "layout");
-  return { success: true };
+
+  // ✅ Server-side redirect after profile completion
+  redirect("/interview-experiences"); // Student dashboard
 }
 
 export async function completeAdminProfile(formData: {
@@ -204,7 +227,9 @@ export async function completeAdminProfile(formData: {
   }
 
   revalidatePath("/", "layout");
-  return { success: true };
+
+  // ✅ Server-side redirect after profile completion
+  redirect("/admin/dashboard"); // Admin dashboard
 }
 
 export async function checkProfileCompletion() {
@@ -253,7 +278,7 @@ export async function sendPasswordResetEmail(email: string) {
     const supabase = await createClient();
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?type=recovery`,
     });
 
     if (error) {
@@ -343,6 +368,7 @@ export async function resetPasswordWithToken(
  */
 export async function verifyResetToken() {
   try {
+    console.log("Verifying reset token...");
     const supabase = await createClient();
 
     const {
@@ -350,7 +376,10 @@ export async function verifyResetToken() {
       error,
     } = await supabase.auth.getUser();
 
+    console.log("User from reset token verification:", user);
+
     if (error || !user) {
+      console.log("Invalid or expired reset link");
       return { valid: false, error: "Invalid or expired reset link" };
     }
 
@@ -359,13 +388,203 @@ export async function verifyResetToken() {
       data: { session },
     } = await supabase.auth.getSession();
 
+    console.log("Session from reset token verification:", session);
+
     if (!session) {
+      console.log("No active session found");
       return { valid: false, error: "No active session" };
     }
 
     return { valid: true, user };
   } catch (error: any) {
     console.error("❌ Error verifying reset token:", error);
+    return { valid: false, error: error.message };
+  }
+}
+
+/**
+ * Confirm email with token_hash from confirmation link (PKCE flow)
+ */
+export async function confirmEmail(tokenHash: string, type: string) {
+  try {
+    if (!tokenHash) {
+      return { error: "Missing confirmation token" };
+    }
+
+    if (type !== "email" && type !== "signup") {
+      return { error: "Invalid confirmation type" };
+    }
+
+    const supabase = await createClient();
+
+    // ✅ Exchange token_hash for session (PKCE flow)
+    const { data, error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: type === "email" ? "email" : "signup",
+    });
+
+    if (error) {
+      console.error("❌ Email confirmation error:", error);
+      return {
+        error: error.message || "Invalid or expired confirmation link",
+      };
+    }
+
+    if (!data.user) {
+      return { error: "Failed to verify user after confirmation" };
+    }
+
+    console.log("✅ Email confirmed for user:", data.user.id);
+
+    // Sync profile metadata after email confirmation
+    const syncResult = await syncProfileToMetadata(data.user.id);
+    if (!syncResult.success) {
+      console.warn(
+        "⚠️ Failed to sync profile metadata after email confirmation"
+      );
+    }
+
+    revalidatePath("/", "layout");
+    return { success: true, user: data.user };
+  } catch (error: any) {
+    console.error("❌ Unexpected error in confirmEmail:", error);
+    return { error: error.message || "Failed to confirm email" };
+  }
+}
+
+/**
+ * Exchange PKCE code for session (password reset flow)
+ */
+export async function exchangeCodeForSession(code: string) {
+  try {
+    if (!code) {
+      return { valid: false, error: "Missing confirmation code" };
+    }
+
+    const supabase = await createClient();
+
+    // ✅ Exchange PKCE code for session
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (error) {
+      console.error("❌ Code exchange failed:", error);
+      return {
+        valid: false,
+        error: error.message || "Invalid or expired reset link",
+      };
+    }
+
+    if (!data.session || !data.user) {
+      return {
+        valid: false,
+        error: "Failed to create session from code",
+      };
+    }
+
+    console.log("✅ Code exchanged successfully, user:", data.user.id);
+
+    revalidatePath("/", "layout");
+    return { valid: true, user: data.user, session: data.session };
+  } catch (error: any) {
+    console.error("❌ Error exchanging code for session:", error);
+    return { valid: false, error: error.message };
+  }
+}
+
+/**
+ * Verify token (handles both PKCE code and token_hash)
+ * Used for email confirmation and password reset flows
+ */
+export async function verifyAuthToken(params: {
+  code?: string;
+  tokenHash?: string;
+  type?: string;
+}) {
+  try {
+    const { code, tokenHash, type } = params;
+
+    // ✅ Case 1: PKCE code (modern flow - password reset)
+    if (code) {
+      return await exchangeCodeForSession(code);
+    }
+
+    // ✅ Case 2: token_hash (email confirmation, older flows)
+    if (tokenHash && type) {
+      return await verifyConfirmationToken(tokenHash, type);
+    }
+
+    return { valid: false, error: "Missing authentication token" };
+  } catch (error: any) {
+    console.error("❌ Error verifying auth token:", error);
+    return { valid: false, error: error.message };
+  }
+}
+
+/**
+ * Verify if email confirmation token is valid
+ */
+export async function verifyConfirmationToken(tokenHash: string, type: string) {
+  try {
+    if (!tokenHash) {
+      return { valid: false, error: "Missing confirmation token" };
+    }
+
+    const supabase = await createClient();
+
+    // ✅ Map the type to valid Supabase OTP types
+    let otpType: "signup" | "email" | "recovery" | "invite" | "magiclink";
+
+    switch (type) {
+      case "signup":
+        otpType = "signup";
+        break;
+      case "email":
+        otpType = "email";
+        break;
+      case "recovery":
+        otpType = "recovery";
+        break;
+      case "invite":
+        otpType = "invite";
+        break;
+      case "magiclink":
+        otpType = "magiclink";
+        break;
+      default:
+        return {
+          valid: false,
+          error: `Invalid verification type: ${type}`,
+        };
+    }
+
+    // ✅ Verify the token_hash is valid
+    const { data, error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: otpType,
+    });
+
+    if (error || !data.user) {
+      console.error("❌ Token verification failed:", error);
+      return {
+        valid: false,
+        error: error?.message || "Invalid or expired confirmation link",
+      };
+    }
+
+    console.log("✅ Token verified successfully, user:", data.user.id);
+
+    // Sync profile metadata after verification
+    const syncResult = await syncProfileToMetadata(data.user.id);
+    if (!syncResult.success) {
+      console.warn(
+        "⚠️ Failed to sync profile metadata after token verification"
+      );
+    }
+
+    revalidatePath("/", "layout");
+    return { valid: true, user: data.user };
+  } catch (error: any) {
+    console.error("❌ Error verifying confirmation token:", error);
     return { valid: false, error: error.message };
   }
 }

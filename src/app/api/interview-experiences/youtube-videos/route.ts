@@ -7,11 +7,11 @@ import {
   fetchYouTubeMetadata,
   fetchYouTubeTranscript,
   formatTimestamp,
-} from "@/helpers/youtube-video.helpers";
-import createChunkSummary from "@/helpers/generate-chunk-summary";
+} from "@/helpers/youtube/youtube-video.helpers";
+import createChunkSummary from "@/helpers/ai/generate-chunk-summary";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import embedDocumentsWithHandling from "@/lib/rag-chatbot/embed-documents";
-import { requireAdmin, hasCollegeAccess } from "@/helpers/auth.helpers"; // ✅ Import auth helpers
+import { requireAdmin, hasCollegeAccess } from "@/helpers/auth/auth.helpers"; // ✅ Import auth helpers
 import { generateSummariesInBatches } from "@/helpers/batch-summary.helpers";
 
 /**
@@ -235,8 +235,6 @@ export async function POST(request: NextRequest) {
         console.log(
           `🧠 Generating summaries for ${transcriptChunks.length} transcript chunks...`
         );
-
-
 
         // ✅ NEW: Batch processing with intelligent rate limiting
         const transcriptTexts = transcriptChunks.map((chunk) => chunk.text);

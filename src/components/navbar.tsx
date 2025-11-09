@@ -120,14 +120,22 @@ export function Navbar() {
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
+
     try {
-      await signOut();
-      setIsOpen(false);
+      const result = await signOut();
+
+      if (result?.error) {
+        console.error("Sign out error:", result.error);
+      } else {
+        // ✅ Refresh to update navbar, then redirect
+        router.refresh();
+        router.push("/");
+      }
     } catch (error) {
-      console.error("Error signing out:", error);
-      setIsSigningOut(false); // Re-enable if error
+      console.error("Unexpected sign out error:", error);
+    } finally {
+      setIsSigningOut(false);
     }
-    // Note: Don't set isSigningOut to false here as redirect will happen
   };
 
   const isActive = (href: string) => pathname === href;

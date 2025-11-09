@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Maximize, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatTimestamp } from "@/helpers/youtube-video.helpers";
+import { formatTimestamp } from "@/helpers/youtube/youtube-video.helpers";
 
 interface VideoSegment {
   title: string;

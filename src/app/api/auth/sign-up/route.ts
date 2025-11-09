@@ -3,7 +3,7 @@ import {
   enforceCollegeEmailOrReject,
   createUserWithProfile,
   syncProfileToMetadata,
-} from "@/helpers/auth.helpers";
+} from "@/helpers/auth/auth.helpers";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
     const { email, password, role, college_id } = parsed.data;
 
     // ✅ Step 1: Validate email domain
-    const rejectResponse = await enforceCollegeEmailOrReject(email, college_id);
-    if (rejectResponse) return rejectResponse;
+    // const rejectResponse = await enforceCollegeEmailOrReject(email, college_id);
+    // if (rejectResponse) return rejectResponse;
 
     // ✅ Step 2: Create user + profile (with automatic rollback)
     const result = await createUserWithProfile({
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       password,
       role,
       college_id,
-      email_confirm: true, // Auto-confirm email
+      email_confirm: false, // Auto-confirm email
     });
 
     if (!result.success) {
@@ -67,27 +67,13 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`✅ User created successfully: ${result?.user?.email}`);
-    // ✅ Step 3: Sync profile to metadata cache
-    if (result.user?.id) {
-      const syncResult = await syncProfileToMetadata(result.user.id);
 
-      if (!syncResult.success) {
-        console.warn(
-          "⚠️ Failed to sync profile to metadata:",
-          syncResult.error ? syncResult.error : "Unknown error"
-        );
-        // Don't fail the signup, just log the warning
-        // The metadata will be synced on next login or profile update
-      } else {
-        console.log(`✅ Profile metadata synced for user: ${result.user.id}`);
-      }
-    }
-
-    // ✅ Step 4: Return success
+    // ✅ Step 3: Return success
     return NextResponse.json(
       {
         success: true,
-        message: "Account created successfully. Please complete your profile.",
+        message:
+          "Account created! Please check your email to confirm your account.",
         user: result.user,
       },
       { status: 201 }

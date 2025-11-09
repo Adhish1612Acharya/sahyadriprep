@@ -35,14 +35,13 @@ export default function LoginPage() {
     try {
       const result = await signInWithEmail(formData);
 
-      if (result.error) {
+      if (result?.error) {
         setError(result.error);
-        return;
+        setLoading(false);
+      } else {
+       
+        router.refresh();
       }
-
-      // Redirect will be handled by middleware
-      router.push("/dashboard");
-      router.refresh();
     } catch (err: any) {
       setError(err.message || "An error occurred during login");
     } finally {

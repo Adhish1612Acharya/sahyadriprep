@@ -1,7 +1,8 @@
 "use client";
 
+import { notFound } from "next/navigation";
 import { useParams, useRouter } from "next/navigation";
-import { useInterviewExperiences } from "@/hooks/useInterviewExperiences.hook";
+import { createClient } from "@/lib/supabase/server";
 import { PDFViewer } from "@/components/pdf-viewer";
 import {
   Card,
@@ -28,6 +29,25 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import dynamic from "next/dynamic";
+import { useInterviewExperiences } from "@/hooks/useInterviewExperiences.hook";
+import Image from "next/image";
+
+// ✅ Import PDFViewer dynamically with no SSR
+const DynamicPDFViewer = dynamic(
+  () => import("@/components/pdf-viewer").then((mod) => mod.PDFViewer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center p-12">
+        <div className="animate-pulse space-y-4 w-full">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-96 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    ),
+  }
+);
 
 export default function InterviewExperienceDetailPage() {
   const params = useParams();
@@ -157,7 +177,7 @@ export default function InterviewExperienceDetailPage() {
             </CardHeader>
             <CardContent>
               {experience.document_media?.url && (
-                <PDFViewer url={experience.document_media.url} />
+                <DynamicPDFViewer url={experience.document_media.url} />
               )}
             </CardContent>
           </Card>
@@ -212,10 +232,11 @@ export default function InterviewExperienceDetailPage() {
                   <p className="text-sm font-medium">Company</p>
                   <div className="flex items-center gap-2 mt-1">
                     {experience.companies?.logo_url && (
-                      <img
+                      <Image
                         src={experience.companies.logo_url}
                         alt={experience.companies.name}
-                        className="h-6 w-6 object-contain"
+                        width={24}
+                        height={24}
                       />
                     )}
                     <p className="text-sm text-muted-foreground">
@@ -271,68 +292,46 @@ export default function InterviewExperienceDetailPage() {
             </CardContent>
           </Card>
 
-          {/* File Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>File Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {experience.document_media && (
-                <div>
-                  <p className="text-sm font-medium mb-2">PDF Document</p>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p>Name: {experience.document_media.file_name}</p>
-                    <p>
-                      Size:{" "}
-                      {(
-                        experience.document_media.file_size /
-                        1024 /
-                        1024
-                      ).toFixed(2)}{" "}
-                      MB
-                    </p>
-                    <p>Type: {experience.document_media.file_type}</p>
-                  </div>
-                </div>
-              )}
-
-              {experience.video_media && (
-                <>
-                  <Separator />
-                  <div>
-                    <p className="text-sm font-medium mb-2">Video File</p>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <p>Name: {experience.video_media.file_name}</p>
-                      <p>
-                        Size:{" "}
-                        {(
-                          experience.video_media.file_size /
-                          1024 /
-                          1024
-                        ).toFixed(2)}{" "}
-                        MB
-                      </p>
-                      <p>Type: {experience.video_media.file_type}</p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
           {/* Timestamps */}
           <Card>
             <CardHeader>
-              <CardTitle>Timestamps</CardTitle>
+              <CardTitle>Timeline</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div>
-                <span className="text-muted-foreground">Created:</span>
-                <p>{new Date(experience.created_at).toLocaleString()}</p>
+            <CardContent className="space-y-4">
+              <div className="flex items-start gap-3">
+                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Uploaded</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(experience.created_at).toLocaleDateString(
+                      "en-IN",
+                      {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      }
+                    )}
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="text-muted-foreground">Updated:</span>
-                <p>{new Date(experience.updated_at).toLocaleString()}</p>
+
+              <Separator />
+
+              <div className="flex items-start gap-3">
+                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Last Updated</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(experience.updated_at).toLocaleDateString(
+                      "en-IN",
+                      {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      }
+                    )}
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

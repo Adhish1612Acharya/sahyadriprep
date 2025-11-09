@@ -8,7 +8,7 @@ import {
 import { CHUNKS_CONTENT_TYPES } from "@/constants/chunks-content-types.constants";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
 import { ContentType } from "@/models/content-chunk.types";
-import createChunkSummary from "@/helpers/generate-chunk-summary";
+import createChunkSummary from "@/helpers/ai/generate-chunk-summary";
 
 // Server-side vector store operations
 export const vectorStoreServerOperations = {
@@ -39,23 +39,12 @@ export const vectorStoreServerOperations = {
     chunksWithEmbeddings: Array<{
       content: string;
       embedding: number[];
-      chunkIndex: number;
+      chunk_index: number;
       tokenCount?: number;
       metadata?: Record<string, any>;
     }>
   ) {
     const supabase = await createClient();
-
-    // const chunks = chunksWithEmbeddings.map((chunk) => ({
-    //   document_id: documentId, // ✅ String reference
-    //   document_title: documentTitle, // ✅ Cache title
-    //   content: chunk.content,
-    //   embedding: `[${chunk.embedding.join(",")}]`,
-    //   chunk_index: chunk.chunkIndex,
-    //   token_count: chunk.tokenCount || chunk.content.split(" ").length,
-    //   metadata: chunk.metadata || {},
-    //   created_at: new Date().toISOString(),
-    // }));
 
     const chunks = chunksWithEmbeddings;
 
@@ -70,7 +59,7 @@ export const vectorStoreServerOperations = {
   },
 
   /**
-   * ✅ Updated search method - accepts optional pre-generated summary
+   * ✅ Updated search method - accepts optional pre-generated summary and company filter
    */
   search: async (
     query: string,
@@ -78,7 +67,8 @@ export const vectorStoreServerOperations = {
       contentType?: ContentType;
       threshold?: number;
       limit?: number;
-      querySummary?: string; // ✅ NEW: Accept pre-generated summary
+      querySummary?: string;
+      companyIds?: string[]; // ✅ NEW: Company filter
     }
   ) => {
     const supabase = await createClient();
@@ -103,9 +93,13 @@ export const vectorStoreServerOperations = {
 
     const { data, error } = await supabase.rpc("match_content", {
       query_embedding: queryEmbedding,
-      match_threshold: 1 - (options?.threshold || 0.7),
+      match_threshold: options?.threshold || 0.5, // ✅ Fixed: Use directly, no inversion
       match_count: options?.limit || 10,
       filter_content_type: options?.contentType || null,
+      filter_company_ids:
+        options?.companyIds && options.companyIds.length > 0
+          ? options.companyIds
+          : null, // ✅ NEW: Pass company IDs array
     });
 
     if (error) throw error;
@@ -113,66 +107,74 @@ export const vectorStoreServerOperations = {
   },
 
   /**
-   * ✅ Updated: Search interview experiences with optional summary
+   * ✅ Updated: Search interview experiences with optional summary and company filter
    */
   searchInterviewExperiences: async (
     query: string,
     limit = 10,
-    querySummary?: string // ✅ NEW parameter
+    querySummary?: string,
+    companyIds?: string[] // ✅ NEW parameter
   ) => {
     return vectorStoreServerOperations.search(query, {
       contentType: CHUNKS_CONTENT_TYPES.INTERVIEW_EXPERIENCE,
-      threshold: 0.75,
+      threshold: 0.5, // ✅ Fixed: Changed from 0.75 to 0.5 (50% similarity)
       limit,
-      querySummary, // ✅ Pass through
+      querySummary,
+      companyIds, // ✅ Pass company filter
     });
   },
 
   /**
-   * ✅ Updated: Search YouTube transcript with optional summary
+   * ✅ Updated: Search YouTube transcript with optional summary and company filter
    */
   searchYouTubeVideosTranscript: async (
     query: string,
     limit = 10,
-    querySummary?: string // ✅ NEW parameter
+    querySummary?: string,
+    companyIds?: string[] // ✅ NEW parameter
   ) => {
     return vectorStoreServerOperations.search(query, {
       contentType: CHUNKS_CONTENT_TYPES.YOUTUBE_VIDEO_TRANSCRIPT,
-      threshold: 0.7,
+      threshold: 0.5, // ✅ Fixed: Changed from 0.7 to 0.5
       limit,
-      querySummary, // ✅ Pass through
+      querySummary,
+      companyIds, // ✅ Pass company filter
     });
   },
 
   /**
-   * ✅ Updated: Search YouTube title with optional summary
+   * ✅ Updated: Search YouTube title with optional summary and company filter
    */
   searchYouTubeVideosTitle: async (
     query: string,
     limit = 10,
-    querySummary?: string // ✅ NEW parameter
+    querySummary?: string,
+    companyIds?: string[] // ✅ NEW parameter
   ) => {
     return vectorStoreServerOperations.search(query, {
       contentType: CHUNKS_CONTENT_TYPES.YOUTUBE_VIDEO_TITLE,
-      threshold: 0.7,
+      threshold: 0.5, // ✅ Fixed: Changed from 0.7 to 0.5
       limit,
-      querySummary, // ✅ Pass through
+      querySummary,
+      companyIds, // ✅ Pass company filter
     });
   },
 
   /**
-   * ✅ Updated: Search YouTube description with optional summary
+   * ✅ Updated: Search YouTube description with optional summary and company filter
    */
   searchYouTubeVideosDescription: async (
     query: string,
     limit = 10,
-    querySummary?: string // ✅ NEW parameter
+    querySummary?: string,
+    companyIds?: string[] // ✅ NEW parameter
   ) => {
     return vectorStoreServerOperations.search(query, {
       contentType: CHUNKS_CONTENT_TYPES.YOUTUBE_VIDEO_DESCRIPTION,
-      threshold: 0.7,
+      threshold: 0.5, // ✅ Fixed: Changed from 0.7 to 0.5
       limit,
-      querySummary, // ✅ Pass through
+      querySummary,
+      companyIds, // ✅ Pass company filter
     });
   },
 

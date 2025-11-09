@@ -10,4 +10,5 @@ export interface Company {
   company_size?: CompanySize;
   glassdoor_rating?: number; // 0-5
   created_at: string;
+  updated_at: string;
 }

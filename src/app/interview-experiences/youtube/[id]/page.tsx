@@ -24,7 +24,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
-import { formatDuration } from "@/helpers/youtube-video.helpers";
+import { formatDuration } from "@/helpers/youtube/youtube-video.helpers";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import {

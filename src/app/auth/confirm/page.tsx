@@ -1,167 +1,154 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import axios from "axios";
+import { useSearchParams } from "next/navigation";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
+import { confirmEmail } from "@/actions/auth.actions";
+import Link from "next/link";
 
 export default function ConfirmPage() {
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
   );
   const [message, setMessage] = useState<string>("");
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  const [isVerifying, setIsVerifying] = useState(true);
 
   useEffect(() => {
-    const confirmAuth = async () => {
+    const handleConfirmation = async () => {
       try {
-        // Extract parameters from URL
+        // Get access token from URL
+        // ✅ Get token_hash and type from URL (PKCE flow)
         const tokenHash = searchParams.get("token_hash");
         const type = searchParams.get("type");
         const next = searchParams.get("next") || "/";
 
-        if (!tokenHash || !type) {
+        if (!tokenHash) {
           setStatus("error");
-          setMessage("Missing required parameters for confirmation.");
+          setMessage(
+            "Missing confirmation token. Please use the link from your email."
+          );
+          setIsVerifying(false);
           return;
         }
 
-        // Make API call to the confirmation route
-        await axios.get("/api/auth/confirm", {
-          params: {
-            token_hash: tokenHash,
-            type: type,
-            next: next,
-          },
-        });
+        if (type !== "signup" && type !== "email_change" && type !== "email") {
+          setStatus("error");
+          setMessage("Invalid confirmation link type.");
+          setIsVerifying(false);
+          return;
+        }
 
-        // If successful, the API route will redirect
-        // But in case we reach here, it means confirmation was successful
+        console.log("🔄 Confirming email with token...");
+
+        // Confirm email using server action
+        const result = await confirmEmail(tokenHash, type);
+
+        if (result.error) {
+          setStatus("error");
+          setMessage(result.error);
+          setIsVerifying(false);
+          return;
+        }
+
+        console.log("✅ Email confirmed successfully");
         setStatus("success");
         setMessage("Email confirmed successfully! Redirecting...");
+        setIsVerifying(false);
 
-        // Redirect after a short delay
-        setTimeout(() => {
-          router.push(next);
-        }, 2000);
-      } catch (error: unknown) {
-        console.error("Confirmation error:", error);
+        // Redirect after 2 seconds
+        // setTimeout(() => {
+        //   router.push(next);
+        // }, 2000);
+      } catch (error: any) {
+        console.error("❌ Confirmation error:", error);
         setStatus("error");
-
-        // Handle specific error cases
-        if (axios.isAxiosError(error)) {
-          if (error.response?.status === 400) {
-            setMessage("Invalid or expired confirmation link.");
-          } else if (error.response?.status === 404) {
-            setMessage("Confirmation endpoint not found.");
-          } else {
-            setMessage(
-              "An error occurred during confirmation. Please try again."
-            );
-          }
-        } else {
-          setMessage("An unexpected error occurred. Please try again.");
-        }
+        setMessage(
+          error.message || "Failed to confirm email. Please try again."
+        );
+        setIsVerifying(false);
       }
     };
 
-    confirmAuth();
-  }, [searchParams, router]);
-
-  const handleRetry = () => {
-    setStatus("loading");
-    setMessage("");
-    // Re-trigger the confirmation process
-    window.location.reload();
-  };
-
-  const handleGoHome = () => {
-    router.push("/");
-  };
+    handleConfirmation();
+  }, [searchParams]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Email Confirmation
-          </h2>
-        </div>
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle>Email Confirmation</CardTitle>
+          <CardDescription>
+            {isVerifying
+              ? "Verifying your email address..."
+              : "Confirmation Status"}
+          </CardDescription>
+        </CardHeader>
 
-        <div className="mt-8 space-y-6">
+        <CardContent>
           {status === "loading" && (
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <p className="mt-4 text-sm text-gray-600">
+            <div className="flex flex-col items-center space-y-4 py-8">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">
                 Confirming your email address...
               </p>
             </div>
           )}
 
           {status === "success" && (
-            <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-                <svg
-                  className="h-6 w-6 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 13l4 4L19 7"
-                  ></path>
-                </svg>
+            <div className="space-y-4">
+              <Alert className="bg-primary/10 text-primary border-primary/20">
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>{message}</AlertDescription>
+              </Alert>
+
+              <div className="flex flex-col items-center space-y-2 py-4">
+                <CheckCircle className="h-16 w-16 text-primary" />
+                <p className="text-sm text-center text-muted-foreground">
+                  Your email has been verified successfully
+                </p>
               </div>
-              <h3 className="mt-4 text-lg font-medium text-gray-900">
-                Success!
-              </h3>
-              <p className="mt-2 text-sm text-gray-600">{message}</p>
             </div>
           )}
 
           {status === "error" && (
-            <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                <svg
-                  className="h-6 w-6 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  ></path>
-                </svg>
-              </div>
-              <h3 className="mt-4 text-lg font-medium text-gray-900">
-                Confirmation Failed
-              </h3>
-              <p className="mt-2 text-sm text-gray-600">{message}</p>
+            <div className="space-y-4">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{message}</AlertDescription>
+              </Alert>
 
-              <div className="mt-6 flex flex-col space-y-3">
-                <button
-                  onClick={handleRetry}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Try Again
-                </button>
-                <button
-                  onClick={handleGoHome}
-                  className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Go to Home
-                </button>
+              <div className="flex flex-col items-center space-y-4 py-4">
+                <AlertCircle className="h-16 w-16 text-destructive" />
+                <p className="text-sm text-center text-muted-foreground">
+                  Please try again or request a new confirmation email
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Button variant="outline" asChild className="w-full">
+                  <Link href="/auth/login">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Login
+                  </Link>
+                </Button>
+                <Button asChild className="w-full">
+                  <Link href="/auth/register">Request New Link</Link>
+                </Button>
               </div>
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

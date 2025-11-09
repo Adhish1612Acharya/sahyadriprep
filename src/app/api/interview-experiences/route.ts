@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validate_pdf } from "@/helpers/validate-pdf.helpers";
-import { validate_video } from "@/helpers/validate-video.helpers";
+import { validate_pdf } from "@/helpers/validation/validate-pdf.helpers";
+import { validate_video } from "@/helpers/validation/validate-video.helpers";
 import { createInterviewExperienceSchema } from "@/lib/validations/interview-experience.schema";
 import { save_uploaded_file, cleanup_temp_files } from "@/helpers/file.helpers";
 import {
@@ -14,9 +14,9 @@ import { createClient as v_createClient } from "@/lib/vector_supabase/server";
 import doc_loader from "@/lib/rag-chatbot/load-doc";
 import create_doc_chunk from "@/lib/rag-chatbot/create-doc-chunk";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
-import createChunkSummary from "@/helpers/generate-chunk-summary";
+import createChunkSummary from "@/helpers/ai/generate-chunk-summary";
 import { generateSummariesInBatches } from "@/helpers/batch-summary.helpers";
-import { requireAdmin, hasCollegeAccess } from "@/helpers/auth.helpers";
+import { requireAdmin, hasCollegeAccess } from "@/helpers/auth/auth.helpers";
 
 /**
  * GET /api/interview-experiences

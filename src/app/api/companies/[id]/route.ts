@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin, hasCollegeAccess } from "@/helpers/auth.helpers";
+import { requireAdmin, hasCollegeAccess } from "@/helpers/auth/auth.helpers";
 
 // GET - Fetch single company by ID (public access)
 export async function GET(

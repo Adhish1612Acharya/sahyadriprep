@@ -5,12 +5,14 @@ import {
   isEmailAllowedForCollege,
   syncProfileToMetadata,
   updateUserMetadata,
-} from "@/helpers/auth.helpers";
+} from "@/helpers/auth/auth.helpers";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const error = requestUrl.searchParams.get("error");
+  const type = requestUrl.searchParams.get("type"); // ✅ Get the type parameter
+  const next = requestUrl.searchParams.get("next") ?? "/";
 
   if (error) {
     return NextResponse.redirect(
@@ -26,6 +28,7 @@ export async function GET(request: Request) {
       await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
+      console.error("❌ Code exchange failed:", exchangeError);
       return NextResponse.redirect(
         new URL("/auth/login?error=exchange_failed", requestUrl.origin)
       );
@@ -34,6 +37,31 @@ export async function GET(request: Request) {
     if (data.user) {
       const user = data.user;
       const email = user.email || "";
+
+      // ✅ SPECIAL CASE: Password Reset Flow
+      if (type === "recovery") {
+        console.log(`🔑 Password recovery session created for: ${email}`);
+        return NextResponse.redirect(
+          new URL("/auth/reset-password", requestUrl.origin)
+        );
+      }
+
+      // ✅ SPECIAL CASE: Email Confirmation Flow
+      if (type === "signup" || type === "email") {
+        console.log(`✅ Email confirmed for: ${email}`);
+
+        // Sync profile metadata after email confirmation
+        const syncResult = await syncProfileToMetadata(user.id);
+        if (!syncResult.success) {
+          console.warn("⚠️ Failed to sync profile after email confirmation");
+        }
+
+        // Redirect to next page or home
+        return NextResponse.redirect(new URL(next, requestUrl.origin));
+      }
+
+      // ✅ NORMAL OAUTH FLOW (Google, GitHub, etc.)
+      console.log(`🔄 Processing OAuth login for: ${email}`);
 
       // ✅ Step 2: Get college_id from user metadata (stored before OAuth redirect)
       // Or default to null for Sahyadri

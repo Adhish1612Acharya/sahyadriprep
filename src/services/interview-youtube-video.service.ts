@@ -1,7 +1,17 @@
 import { axiosClient } from "@/lib/axiosClient";
 import { YOUTUBE_ENDPOINTS } from "@/constants/api-endpoints.constants";
-import { parseYouTubeDuration } from "@/helpers/youtube-video.helpers";
-import { CreateYouTubeVideoInput, Flashcard, OverviewData, ProcessVideoInput, ProcessVideoResponse, VideoSegment, VideoTip, YouTubeAPIResponse, YouTubeVideo } from "@/types/services/interview-youtube-video.types";
+import { parseYouTubeDuration } from "@/helpers/youtube/youtube-video.helpers";
+import {
+  CreateYouTubeVideoInput,
+  Flashcard,
+  OverviewData,
+  ProcessVideoInput,
+  ProcessVideoResponse,
+  VideoSegment,
+  VideoTip,
+  YouTubeAPIResponse,
+  YouTubeVideo,
+} from "@/types/services/interview-youtube-video.types";
 
 // ============================================
 // SERVICE

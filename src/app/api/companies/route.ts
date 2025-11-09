@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { companySchema } from "@/lib/validations/company.schema";
-import { requireAdmin } from "@/helpers/auth.helpers";
+import { requireAdmin } from "@/helpers/auth/auth.helpers";
 
 // GET - Fetch all companies (authenticated users only)
 export async function GET(request: NextRequest) {

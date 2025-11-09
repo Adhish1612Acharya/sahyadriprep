@@ -246,13 +246,14 @@ export async function deleteAuthUserById(userId: string) {
 }
 
 /**
- * Create a new auth user with admin privileges
- * Auto-confirms email and sets user metadata
+ * Create a new auth user
+ * Uses signUp() for email confirmation flow, admin.createUser() for auto-confirm
  *
  * @param email - User's email address
  * @param password - User's password
  * @param role - User role (student, college_admin, super_admin)
  * @param college_id - College ID (optional)
+ * @param email_confirm - If true, auto-confirms email. If false, sends confirmation email
  * @returns User data or error
  */
 export async function createAuthUser(params: {
@@ -267,39 +268,84 @@ export async function createAuthUser(params: {
     password,
     role,
     college_id = null,
-    email_confirm = true,
+    email_confirm = false,
   } = params;
 
   try {
-    const supabaseAdmin = createAdminClient();
+    console.log("Sign Up Params:", params);
 
-    console.log(`📝 Creating auth user: ${email} (${role})`);
+    // ✅ CASE 1: Auto-confirm email (admin creation, no email sent)
+    if (email_confirm === true) {
+      const supabaseAdmin = createAdminClient();
 
-    const { data: userData, error: createError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        user_metadata: {
-          role,
-          college_id: college_id || null,
-        },
-        email_confirm, // Auto-confirm email (set to false for email verification flow)
-      });
+      console.log(`📝 Creating auth user (auto-confirmed): ${email} (${role})`);
 
-    if (createError) {
-      console.error("❌ createAuthUser error:", createError);
-      return { success: false, error: createError };
+      const { data: userData, error: createError } =
+        await supabaseAdmin.auth.admin.createUser({
+          email,
+          password,
+          user_metadata: {
+            role,
+            college_id: college_id || null,
+          },
+          email_confirm: true, // ✅ Auto-confirm, no email sent
+        });
+
+      if (createError) {
+        console.error("❌ createAuthUser error:", createError);
+        return { success: false, error: createError };
+      }
+
+      if (!userData.user) {
+        return { success: false, error: { message: "Failed to create user" } };
+      }
+
+      console.log(`✅ Auth user created (confirmed): ${userData.user.id}`);
+
+      return {
+        success: true,
+        user: userData.user,
+      };
     }
 
-    if (!userData.user) {
+    // ✅ CASE 2: Require email confirmation (sends confirmation email)
+    const supabase = await createClient();
+
+    console.log(
+      `📝 Creating auth user (confirmation required): ${email} (${role})`
+    );
+
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp(
+      {
+        email,
+        password,
+        options: {
+          data: {
+            role,
+            college_id: college_id || null,
+          },
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+        },
+      }
+    );
+
+    if (signUpError) {
+      console.error("❌ signUp error:", signUpError);
+      return { success: false, error: signUpError };
+    }
+
+    if (!signUpData.user) {
       return { success: false, error: { message: "Failed to create user" } };
     }
 
-    console.log(`✅ Auth user created: ${userData.user.id}`);
+    console.log(
+      `✅ Auth user created (pending confirmation): ${signUpData.user.id}`
+    );
+    console.log(`📧 Confirmation email sent to: ${email}`);
 
     return {
       success: true,
-      user: userData.user,
+      user: signUpData.user,
     };
   } catch (e: any) {
     console.error("❌ Unexpected error in createAuthUser:", e);

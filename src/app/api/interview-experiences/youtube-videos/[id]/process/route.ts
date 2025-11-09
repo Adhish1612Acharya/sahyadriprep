@@ -1,11 +1,11 @@
-import { fetchYouTubeTranscript } from "@/helpers/youtube-video.helpers";
+import { fetchYouTubeTranscript } from "@/helpers/youtube/youtube-video.helpers";
 import { AI_KEYS, validateAIKeys } from "@/config/ai-keys.config";
 import {
   generateOverview,
   generateSegments,
   generateFlashcards,
   generateKeyTips,
-} from "@/helpers/ai-generation.helpers";
+} from "@/helpers/ai/ai-generation.helpers";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 

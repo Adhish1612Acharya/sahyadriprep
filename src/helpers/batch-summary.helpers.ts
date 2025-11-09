@@ -1,6 +1,6 @@
 import createChunkSummary, {
   createFallbackSummary,
-} from "@/helpers/generate-chunk-summary";
+} from "@/helpers/ai/generate-chunk-summary";
 
 interface BatchSummaryOptions {
   batchSize?: number;

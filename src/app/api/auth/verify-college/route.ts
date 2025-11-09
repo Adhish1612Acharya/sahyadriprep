@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   isEmailAllowedForCollege,
   deleteAuthUserById,
-} from "@/helpers/auth.helpers";
+} from "@/helpers/auth/auth.helpers";
 
 export async function POST(request: NextRequest) {
   try {

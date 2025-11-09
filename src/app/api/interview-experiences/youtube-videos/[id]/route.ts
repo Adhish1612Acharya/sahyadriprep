@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { isUserSuperAdmin, requireAdmin } from "@/helpers/auth.helpers";
+import { isUserSuperAdmin, requireAdmin } from "@/helpers/auth/auth.helpers";
 
 /**
  * GET /api/youtube-videos/:id

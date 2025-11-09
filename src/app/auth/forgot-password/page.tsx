@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +21,6 @@ export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +61,7 @@ export default function ForgotPasswordPage() {
             </div>
             <CardTitle>Check Your Email</CardTitle>
             <CardDescription>
-              We've sent a password reset link to{" "}
+              Weve sent a password reset link to{" "}
               <span className="font-medium text-foreground">{email}</span>
             </CardDescription>
           </CardHeader>
@@ -78,7 +76,7 @@ export default function ForgotPasswordPage() {
 
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground text-center">
-                Didn't receive the email? Check your spam folder or
+                Didnt receive the email? Check your spam folder or
               </p>
               <Button
                 variant="outline"
@@ -107,7 +105,7 @@ export default function ForgotPasswordPage() {
         <CardHeader className="text-center">
           <CardTitle>Forgot Password?</CardTitle>
           <CardDescription>
-            Enter your email address and we'll send you a link to reset your
+            Enter your email address and we&apos;ll send you a link to reset your
             password
           </CardDescription>
         </CardHeader>
