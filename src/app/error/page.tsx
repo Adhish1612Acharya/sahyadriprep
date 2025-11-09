@@ -1,46 +1,52 @@
-"use server";
+"use client";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
+import { useEffect } from "react";
 
-import { createClient } from "@/lib/supabase/server";
-
-export async function login(formData: FormData) {
-  const supabase = await createClient();
-
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
-
-  const { error } = await supabase.auth.signInWithPassword(data);
-
-  if (error) {
-    redirect("/error");
-  }
-
-  revalidatePath("/", "layout");
-  redirect("/");
+interface ErrorPageProps {
+  error: Error & { digest?: string };
+  reset: () => void;
 }
 
-export async function signup(formData: FormData) {
-  const supabase = await createClient();
+export default function ErrorPage({ error, reset }: ErrorPageProps) {
+  useEffect(() => {
+    // Log error to error reporting service
+    console.error("Application error:", error);
+  }, [error]);
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  };
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="mx-auto max-w-md rounded-lg bg-white p-8 shadow-lg">
+        <div className="flex items-center gap-3 text-red-600 mb-4">
+          <AlertCircle className="h-6 w-6" />
+          <h2 className="text-2xl font-bold">Something went wrong!</h2>
+        </div>
 
-  const { error } = await supabase.auth.signUp(data);
+        <p className="text-gray-600 mb-6">
+          {error.message || "An unexpected error occurred. Please try again."}
+        </p>
 
-  if (error) {
-    redirect("/error");
-  }
+        {process.env.NODE_ENV === "development" && error.digest && (
+          <div className="mb-4 rounded bg-gray-100 p-3">
+            <p className="text-xs text-gray-500">
+              Error Digest: {error.digest}
+            </p>
+          </div>
+        )}
 
-  revalidatePath("/", "layout");
-  redirect("/");
+        <div className="flex gap-3">
+          <Button onClick={reset} variant="default">
+            Try Again
+          </Button>
+          <Button
+            onClick={() => (window.location.href = "/")}
+            variant="outline"
+          >
+            Go Home
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
