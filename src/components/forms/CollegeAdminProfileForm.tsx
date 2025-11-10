@@ -6,7 +6,7 @@ import {
   collegeAdminProfileUpdateSchema,
   CollegeAdminProfileUpdate,
 } from "@/lib/validations/profile.schema";
-import { CollegeAdminProfile } from "@/services/profile.service";
+import { CollegeAdminProfile } from "@/types/services/profile-service.types";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -41,7 +41,6 @@ export function CollegeAdminProfileForm({
     resolver: zodResolver(collegeAdminProfileUpdateSchema),
     defaultValues: {
       full_name: profile.full_name || "",
-      email: profile.email || "",
       phone: profile.phone || "",
       designation: profile.designation || "",
       department: profile.department || "",
@@ -67,24 +66,6 @@ export function CollegeAdminProfileForm({
                     <FormLabel>Full Name *</FormLabel>
                     <FormControl>
                       <Input placeholder="Dr. John Smith" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="admin@college.edu"
-                        {...field}
-                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

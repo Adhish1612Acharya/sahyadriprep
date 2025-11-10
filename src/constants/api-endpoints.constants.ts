@@ -144,6 +144,17 @@ export const COMPANY_ENDPOINTS = {
 } as const;
 
 // ============================================
+// PROFILE ENDPOINTS
+// ============================================
+export const PROFILE_ENDPOINTS = {
+  BASE: "/profile",
+  ME: "/profile/me",
+  UPDATE: "/profile/update",
+  AVATAR: "/profile/avatar",
+  RESUME: "/profile/resume",
+} as const;
+
+// ============================================
 // AGGREGATE ALL ENDPOINTS (for reference)
 // ============================================
 export const API_ENDPOINTS = {
@@ -160,15 +171,5 @@ export const API_ENDPOINTS = {
   COMPANIES: COMPANY_ENDPOINTS,
   IMPORTANT_TOPICS: IMPORTANT_TOPIC_ENDPOINTS,
   YOUTUBE: YOUTUBE_ENDPOINTS,
-} as const;
-
-// ============================================
-// PROFILE ENDPOINTS
-// ============================================
-export const PROFILE_ENDPOINTS = {
-  BASE: "/api/profile",
-  ME: "/api/profile/me",
-  UPDATE: "/api/profile/update",
-  AVATAR: "/api/profile/avatar",
-  RESUME: "/api/profile/resume",
+  PROFILE: PROFILE_ENDPOINTS,
 } as const;

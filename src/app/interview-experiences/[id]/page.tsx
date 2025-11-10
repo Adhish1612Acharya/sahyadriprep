@@ -71,7 +71,7 @@ export default function InterviewExperienceDetailPage() {
   const handleDelete = () => {
     deleteExperience.mutate(experienceId, {
       onSuccess: () => {
-        router.push("/admin/interview-experiences");
+        router.push("/interview-experiences");
       },
     });
   };
@@ -104,7 +104,7 @@ export default function InterviewExperienceDetailPage() {
         <Button
           variant="outline"
           className="mt-4"
-          onClick={() => router.push("/admin/interview-experiences")}
+          onClick={() => router.push("/interview-experiences")}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to List
@@ -119,7 +119,7 @@ export default function InterviewExperienceDetailPage() {
       <div className="flex items-center justify-between mb-6">
         <Button
           variant="ghost"
-          onClick={() => router.push("/admin/interview-experiences")}
+          onClick={() => router.push("/interview-experiences")}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to List

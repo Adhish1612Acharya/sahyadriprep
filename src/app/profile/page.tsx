@@ -20,7 +20,7 @@ import {
   StudentProfile,
   CollegeAdminProfile,
   UserRole,
-} from "@/services/profile.service";
+} from "@/types/services/profile-service.types";
 import {
   AlertCircle,
   User,

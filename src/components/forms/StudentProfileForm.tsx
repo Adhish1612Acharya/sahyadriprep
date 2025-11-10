@@ -6,7 +6,7 @@ import {
   studentProfileUpdateSchema,
   StudentProfileUpdate,
 } from "@/lib/validations/profile.schema";
-import { StudentProfile } from "@/services/profile.service";
+import { StudentProfile } from "@/types/services/profile-service.types";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -77,7 +77,6 @@ export function StudentProfileForm({
     resolver: zodResolver(studentProfileUpdateSchema),
     defaultValues: {
       full_name: profile.full_name || "",
-      email: profile.email || "",
       phone: profile.phone || "",
       usn: profile.usn || "",
       batch: profile.batch || "",
@@ -116,23 +115,6 @@ export function StudentProfileForm({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="john@example.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}

@@ -33,8 +33,13 @@ export async function POST(request: NextRequest) {
     const { email, password, role, college_id } = parsed.data;
 
     // ✅ Step 1: Validate email domain
-    // const rejectResponse = await enforceCollegeEmailOrReject(email, college_id);
-    // if (rejectResponse) return rejectResponse;
+    if (role === "student" && college_id) {
+      const rejectResponse = await enforceCollegeEmailOrReject(
+        email,
+        college_id
+      );
+      if (rejectResponse) return rejectResponse;
+    }
 
     // ✅ Step 2: Create user + profile (with automatic rollback)
     const result = await createUserWithProfile({

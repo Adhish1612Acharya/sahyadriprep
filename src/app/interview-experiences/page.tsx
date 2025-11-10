@@ -328,7 +328,7 @@ export default function InterviewExperiencesPage() {
                         {exp.student_name || "Anonymous"}
                       </h3>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {exp.companies?.name} • {exp.batch}
+                        {exp.company_details?.name} • {exp.batch}
                       </p>
                     </div>
 
@@ -336,11 +336,11 @@ export default function InterviewExperiencesPage() {
                     <div className="flex flex-wrap gap-4 text-sm">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <span>{exp.companies?.name}</span>
+                        <span>{exp.company_details?.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <School className="h-4 w-4 text-muted-foreground" />
-                        <span>{exp.colleges?.name}</span>
+                        <span>{exp.college_details.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -379,11 +379,11 @@ export default function InterviewExperiencesPage() {
                   </div>
 
                   {/* Company Logo */}
-                  {exp.companies?.logo_url && (
+                  {exp.company_details?.logo_url && (
                     <div className="ml-4">
                       <Image
-                        src={exp.companies.logo_url}
-                        alt={exp.companies.name}
+                        src={exp.company_details.logo_url}
+                        alt={exp.company_details.name}
                         width={64}
                         height={64}
                         className="object-contain rounded-lg border"

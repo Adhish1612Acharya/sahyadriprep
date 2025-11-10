@@ -7,7 +7,6 @@ import { z } from "zod";
 export const studentProfileUpdateSchema = z
   .object({
     full_name: z.string().min(1, "Full name is required").max(100),
-    email: z.string().email("Invalid email address"),
     phone: z
       .string()
       .regex(/^[0-9]{10}$/, "Phone must be 10 digits")
@@ -114,7 +113,6 @@ export const studentProfileUpdateSchema = z
 export const collegeAdminProfileUpdateSchema = z
   .object({
     full_name: z.string().min(1, "Full name is required").max(100),
-    email: z.string().email("Invalid email address"),
     phone: z
       .string()
       .regex(/^[0-9]{10}$/, "Phone must be 10 digits")
