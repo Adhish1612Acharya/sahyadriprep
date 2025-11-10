@@ -3,12 +3,10 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import FloatingChatbot from "@/components/floating-chatbot";
 import { QueryProvider } from "@/providers/query-provider";
-import { AuthProvider } from "@/contexts/auth-context"; // ✅ Import AuthProvider
+import { AuthProvider } from "@/contexts/auth-context"; 
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
-// import "react-pdf/dist/Page/AnnotationLayer.css";
-// import "react-pdf/dist/Page/TextLayer.css";
 
 const inter = Inter({ subsets: ["latin"] });
 

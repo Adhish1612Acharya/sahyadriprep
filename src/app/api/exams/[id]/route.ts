@@ -4,11 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 // ✅ Get exam by ID
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { id } = params;
+    const { id } = await params;
 
     // Validate ID format
     if (!id || typeof id !== "string") {
@@ -249,4 +249,3 @@ export async function DELETE(
     );
   }
 }
-
