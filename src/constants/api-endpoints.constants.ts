@@ -161,3 +161,14 @@ export const API_ENDPOINTS = {
   IMPORTANT_TOPICS: IMPORTANT_TOPIC_ENDPOINTS,
   YOUTUBE: YOUTUBE_ENDPOINTS,
 } as const;
+
+// ============================================
+// PROFILE ENDPOINTS
+// ============================================
+export const PROFILE_ENDPOINTS = {
+  BASE: "/api/profile",
+  ME: "/api/profile/me",
+  UPDATE: "/api/profile/update",
+  AVATAR: "/api/profile/avatar",
+  RESUME: "/api/profile/resume",
+} as const;
