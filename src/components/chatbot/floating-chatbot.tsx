@@ -5,7 +5,7 @@ import { MessageSquare, X, Minimize2, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import RagChatbot from "./rag-chatbot";
+import RagChatbot from "@/components/chatbot/rag-chatbot";
 
 export default function FloatingChatbot() {
   const [isOpen, setIsOpen] = useState(false);

@@ -252,7 +252,8 @@ export function MediaUploader({
               {/* File size and type info */}
               <div className="text-xs text-muted-foreground">
                 {media_item.file_type} •{" "}
-                {(media_item.file_size / 1024 / 1024).toFixed(2)} MB
+                {media_item.file_size &&
+                  (media_item.file_size / 1024 / 1024).toFixed(2)}MB
               </div>
             </li>
           ))}

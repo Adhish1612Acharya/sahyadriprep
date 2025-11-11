@@ -60,7 +60,7 @@ export function ImportantQuestionsTab({
       .map((question) => ({
         question: question.question.trim(),
         text_answer: question.text_answer.trim() || undefined,
-        video_file: question.video_files[0]?.file || undefined,
+        video_file: question.video_files[0]?.url || undefined,
         is_public: question.is_public,
       }));
   }, [questions]);

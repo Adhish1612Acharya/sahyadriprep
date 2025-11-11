@@ -16,7 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 
 interface LoginFormProps {
-  onLogin: (formData: FormData) => Promise<{ error?: string }>;
+  onLogin: (formData: FormData) => Promise<{ error?: string } | void>;
 }
 
 export function LoginForm({ onLogin }: LoginFormProps) {

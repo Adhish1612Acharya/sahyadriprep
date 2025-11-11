@@ -51,12 +51,11 @@ export async function GET(
 // ✅ Update exam
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { id } = params;
-
+    const { id } = await params;
     // Validate ID format
     if (!id || typeof id !== "string") {
       return NextResponse.json(
@@ -165,12 +164,11 @@ export async function PUT(
 // ✅ Delete exam
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { id } = params;
-
+    const { id } = await params;
     // Validate ID format
     if (!id || typeof id !== "string") {
       return NextResponse.json(

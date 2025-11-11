@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -54,6 +53,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import Image from "next/image";
 
 export default function ManageCompaniesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -223,7 +223,7 @@ export default function ManageCompaniesPage() {
                   id="logo_url"
                   type="url"
                   placeholder="https://example.com/logo.png"
-                  value={formData.logo_url}
+                  value={formData.logo_url ?? ""}
                   onChange={(e) =>
                     setFormData({ ...formData, logo_url: e.target.value })
                   }
@@ -241,7 +241,7 @@ export default function ManageCompaniesPage() {
                   id="website"
                   type="url"
                   placeholder="https://www.example.com"
-                  value={formData.website}
+                  value={formData.website ?? ""}
                   onChange={(e) =>
                     setFormData({ ...formData, website: e.target.value })
                   }
@@ -254,7 +254,7 @@ export default function ManageCompaniesPage() {
                 <Input
                   id="industry"
                   placeholder="e.g. Technology, Finance, Healthcare"
-                  value={formData.industry}
+                  value={formData.industry ?? ""}
                   onChange={(e) =>
                     setFormData({ ...formData, industry: e.target.value })
                   }
@@ -267,7 +267,7 @@ export default function ManageCompaniesPage() {
                 <Input
                   id="headquarters"
                   placeholder="e.g. Bangalore, India"
-                  value={formData.headquarters}
+                  value={formData.headquarters ?? ""}
                   onChange={(e) =>
                     setFormData({ ...formData, headquarters: e.target.value })
                   }
@@ -388,7 +388,7 @@ export default function ManageCompaniesPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     {company.logo_url ? (
-                      <img
+                      <Image
                         src={company.logo_url}
                         alt={company.name}
                         className="w-12 h-12 rounded-lg object-contain border"
@@ -447,7 +447,11 @@ export default function ManageCompaniesPage() {
                     variant="outline"
                     size="sm"
                     className="w-full"
-                    onClick={() => window.open(company.website, "_blank")}
+                    onClick={() => {
+                      if (company.website) {
+                        window.open(company.website, "_blank");
+                      }
+                    }}
                   >
                     <Globe className="h-4 w-4 mr-2" />
                     Visit Website
@@ -528,7 +532,7 @@ export default function ManageCompaniesPage() {
               <Label htmlFor="edit-logo">Logo URL</Label>
               <Input
                 id="edit-logo"
-                value={formData.logo_url}
+                value={formData.logo_url ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, logo_url: e.target.value })
                 }
@@ -539,7 +543,7 @@ export default function ManageCompaniesPage() {
               <Label htmlFor="edit-website">Website</Label>
               <Input
                 id="edit-website"
-                value={formData.website}
+                value={formData.website ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, website: e.target.value })
                 }
@@ -550,7 +554,7 @@ export default function ManageCompaniesPage() {
               <Label htmlFor="edit-industry">Industry</Label>
               <Input
                 id="edit-industry"
-                value={formData.industry}
+                value={formData.industry ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, industry: e.target.value })
                 }
@@ -561,7 +565,7 @@ export default function ManageCompaniesPage() {
               <Label htmlFor="edit-headquarters">Headquarters</Label>
               <Input
                 id="edit-headquarters"
-                value={formData.headquarters}
+                value={formData.headquarters ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, headquarters: e.target.value })
                 }

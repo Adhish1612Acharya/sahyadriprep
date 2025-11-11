@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import FloatingChatbot from "@/components/floating-chatbot";
 import { QueryProvider } from "@/providers/query-provider";
-import { AuthProvider } from "@/contexts/auth-context"; 
+import { AuthProvider } from "@/contexts/auth-context";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-
+import { ConditionalChatbot } from "@/components/chatbot/conditional-chatbot";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,12 +23,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <AuthProvider>
-          {" "}
-          {/* ✅ Wrap with AuthProvider */}
           <QueryProvider>
             <Navbar />
             {children}
-            <FloatingChatbot />
+            {/* ✅ Conditional Chatbot - Only shows when user is logged in */}
+            <ConditionalChatbot />
             <Footer />
           </QueryProvider>
         </AuthProvider>

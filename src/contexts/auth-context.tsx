@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
 interface ProfileData {
   full_name: string;
@@ -26,6 +27,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<
     "student" | "college_admin" | "super_admin" | null
@@ -261,6 +264,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfileData(null);
         setIsLoading(false); // ✅ CRITICAL: Set to false on sign out
       }
+
+      router.refresh();
     });
 
     // ✅ Cleanup

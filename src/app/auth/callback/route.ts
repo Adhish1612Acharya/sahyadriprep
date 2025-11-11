@@ -9,14 +9,24 @@ import {
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+  const token = requestUrl.searchParams.get("token");
   const code = requestUrl.searchParams.get("code");
   const error = requestUrl.searchParams.get("error");
   const type = requestUrl.searchParams.get("type"); // ✅ Get the type parameter
   const next = requestUrl.searchParams.get("next") ?? "/";
+  const error_description = requestUrl.searchParams.get("error_description");
 
+  console.log("🔐 Auth callback triggered");
+  console.log("Has code:", !!code);
+  console.log("Error:", error);
+
+  // ✅ Handle OAuth errors
   if (error) {
+    console.error("❌ OAuth error:", error, error_description);
     return NextResponse.redirect(
-      new URL("/auth/login?error=oauth_failed", requestUrl.origin)
+      `${requestUrl.origin}/auth/login?error=${encodeURIComponent(
+        error_description || error
+      )}`
     );
   }
 
@@ -29,8 +39,15 @@ export async function GET(request: Request) {
 
     if (exchangeError) {
       console.error("❌ Code exchange failed:", exchangeError);
+      // Clear any corrupted auth state
+      await supabase.auth.signOut();
+
       return NextResponse.redirect(
-        new URL("/auth/login?error=exchange_failed", requestUrl.origin)
+        `${
+          requestUrl.origin
+        }/auth/login?error=auth_callback_failed&details=${encodeURIComponent(
+          exchangeError.message
+        )}`
       );
     }
 
@@ -195,6 +212,63 @@ export async function GET(request: Request) {
       );
 
       return NextResponse.redirect(new URL(redirectTo, requestUrl.origin));
+    }
+  }
+
+  if (token && type === "recovery") {
+    // ✅ Handle password recovery flow
+    const supabase = await createClient();
+
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: token,
+        type: "recovery",
+      });
+
+      if (error) {
+        console.error("❌ Recovery verification failed:", error);
+        return NextResponse.redirect(
+          `${requestUrl.origin}/auth/login?error=recovery_failed`
+        );
+      }
+
+      console.log("✅ Recovery token verified");
+
+      // Redirect to password reset page
+      return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password`);
+    } catch (e: any) {
+      console.error("❌ Unexpected error during recovery:", e);
+      return NextResponse.redirect(
+        `${requestUrl.origin}/auth/login?error=recovery_failed`
+      );
+    }
+  }
+
+  if (token && type === "signup") {
+    // ✅ Handle email confirmation
+    const supabase = await createClient();
+
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: token,
+        type: "signup",
+      });
+
+      if (error) {
+        console.error("❌ Email verification failed:", error);
+        return NextResponse.redirect(
+          `${requestUrl.origin}/auth/login?error=verification_failed`
+        );
+      }
+
+      console.log("✅ Email verified");
+
+      return NextResponse.redirect(`${requestUrl.origin}/dashboard`);
+    } catch (e: any) {
+      console.error("❌ Unexpected error during verification:", e);
+      return NextResponse.redirect(
+        `${requestUrl.origin}/auth/login?error=verification_failed`
+      );
     }
   }
 

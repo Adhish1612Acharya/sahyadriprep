@@ -4,12 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 // ✅ Get subject by ID
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { id } = params;
-
+    const { id } = await params;
     if (!id) {
       return NextResponse.json(
         { error: "Subject ID is required" },
@@ -49,12 +48,11 @@ export async function GET(
 // ✅ Update subject
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params:  Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { id } = params;
-
+    const { id } = await params;
     if (!id) {
       return NextResponse.json(
         { error: "Subject ID is required" },
@@ -106,12 +104,11 @@ export async function PUT(
 // ✅ Delete subject
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { id } = params;
-
+    const { id } = await params;
     if (!id) {
       return NextResponse.json(
         { error: "Subject ID is required" },
