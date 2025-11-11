@@ -8,6 +8,7 @@ import { YouTubeVideo } from "@/types/services/interview-youtube-video.types";
 import { formatDuration } from "@/helpers/youtube/youtube-video.helpers";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
+import Image from "next/image";
 
 interface VideoCardProps {
   video: YouTubeVideo;
@@ -27,7 +28,7 @@ export function VideoCard({ video }: VideoCardProps) {
     >
       {/* Thumbnail */}
       <div className="relative aspect-video bg-muted">
-        <img
+        <Image
           src={video.thumbnail_url || "/placeholder-video.jpg"}
           alt={video.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

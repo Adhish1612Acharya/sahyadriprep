@@ -2,7 +2,7 @@
 // TYPES
 // ============================================
 
-import { SuperAdminProfile } from "@/services/profile.service";
+// import { SuperAdminProfile } from "@/types/services/profile-service.types";
 
 export type UserRole = "student" | "college_admin" | "super_admin";
 
@@ -53,7 +53,7 @@ export interface CollegeAdminProfile extends BaseProfile {
   } | null;
 }
 
-export type Profile = StudentProfile | CollegeAdminProfile | SuperAdminProfile;
+export type Profile = StudentProfile | CollegeAdminProfile;
 
 export interface ProfileResponse {
   success: boolean;

@@ -20,7 +20,7 @@ import type { Media } from "@/models/media.types";
 type ImportantTopicData = {
   title: string;
   text_answer?: string;
-  video_file?: File;
+  video_file?: Media;
   is_public: boolean;
 };
 
@@ -60,7 +60,7 @@ export function ImportantTopicsTab({
       .map((topic) => ({
         title: topic.title.trim(),
         text_answer: topic.text_answer.trim() || undefined,
-        video_file: topic.video_files[0]?.file || undefined,
+        video_file: topic.video_files[0] || undefined,
         is_public: topic.is_public,
       }));
   }, [topics]);

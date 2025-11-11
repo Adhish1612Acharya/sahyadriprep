@@ -20,7 +20,7 @@ import type { Media } from "@/models/media.types";
 type ImportantQuestionData = {
   question: string;
   text_answer?: string;
-  video_file?: File;
+  video_file?: File | string;
   is_public: boolean;
 };
 

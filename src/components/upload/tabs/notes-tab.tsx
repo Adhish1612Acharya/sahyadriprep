@@ -47,11 +47,14 @@ export function NotesTab({
   const notes_data: NoteData[] = useMemo(() => {
     if (!is_valid || !title.trim()) return [];
 
-    return files.map((media) => ({
-      title: title.trim(),
-      description: description.trim(),
-      file: media.file || new File([], media.url, { type: media.type }),
-    }));
+    return files.map((media) => {
+      const fileFromMedia = (media as any).file ?? new File([], media.url, { type: (media as any).type ?? "application/pdf" });
+      return {
+        title: title.trim(),
+        description: description.trim(),
+        file: fileFromMedia,
+      } as NoteData;
+    });
   }, [title, description, files, is_valid]);
 
   // Notify parent component when notes data changes

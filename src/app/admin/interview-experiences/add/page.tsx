@@ -35,6 +35,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle } from "lucide-react";
 import { useInterviewExperiences } from "@/hooks/useInterviewExperiences.hook";
 import { useCompanies } from "@/hooks/useCompanies.hook";
+import Image from "next/image";
 
 // Form validation schema
 const formSchema = z.object({
@@ -50,7 +51,7 @@ const formSchema = z.object({
       "PDF must be less than 10MB"
     ),
   video_preview: z
-    .instanceof(FileList)
+    .any()
     .optional()
     .refine(
       (files) =>
@@ -352,7 +353,7 @@ export default function UploadInterviewExperiencePage() {
                             <SelectItem key={company.id} value={company.id}>
                               <div className="flex items-center gap-2">
                                 {company.logo_url ? (
-                                  <img
+                                  <Image
                                     src={company.logo_url}
                                     alt={company.name}
                                     className="h-5 w-5 rounded object-contain"

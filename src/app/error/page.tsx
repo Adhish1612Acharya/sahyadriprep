@@ -4,15 +4,20 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 import { useEffect } from "react";
 
+// ✅ Disable static generation for error pages
+export const dynamic = "force-dynamic";
+
 interface ErrorPageProps {
-  error: Error & { digest?: string };
-  reset: () => void;
+  error?: Error & { digest?: string }; // ✅ Make optional
+  reset?: () => void; // ✅ Make optional
 }
 
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
   useEffect(() => {
     // Log error to error reporting service
-    console.error("Application error:", error);
+    if (error) {
+      console.error("Application error:", error);
+    }
   }, [error]);
 
   return (
@@ -24,10 +29,10 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
         </div>
 
         <p className="text-gray-600 mb-6">
-          {error.message || "An unexpected error occurred. Please try again."}
+          {error?.message || "An unexpected error occurred. Please try again."}
         </p>
 
-        {process.env.NODE_ENV === "development" && error.digest && (
+        {process.env.NODE_ENV === "development" && error?.digest && (
           <div className="mb-4 rounded bg-gray-100 p-3">
             <p className="text-xs text-gray-500">
               Error Digest: {error.digest}
@@ -36,9 +41,11 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
         )}
 
         <div className="flex gap-3">
-          <Button onClick={reset} variant="default">
-            Try Again
-          </Button>
+          {reset && (
+            <Button onClick={reset} variant="default">
+              Try Again
+            </Button>
+          )}
           <Button
             onClick={() => (window.location.href = "/")}
             variant="outline"

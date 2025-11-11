@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Card,
@@ -15,7 +15,10 @@ import { Loader2, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
 import { confirmEmail } from "@/actions/auth.actions";
 import Link from "next/link";
 
-export default function ConfirmPage() {
+// ✅ Disable static generation
+export const dynamic = "force-dynamic";
+
+function ConfirmPageContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
@@ -26,7 +29,6 @@ export default function ConfirmPage() {
   useEffect(() => {
     const handleConfirmation = async () => {
       try {
-        // Get access token from URL
         // ✅ Get token_hash and type from URL (PKCE flow)
         const tokenHash = searchParams.get("token_hash");
         const type = searchParams.get("type");
@@ -66,9 +68,9 @@ export default function ConfirmPage() {
         setIsVerifying(false);
 
         // Redirect after 2 seconds
-        // setTimeout(() => {
-        //   router.push(next);
-        // }, 2000);
+        setTimeout(() => {
+          window.location.href = next;
+        }, 2000);
       } catch (error: any) {
         console.error("❌ Confirmation error:", error);
         setStatus("error");
@@ -106,13 +108,13 @@ export default function ConfirmPage() {
 
           {status === "success" && (
             <div className="space-y-4">
-              <Alert className="bg-primary/10 text-primary border-primary/20">
+              <Alert className="bg-green-50 text-green-700 border-green-200">
                 <CheckCircle className="h-4 w-4" />
                 <AlertDescription>{message}</AlertDescription>
               </Alert>
 
               <div className="flex flex-col items-center space-y-2 py-4">
-                <CheckCircle className="h-16 w-16 text-primary" />
+                <CheckCircle className="h-16 w-16 text-green-600" />
                 <p className="text-sm text-center text-muted-foreground">
                   Your email has been verified successfully
                 </p>
@@ -150,5 +152,27 @@ export default function ConfirmPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// ✅ Wrap in Suspense boundary
+export default function ConfirmPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardContent className="flex flex-col items-center space-y-4 py-8">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">
+                Loading confirmation page...
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <ConfirmPageContent />
+    </Suspense>
   );
 }

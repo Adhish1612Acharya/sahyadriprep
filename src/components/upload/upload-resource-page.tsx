@@ -751,14 +751,14 @@ function UploadResourcePage() {
                   <ImportantTopicsTab
                     resource_id={resource_id}
                     created_by="user_123"
-                    on_topics_change={handle_topics_change}
+                    on_topics_change={handle_topics_change as any}
                   />
                 </TabsContent>
                 <TabsContent value="questions" className="mt-4">
                   <ImportantQuestionsTab
                     resource_id={resource_id}
                     created_by="user_123"
-                    on_questions_change={handle_questions_change}
+                    on_questions_change={handle_questions_change as any}
                   />
                 </TabsContent>
               </Tabs>
