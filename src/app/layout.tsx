@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { ConditionalChatbot } from "@/components/chatbot/conditional-chatbot";
+import { getCurrentUser } from "@/helpers/auth/auth.helpers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -14,15 +15,16 @@ export const metadata: Metadata = {
   description: "Interview preparation platform",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getCurrentUser();
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthProvider>
+        <AuthProvider initialUser={user}>
           <QueryProvider>
             <Navbar />
             {children}

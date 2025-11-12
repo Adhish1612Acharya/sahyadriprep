@@ -38,9 +38,15 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error);
         setLoading(false);
+      } else if (result?.success && result.redirectTo) {
+        // ✅ The user is signed in. The onAuthStateChange
+        // listener will now handle the UI update.
+        // We just need to navigate the user.
+        router.push(result.redirectTo);
       } else {
-       
-        router.refresh();
+        // Fallback in case something unexpected happens
+        setError("Login successful, but redirect failed.");
+        setLoading(false);
       }
     } catch (err: any) {
       setError(err.message || "An error occurred during login");

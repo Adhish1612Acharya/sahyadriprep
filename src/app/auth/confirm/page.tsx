@@ -43,7 +43,13 @@ function ConfirmPageContent() {
           return;
         }
 
-        if (type !== "signup" && type !== "email_change" && type !== "email") {
+        if (
+          type !== "signup" &&
+          type !== "email_change" &&
+          type !== "email" &&
+          type !== "recovery"
+        ) {
+          console.log("❌ Invalid confirmation link type:", type);
           setStatus("error");
           setMessage("Invalid confirmation link type.");
           setIsVerifying(false);
@@ -82,7 +88,7 @@ function ConfirmPageContent() {
     };
 
     handleConfirmation();
-  }, [searchParams]);
+  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchProfileByUserId } from "@/helpers/database/profiles/fetch";
+import { fetchProfileByUserId } from "@/helpers/database/profiles/fetch.server";
 import {
   updateStudentProfile,
   updateCollegeAdminProfile,

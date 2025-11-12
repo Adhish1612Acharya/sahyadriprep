@@ -31,7 +31,10 @@ export function VideoCard({ video }: VideoCardProps) {
         <Image
           src={video.thumbnail_url || "/placeholder-video.jpg"}
           alt={video.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          fill // ✅ Use fill instead of width/height
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // ✅ Add sizes
+          priority={false} // ✅ Lazy load thumbnails
         />
 
         {/* Duration Badge */}

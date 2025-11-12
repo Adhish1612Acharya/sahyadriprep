@@ -108,15 +108,15 @@ export function Navbar() {
   }, []);
 
   // ✅ Debug logging
-  useEffect(() => {
-    console.log("🔍 Navbar Debug:", {
-      isLoading,
-      hasUser: !!user,
-      role,
-      profileData,
-      mounted,
-    });
-  }, [isLoading, user, role, profileData, mounted]);
+  // useEffect(() => {
+  //   console.log("🔍 Navbar Debug:", {
+  //     isLoading,
+  //     hasUser: !!user,
+  //     role,
+  //     profileData,
+  //     mounted,
+  //   });
+  // }, [isLoading, user, role, profileData, mounted]);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -127,8 +127,7 @@ export function Navbar() {
       if (result?.error) {
         console.error("Sign out error:", result.error);
       } else {
-        // ✅ Refresh to update navbar, then redirect
-        router.refresh();
+       
         router.push("/");
       }
     } catch (error) {

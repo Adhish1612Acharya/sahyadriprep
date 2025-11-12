@@ -52,7 +52,10 @@ export async function signInWithEmail(formData: {
 
   const redirectTo =
     redirectMap[profile.role as keyof typeof redirectMap] || "/";
-  redirect(redirectTo); // ✅ Server-side redirect
+  //redirect(redirectTo); // ✅ Server-side redirect
+
+  // Return the path instead of redirecting
+  return { success: true, redirectTo };
 }
 
 export async function signInWithGoogle(options?: {
@@ -96,7 +99,7 @@ export async function signOut() {
 
   console.log("✅ Server sign out successful");
 
-  revalidatePath("/", "layout");
+  // revalidatePath("/", "layout");
   return { success: true };
 }
 
@@ -277,8 +280,11 @@ export async function sendPasswordResetEmail(email: string) {
   try {
     const supabase = await createClient();
 
+    // Use your token exchange URL (step 1 from PKCE flow)
+    const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`;
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?type=recovery`,
+      redirectTo: redirectUrl,
     });
 
     if (error) {
@@ -344,16 +350,19 @@ export async function resetPasswordWithToken(
 
     const supabase = await createClient();
 
-    const { error } = await supabase.auth.updateUser({
+    const { error: updateError } = await supabase.auth.updateUser({
       password: newPassword,
     });
-
-    if (error) {
-      console.error("❌ Password reset error:", error);
-      return { error: error.message };
+    if (updateError) {
+      return { error: updateError.message };
     }
 
-    console.log("✅ Password reset successfully");
+    const { success, error } = await signOut();
+
+    if(error)
+    {
+      return { error: error };
+    }
 
     revalidatePath("/", "layout");
     return { success: true };
@@ -366,40 +375,50 @@ export async function resetPasswordWithToken(
 /**
  * Verify if user has valid reset token
  */
-export async function verifyResetToken() {
-  try {
-    console.log("Verifying reset token...");
-    const supabase = await createClient();
+// export async function verifyResetToken() {
+//   try {
+//     console.log("Verifying reset token...");
+//     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
+//     const {
+//       data: { user },
+//       error,
+//     } = await supabase.auth.getUser();
 
-    console.log("User from reset token verification:", user);
+//     console.log("User from reset token verification:", user);
 
-    if (error || !user) {
-      console.log("Invalid or expired reset link");
-      return { valid: false, error: "Invalid or expired reset link" };
-    }
+//     if (error || !user) {
+//       console.log("Invalid or expired reset link");
+//       return { valid: false, error: "Invalid or expired reset link" };
+//     }
 
-    // Check if this is a password recovery session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+//     // Check if this is a password recovery session
+//     const {
+//       data: { session },
+//     } = await supabase.auth.getSession();
 
-    console.log("Session from reset token verification:", session);
+//     console.log("Session from reset token verification:", session);
 
-    if (!session) {
-      console.log("No active session found");
-      return { valid: false, error: "No active session" };
-    }
+//     if (!session) {
+//       console.log("No active session found");
+//       return { valid: false, error: "No active session" };
+//     }
 
-    return { valid: true, user };
-  } catch (error: any) {
-    console.error("❌ Error verifying reset token:", error);
-    return { valid: false, error: error.message };
-  }
+//     return { valid: true, user };
+//   } catch (error: any) {
+//     console.error("❌ Error verifying reset token:", error);
+//     return { valid: false, error: error.message };
+//   }
+// }
+
+export async function verifyResetToken(token: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({
+    token_hash: token,
+    type: "recovery",
+  });
+
+  return !error;
 }
 
 /**
@@ -411,7 +430,7 @@ export async function confirmEmail(tokenHash: string, type: string) {
       return { error: "Missing confirmation token" };
     }
 
-    if (type !== "email" && type !== "signup") {
+    if (type !== "email" && type !== "signup" && type !== "recovery") {
       return { error: "Invalid confirmation type" };
     }
 
@@ -420,7 +439,7 @@ export async function confirmEmail(tokenHash: string, type: string) {
     // ✅ Exchange token_hash for session (PKCE flow)
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
-      type: type === "email" ? "email" : "signup",
+      type,
     });
 
     if (error) {
@@ -433,8 +452,6 @@ export async function confirmEmail(tokenHash: string, type: string) {
     if (!data.user) {
       return { error: "Failed to verify user after confirmation" };
     }
-
-    console.log("✅ Email confirmed for user:", data.user.id);
 
     // Sync profile metadata after email confirmation
     const syncResult = await syncProfileToMetadata(data.user.id);
