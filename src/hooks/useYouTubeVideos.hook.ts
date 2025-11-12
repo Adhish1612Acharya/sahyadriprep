@@ -4,11 +4,10 @@ import {
   ProcessVideoInput,
 } from "@/types/services/interview-youtube-video.types";
 import { youtubeService } from "@/services/interview-youtube-video.service";
-// import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const useInterviewYouTubeVideos = () => {
   const queryClient = useQueryClient();
-  //   const { toast } = useToast();
 
   // ============================================
   // QUERIES
@@ -65,17 +64,14 @@ export const useInterviewYouTubeVideos = () => {
       youtubeService.createVideo(data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["youtube-videos"] });
-      //   toast({
-      //     title: "✅ Success",
-      //     description: `Video "${data.title}" added successfully`,
-      //   });
+      toast("Video Added", {
+        description: `YouTube video "${data.title}" has been added successfully`,
+      });
     },
     onError: (error: Error) => {
-      //   toast({
-      //     title: "❌ Error",
-      //     description: error.message || "Failed to add video",
-      //     variant: "destructive",
-      //   });
+      toast.error("Error", {
+        description: error.message || "Failed to add YouTube video",
+      });
     },
   });
 
@@ -84,17 +80,14 @@ export const useInterviewYouTubeVideos = () => {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["youtube-videos"] });
       queryClient.removeQueries({ queryKey: ["youtube-video", id] });
-      //   toast({
-      //     title: "✅ Success",
-      //     description: "Video deleted successfully",
-      //   });
+      toast("Video Deleted", {
+        description: "YouTube video has been deleted successfully",
+      });
     },
     onError: (error: Error) => {
-      //   toast({
-      //     title: "❌ Error",
-      //     description: error.message || "Failed to delete video",
-      //     variant: "destructive",
-      //   });
+      toast.error("Error", {
+        description: error.message || "Failed to delete YouTube video",
+      });
     },
   });
 
@@ -115,27 +108,9 @@ export const useInterviewYouTubeVideos = () => {
       queryClient.invalidateQueries({
         queryKey: ["youtube-video", variables.id],
       });
-
-      console.log("✅ Video processed successfully:", {
-        transcript_length: data.transcript.text.length,
-        segments: data.segments.length,
-        flashcards: data.flashcards.length,
-        tips: data.tips.length,
-      });
-
-      //   toast({
-      //     title: "✅ Success",
-      //     description: "Video processed successfully with AI!",
-      //   });
     },
     onError: (error: Error) => {
       console.error("❌ Error processing video:", error);
-
-      //   toast({
-      //     title: "❌ Error",
-      //     description: error.message || "Failed to process video",
-      //     variant: "destructive",
-      //   });
     },
   });
 

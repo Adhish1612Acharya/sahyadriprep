@@ -9,7 +9,7 @@ export async function signup(formData: {
   password: string;
   full_name: string;
 }) {
-  console.log("Signup action triggered");
+
   const supabase = await createClient();
 
   // Extract form data
@@ -19,7 +19,7 @@ export async function signup(formData: {
     full_name: formData.full_name,
   };
 
-  console.log("Signup data:", data);
+ 
   // Validate required fields
   if (!data.email || !data.password) {
     return { error: "Email and password are required" };
@@ -65,7 +65,7 @@ export async function signup(formData: {
       return { error: authError.message };
     }
 
-    console.log("Auth signup data:", authData);
+  
 
     if (!authData || !authData.user) {
       return { error: "Signup failed. Please try again." };

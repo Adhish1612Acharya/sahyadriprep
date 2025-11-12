@@ -37,7 +37,6 @@ const authService = {
         data
       );
 
-      console.log("Signup response:", response);
       return response.data;
     } catch (error: any) {
       throw new Error(error.message || "Failed to sign up");

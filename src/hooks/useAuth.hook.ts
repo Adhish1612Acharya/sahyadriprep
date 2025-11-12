@@ -22,7 +22,7 @@ export const useAuthService = () => {
     mutationFn: (data: VerifyCollegeRequest) =>
       authService.verifyCollegeEmail(data),
     onSuccess: (data) => {
-      console.log("✅ College email verified:", data.user?.email);
+      console.log("✅ College email verified:");
     },
     onError: async (error: Error) => {
       console.error("❌ College email verification failed:", error);
@@ -46,10 +46,8 @@ export const useAuthService = () => {
   const signupWithEmail = useMutation({
     mutationFn: (data: SignupRequest) => authService.signupWithEmail(data),
     onSuccess: (data) => {
-      console.log("Data : ", data);
-      console.log("✅ Sign up successful:", data.user?.email);
       // You can redirect to login or dashboard here
-      router.push("/auth/login?success=account_created");
+      router.push("/auth/login?success=account_created Verify your email");
     },
     onError: (error: Error) => {
       console.error("❌ Sign up failed:", error);

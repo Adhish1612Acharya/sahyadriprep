@@ -12,13 +12,9 @@ export async function GET(request: Request) {
   const token = requestUrl.searchParams.get("token");
   const code = requestUrl.searchParams.get("code");
   const error = requestUrl.searchParams.get("error");
-  const type = requestUrl.searchParams.get("type"); // ✅ Get the type parameter
+  const type = requestUrl.searchParams.get("type");
   const next = requestUrl.searchParams.get("next") ?? "/";
   const error_description = requestUrl.searchParams.get("error_description");
-
-  console.log("🔐 Auth callback triggered");
-  console.log("Has code:", !!code);
-  console.log("Error:", error);
 
   // ✅ Handle OAuth errors
   if (error) {
@@ -39,7 +35,6 @@ export async function GET(request: Request) {
 
     if (exchangeError) {
       console.error("❌ Code exchange failed:", exchangeError);
-      // Clear any corrupted auth state
       await supabase.auth.signOut();
 
       return NextResponse.redirect(
@@ -67,22 +62,25 @@ export async function GET(request: Request) {
       if (type === "signup" || type === "email") {
         console.log(`✅ Email confirmed for: ${email}`);
 
-        // Sync profile metadata after email confirmation
         const syncResult = await syncProfileToMetadata(user.id);
         if (!syncResult.success) {
           console.warn("⚠️ Failed to sync profile after email confirmation");
         }
 
-        // Redirect to next page or home
         return NextResponse.redirect(new URL(next, requestUrl.origin));
       }
 
       // ✅ NORMAL OAUTH FLOW (Google, GitHub, etc.)
       console.log(`🔄 Processing OAuth login for: ${email}`);
 
-      // ✅ Step 2: Get college_id from user metadata (stored before OAuth redirect)
-      // Or default to null for Sahyadri
       const collegeId = user.user_metadata?.college_id || null;
+
+      // ✅ Step 2: Check if user exists in profiles (could be an admin)
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id, role,  profile_completed")
+        .eq("id", user.id)
+        .single();
 
       // ✅ Step 3: Verify email domain against college
       const isAllowed = await isEmailAllowedForCollege(email, collegeId);
@@ -94,15 +92,39 @@ export async function GET(request: Request) {
           }`
         );
 
-        // Delete the user from auth (cleanup)
-        try {
-          await deleteAuthUserById(user.id);
-          console.log(`🗑️ Deleted unauthorized user: ${user.id}`);
-        } catch (deleteError) {
-          console.error("Failed to delete unauthorized user:", deleteError);
+        // ✅ Check if this is an existing admin user
+        if (existingProfile) {
+          const isAdmin =
+            existingProfile.role === "college_admin" ||
+            existingProfile.role === "super_admin";
+
+          if (isAdmin) {
+            console.log(
+              `⚠️ Admin user attempted OAuth login: ${email} (${existingProfile.role})`
+            );
+
+            // ✅ Don't delete admin users, just sign them out
+            await supabase.auth.signOut();
+
+            return NextResponse.redirect(
+              new URL(
+                "/auth/login?error=oauth_not_supported&message=Admin accounts cannot use Google login. Please use email and password.",
+                requestUrl.origin
+              )
+            );
+          }
         }
 
-        // Sign out the session
+        // ✅ Not an admin - safe to delete the OAuth account
+        console.log(`🗑️ Deleting unauthorized OAuth user: ${email}`);
+
+        try {
+          await deleteAuthUserById(user.id);
+          console.log(`✅ Deleted unauthorized user: ${user.id}`);
+        } catch (deleteError) {
+          console.error("❌ Failed to delete unauthorized user:", deleteError);
+        }
+
         await supabase.auth.signOut();
 
         return NextResponse.redirect(
@@ -124,7 +146,7 @@ export async function GET(request: Request) {
 
       if (!profile) {
         // ✅ Step 5: New user - create profile
-        const role = user.user_metadata?.role || "student"; // Get role from metadata or default to student
+        const role = user.user_metadata?.role || "student";
 
         const { error: profileError } = await supabase.from("profiles").insert({
           id: user.id,
@@ -156,7 +178,6 @@ export async function GET(request: Request) {
             "⚠️ Failed to sync profile to metadata:",
             syncResult.error
           );
-          // Don't fail the OAuth flow, metadata will sync on next login
         } else {
           console.log(`✅ Profile metadata synced for user: ${user.id}`);
         }
@@ -170,7 +191,6 @@ export async function GET(request: Request) {
       const metadataRole = user.user_metadata?.role;
       const metadataProfileCompleted = user.user_metadata?.profile_completed;
 
-      // Check if metadata is out of sync
       if (
         metadataRole !== profile.role ||
         metadataProfileCompleted !== profile.profile_completed
@@ -184,7 +204,6 @@ export async function GET(request: Request) {
             "⚠️ Failed to sync profile to metadata:",
             syncResult.error
           );
-          // Don't fail the OAuth flow
         } else {
           console.log(`✅ Profile metadata synced for user: ${user.id}`);
         }
@@ -216,7 +235,6 @@ export async function GET(request: Request) {
   }
 
   if (token && type === "recovery") {
-    // ✅ Handle password recovery flow
     const supabase = await createClient();
 
     try {
@@ -234,7 +252,6 @@ export async function GET(request: Request) {
 
       console.log("✅ Recovery token verified");
 
-      // Redirect to password reset page
       return NextResponse.redirect(`${requestUrl.origin}/auth/reset-password`);
     } catch (e: any) {
       console.error("❌ Unexpected error during recovery:", e);
@@ -245,7 +262,6 @@ export async function GET(request: Request) {
   }
 
   if (token && type === "signup") {
-    // ✅ Handle email confirmation
     const supabase = await createClient();
 
     try {

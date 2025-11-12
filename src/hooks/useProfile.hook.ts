@@ -5,6 +5,7 @@ import {
   CollegeAdminProfileUpdate,
   SuperAdminProfileUpdate,
 } from "@/lib/validations/profile.schema";
+import { toast } from "sonner";
 // import { useToast } from "@/hooks/use-toast";
 
 export const useProfile = () => {
@@ -32,18 +33,14 @@ export const useProfile = () => {
       profileService.updateStudentProfile(data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
-      // toast({
-      //   title: "✅ Profile Updated",
-      //   description: "Your profile has been updated successfully",
-      // });
-      console.log("✅ Student profile updated");
+      toast("Profile Updated", {
+        description: "Your profile has been updated successfully",
+      });
     },
     onError: (error: Error) => {
-        // toast({
-        //   title: "❌ Update Failed",
-        //   description: error.message || "Failed to update profile",
-        //   variant: "destructive",
-        // });
+      toast.error("Update Failed", {
+        description: error.message || "Failed to update profile",
+      });
       console.error("❌ Error updating student profile:", error);
     },
   });
@@ -53,19 +50,14 @@ export const useProfile = () => {
       profileService.updateCollegeAdminProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
-      // toast({
-      //   title: "✅ Profile Updated",
-      //   description: "Your profile has been updated successfully",
-      // });
-      console.log("✅ College admin profile updated");
+      toast("Profile Updated", {
+        description: "Your profile has been updated successfully",
+      });
     },
     onError: (error: Error) => {
-      // toast({
-      //   title: "❌ Update Failed",
-      //   description: error.message || "Failed to update profile",
-      //   variant: "destructive",
-      // });
-      console.error("❌ Error updating admin profile:", error);
+      toast.error("Update Failed", {
+        description: error.message || "Failed to update profile",
+      });
     },
   });
 
@@ -74,19 +66,14 @@ export const useProfile = () => {
       profileService.updateSuperAdminProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
-      // toast({
-      //   title: "✅ Profile Updated",
-      //   description: "Your profile has been updated successfully",
-      // });
-      console.log("✅ Super admin profile updated");
+      toast("Profile Updated", {  
+        description: "Your profile has been updated successfully",
+      });
     },
     onError: (error: Error) => {
-      // toast({
-      //   title: "❌ Update Failed",
-      //   description: error.message || "Failed to update profile",
-      //   variant: "destructive",
-      // });
-      console.error("❌ Error updating super admin profile:", error);
+      toast.error("Update Failed", {
+        description: error.message || "Failed to update profile",
+      });
     },
   });
 
@@ -94,17 +81,14 @@ export const useProfile = () => {
     mutationFn: (file: File) => profileService.uploadAvatar(file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
-      // toast({
-      //   title: "✅ Avatar Uploaded",
-      //   description: "Your profile picture has been updated",
-      // });
+      toast("Avatar Uploaded", {
+        description: "Your profile picture has been updated",
+      });
     },
     onError: (error: Error) => {
-      // toast({
-      //   title: "❌ Upload Failed",
-      //   description: error.message || "Failed to upload avatar",
-      //   variant: "destructive",
-      // });
+      toast.error("Upload Failed", {
+        description: error.message || "Failed to upload avatar",
+      });
     },
   });
 
@@ -112,17 +96,14 @@ export const useProfile = () => {
     mutationFn: (file: File) => profileService.uploadResume(file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
-      // toast({
-      //   title: "✅ Resume Uploaded",
-      //   description: "Your resume has been uploaded successfully",
-      // });
+      toast("Resume Uploaded", {
+        description: "Your resume has been uploaded successfully",
+      });
     },
     onError: (error: Error) => {
-      // toast({
-      //   title: "❌ Upload Failed",
-      //     description: error.message || "Failed to upload resume",
-      //   variant: "destructive",
-      // });
+      toast.error("Upload Failed", {
+        description: error.message || "Failed to upload resume",
+      });
     },
   });
 

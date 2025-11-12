@@ -31,24 +31,6 @@ export default function SignupPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <SignupForm />
-
-          <p className="text-xs text-center text-muted-foreground">
-            By creating an account, you agree to our{" "}
-            <Link
-              href="/terms"
-              className="underline underline-offset-4 hover:text-primary"
-            >
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link
-              href="/privacy"
-              className="underline underline-offset-4 hover:text-primary"
-            >
-              Privacy Policy
-            </Link>
-            .
-          </p>
         </CardContent>
         <CardFooter>
           <p className="text-sm text-center w-full text-muted-foreground">

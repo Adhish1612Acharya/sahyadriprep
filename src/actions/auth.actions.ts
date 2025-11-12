@@ -36,8 +36,6 @@ export async function signInWithEmail(formData: {
         syncResult.error
       );
       // Don't fail the login, metadata will sync on next request
-    } else {
-      console.log(`✅ Profile metadata synced on login: ${data.user.id}`);
     }
   }
 
@@ -97,7 +95,6 @@ export async function signOut() {
     return { error: error.message };
   }
 
-  console.log("✅ Server sign out successful");
 
   // revalidatePath("/", "layout");
   return { success: true };
@@ -161,8 +158,6 @@ export async function completeStudentProfile(formData: {
       syncResult.error
     );
     // Don't fail the login, metadata will sync on next request
-  } else {
-    console.log(`✅ Profile metadata synced on login: ${user.id}`);
   }
 
   revalidatePath("/", "layout");
@@ -225,9 +220,7 @@ export async function completeAdminProfile(formData: {
       syncResult.error
     );
     // Don't fail the login, metadata will sync on next request
-  } else {
-    console.log(`✅ Profile metadata synced on login: ${user.id}`);
-  }
+  } 
 
   revalidatePath("/", "layout");
 
@@ -292,7 +285,6 @@ export async function sendPasswordResetEmail(email: string) {
       return { error: error.message };
     }
 
-    console.log("✅ Password reset email sent to:", email);
     return { success: true };
   } catch (error: any) {
     console.error("❌ Unexpected error in sendPasswordResetEmail:", error);
@@ -323,8 +315,6 @@ export async function updatePassword(newPassword: string) {
       console.error("❌ Password update error:", error);
       return { error: error.message };
     }
-
-    console.log("✅ Password updated for user:", user.id);
     return { success: true };
   } catch (error: any) {
     console.error("❌ Unexpected error in updatePassword:", error);
@@ -359,8 +349,7 @@ export async function resetPasswordWithToken(
 
     const { success, error } = await signOut();
 
-    if(error)
-    {
+    if (error) {
       return { error: error };
     }
 
@@ -372,44 +361,6 @@ export async function resetPasswordWithToken(
   }
 }
 
-/**
- * Verify if user has valid reset token
- */
-// export async function verifyResetToken() {
-//   try {
-//     console.log("Verifying reset token...");
-//     const supabase = await createClient();
-
-//     const {
-//       data: { user },
-//       error,
-//     } = await supabase.auth.getUser();
-
-//     console.log("User from reset token verification:", user);
-
-//     if (error || !user) {
-//       console.log("Invalid or expired reset link");
-//       return { valid: false, error: "Invalid or expired reset link" };
-//     }
-
-//     // Check if this is a password recovery session
-//     const {
-//       data: { session },
-//     } = await supabase.auth.getSession();
-
-//     console.log("Session from reset token verification:", session);
-
-//     if (!session) {
-//       console.log("No active session found");
-//       return { valid: false, error: "No active session" };
-//     }
-
-//     return { valid: true, user };
-//   } catch (error: any) {
-//     console.error("❌ Error verifying reset token:", error);
-//     return { valid: false, error: error.message };
-//   }
-// }
 
 export async function verifyResetToken(token: string) {
   const supabase = await createClient();
@@ -498,8 +449,6 @@ export async function exchangeCodeForSession(code: string) {
       };
     }
 
-    console.log("✅ Code exchanged successfully, user:", data.user.id);
-
     revalidatePath("/", "layout");
     return { valid: true, user: data.user, session: data.session };
   } catch (error: any) {
@@ -587,8 +536,6 @@ export async function verifyConfirmationToken(tokenHash: string, type: string) {
         error: error?.message || "Invalid or expired confirmation link",
       };
     }
-
-    console.log("✅ Token verified successfully, user:", data.user.id);
 
     // Sync profile metadata after verification
     const syncResult = await syncProfileToMetadata(data.user.id);

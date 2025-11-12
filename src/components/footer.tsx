@@ -40,18 +40,10 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/colleges"
+                  href="/interview-experiences/youtube"
                   className="hover:text-primary transition-colors"
                 >
-                  Colleges
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/videos"
-                  className="hover:text-primary transition-colors"
-                >
-                  Video Tutorials
+                  Interview Sessions
                 </Link>
               </li>
             </ul>
@@ -76,7 +68,7 @@ export function Footer() {
                   Contact
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link
                   href="/privacy"
                   className="hover:text-primary transition-colors"
@@ -91,31 +83,31 @@ export function Footer() {
                 >
                   Terms of Service
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
 
           <div>
             <h4 className="font-semibold mb-4">Connect</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <a href="#" className="hover:text-primary transition-colors">
-                  LinkedIn
-                </a>
-              </li>
+              {/* 
               <li>
                 <a href="#" className="hover:text-primary transition-colors">
                   Twitter
                 </a>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <a href="#" className="hover:text-primary transition-colors">
                   Instagram
                 </a>
-              </li>
+              </li> */}
+
               <li>
-                <a href="#" className="hover:text-primary transition-colors">
-                  YouTube
+                <a
+                  href="https://chat.whatsapp.com/HtZFz8GepZf9rzCDhl8vuI?mode=wwt"
+                  className="hover:text-primary transition-colors"
+                >
+                  Whatsapp
                 </a>
               </li>
             </ul>

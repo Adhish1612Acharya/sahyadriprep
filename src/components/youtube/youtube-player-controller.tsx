@@ -91,7 +91,7 @@ export function YouTubePlayerController({
   // ✅ Re-initialize player when videoId changes
   useEffect(() => {
     if (isReady && player && videoId) {
-      console.log("🔄 Loading new video:", videoId);
+
       player.loadVideoById(videoId);
     }
   }, [videoId, isReady]);
@@ -103,7 +103,6 @@ export function YouTubePlayerController({
     }
 
     try {
-      console.log("🎬 Initializing YouTube player with videoId:", videoId);
 
       const ytPlayer = new window.YT.Player(playerContainerRef.current, {
         videoId: videoId,
@@ -129,7 +128,6 @@ export function YouTubePlayerController({
           onStateChange: (event: any) => {
             const isPlayingNow = event.data === window.YT.PlayerState.PLAYING;
             setIsPlaying(isPlayingNow);
-            console.log("🎵 Player state changed:", event.data);
           },
           onError: (event: any) => {
             console.error("❌ YouTube Player Error:", event.data);
@@ -149,7 +147,6 @@ export function YouTubePlayerController({
       player &&
       isReady
     ) {
-      console.log("🎯 Jumping to timestamp:", jumpToTimestamp);
       jumpToTime(jumpToTimestamp);
     }
   }, [jumpToTimestamp, player, isReady]);

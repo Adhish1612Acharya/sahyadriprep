@@ -7,6 +7,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { ConditionalChatbot } from "@/components/chatbot/conditional-chatbot";
 import { getCurrentUser } from "@/helpers/auth/auth.helpers";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,6 +29,7 @@ export default async function RootLayout({
           <QueryProvider>
             <Navbar />
             {children}
+            <Toaster position="top-center" expand={true} />
             {/* ✅ Conditional Chatbot - Only shows when user is logged in */}
             <ConditionalChatbot />
             <Footer />

@@ -15,7 +15,7 @@ const bodySchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("✅ Signup request received");
+
     const body = await request.json();
     const parsed = bodySchema.safeParse(body);
 
@@ -70,8 +70,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log(`✅ User created successfully: ${result?.user?.email}`);
 
     // ✅ Step 3: Return success
     return NextResponse.json(

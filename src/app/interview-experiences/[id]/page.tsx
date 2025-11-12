@@ -64,7 +64,6 @@ export default function InterviewExperienceDetailPage() {
     error,
   } = useExperienceQuery(experienceId);
 
-  console.log("Experience Data:", experience);
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 

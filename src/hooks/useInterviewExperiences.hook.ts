@@ -80,7 +80,6 @@ export const useInterviewExperiences = () => {
         queryKey: ["interview-experiences"],
       });
 
-      console.log("✅ Interview experience created successfully");
     },
     onError: (error: Error) => {
       console.error("❌ Error creating interview experience:", error);
@@ -101,7 +100,6 @@ export const useInterviewExperiences = () => {
         queryKey: ["interview-experience", deletedId],
       });
 
-      console.log("✅ Interview experience deleted successfully");
     },
     onError: (error: Error) => {
       console.error("❌ Error deleting interview experience:", error);

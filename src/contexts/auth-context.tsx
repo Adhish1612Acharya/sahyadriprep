@@ -48,7 +48,7 @@ export function AuthProvider({
       const result = await fetchProfileByUserId(currentUser.id);
 
       if ("error" in result) {
-        console.error("Error fetching profile:", result.error);
+        console.log("Error fetching profile:", result.error);
 
         const roleFromMetadata = currentUser.user_metadata?.role as Role;
         setRole(roleFromMetadata || null);

@@ -36,6 +36,7 @@ import { CheckCircle, AlertCircle } from "lucide-react";
 import { useInterviewExperiences } from "@/hooks/useInterviewExperiences.hook";
 import { useCompanies } from "@/hooks/useCompanies.hook";
 import Image from "next/image";
+import { toast } from "sonner";
 
 // Form validation schema
 const formSchema = z.object({
@@ -114,8 +115,6 @@ export default function UploadInterviewExperiencePage() {
       const documentFile = values.document[0];
       const videoFile = values.video_preview?.[0];
 
-      console.log("📤 Uploading interview experience...");
-
       createExperience.mutate(
         {
           document: documentFile,
@@ -130,7 +129,7 @@ export default function UploadInterviewExperiencePage() {
         },
         {
           onSuccess: (data) => {
-            console.log("✅ Upload successful:", data);
+            toast.success("Interview experience uploaded successfully");
             setShowSuccess(true);
 
             // Reset form
@@ -138,8 +137,15 @@ export default function UploadInterviewExperiencePage() {
 
             // Redirect after 2 seconds
             setTimeout(() => {
-              router.push("/admin/interview-experiences");
+              router.push(`/interview-experiences/${data.data.experience_id}`);
             }, 2000);
+          },
+          onError: (error) => {
+            toast.error("Failed to upload interview experience", {
+              description:
+                error.message ||
+                "An unexpected error occurred. Please try again.",
+            });
           },
         }
       );

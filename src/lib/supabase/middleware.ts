@@ -188,6 +188,10 @@ export async function updateSession(request: NextRequest) {
     "/auth/confirm",
     "/auth/reset-password",
     "/error",
+    "/about",
+    "/contact",
+    "/privacy-policy",
+    "/terms-of-service",
   ];
 
   const publicApiPaths = ["/api/auth"];

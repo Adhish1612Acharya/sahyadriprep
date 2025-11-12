@@ -66,65 +66,6 @@ export default function ResetPasswordPage() {
     }
   };
 
-  // ✅ Loading state - Verifying token
-  // if (verifying) {
-  //   return (
-  //     <div className="flex min-h-screen items-center justify-center p-4">
-  //       <Card className="w-full max-w-md">
-  //         <CardHeader className="text-center">
-  //           <CardTitle>Verifying Reset Link</CardTitle>
-  //           <CardDescription>
-  //             Please wait while we verify your reset session...
-  //           </CardDescription>
-  //         </CardHeader>
-  //         <CardContent className="py-8">
-  //           <div className="flex flex-col items-center space-y-4">
-  //             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-  //             <p className="text-sm text-muted-foreground">Verifying...</p>
-  //           </div>
-  //         </CardContent>
-  //       </Card>
-  //     </div>
-  //   );
-  // }
-
-  // ✅ Invalid token state
-  // if (!isValid) {
-  //   return (
-  //     <div className="flex min-h-screen items-center justify-center p-4">
-  //       <Card className="w-full max-w-md">
-  //         <CardHeader className="text-center">
-  //           <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
-  //             <AlertCircle className="h-6 w-6 text-destructive" />
-  //           </div>
-  //           <CardTitle>Invalid Reset Link</CardTitle>
-  //           <CardDescription>
-  //             This password reset link is invalid or has expired
-  //           </CardDescription>
-  //         </CardHeader>
-  //         <CardContent className="space-y-4">
-  //           <Alert variant="destructive">
-  //             <AlertCircle className="h-4 w-4" />
-  //             <AlertDescription>{error}</AlertDescription>
-  //           </Alert>
-
-  //           <div className="flex flex-col gap-2">
-  //             <Button asChild className="w-full">
-  //               <Link href="/auth/forgot-password">Request New Link</Link>
-  //             </Button>
-  //             <Button variant="outline" asChild className="w-full">
-  //               <Link href="/auth/login">
-  //                 <ArrowLeft className="mr-2 h-4 w-4" />
-  //                 Back to Login
-  //               </Link>
-  //             </Button>
-  //           </div>
-  //         </CardContent>
-  //       </Card>
-  //     </div>
-  //   );
-  // }
-
   // ✅ Success state
   if (success) {
     return (

@@ -127,7 +127,6 @@ function EmptyState({
   const suggestions = [
     { label: "Deloitte", query: "What was the Deloitte interview process?" },
     { label: "Technical rounds", query: "Tell me about technical rounds" },
-    { label: "Google tips", query: "Tips for Google interviews?" },
     { label: "HR rounds", query: "What to expect in HR rounds?" },
   ];
 

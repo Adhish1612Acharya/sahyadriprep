@@ -41,9 +41,9 @@ export default function HomePage() {
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-              Learn from thousands of interview experiences shared by students
-              from top colleges. Prepare smarter, not harder with AI-powered
-              insights and personalized guidance.
+              Learn from thousands of interview experiences shared Your Seniors.
+              Prepare smarter, not harder with AI-powered insights and
+              personalized guidance.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -63,7 +63,7 @@ export default function HomePage() {
               </Button>
             </div>
 
-            {/* Stats */}
+            {/* Stats
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-12 w-full max-w-4xl">
               <div className="flex flex-col items-center">
                 <div className="text-3xl md:text-4xl font-bold text-primary">
@@ -89,11 +89,12 @@ export default function HomePage() {
                 </div>
                 <div className="text-sm text-muted-foreground">Students</div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
 
+      {/* Features Section */}
       {/* Features Section */}
       <section className="py-20 md:py-32 bg-muted/30">
         <div className="container mx-auto px-4">
@@ -102,12 +103,12 @@ export default function HomePage() {
               Everything You Need to Succeed
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Comprehensive tools and resources to help you prepare for your
-              dream job
+              Smarter preparation through real experiences, AI-powered insights,
+              and curated learning from your own college ecosystem.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
             {/* Feature 1 */}
             <Card className="border-2 hover:border-primary/50 transition-colors">
               <CardHeader>
@@ -116,26 +117,28 @@ export default function HomePage() {
                 </div>
                 <CardTitle>Interview Experiences</CardTitle>
                 <CardDescription>
-                  Read detailed interview experiences from students who got
-                  placed in top companies
+                  Access verified interview experiences shared by seniors
+                  through our placement cell — all in one place.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Round-by-round breakdowns</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                     <span className="text-sm">
-                      Question patterns and topics
+                      Round-by-round interview insights
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                     <span className="text-sm">
-                      Tips and strategies that worked
+                      AI-generated video previews for quick understanding
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <span className="text-sm">
+                      Search by company, branch, or role
                     </span>
                   </li>
                 </ul>
@@ -148,27 +151,31 @@ export default function HomePage() {
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <MessageSquare className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>AI Interview Coach</CardTitle>
+                <CardTitle>Sahyadri Coach (AI Assistant)</CardTitle>
                 <CardDescription>
-                  Get personalized guidance from our AI-powered chatbot trained
-                  on real experiences
+                  Your RAG-based AI placement assistant — ask anything about
+                  interview preparation and get answers backed by sources.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">24/7 instant answers</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                     <span className="text-sm">
-                      Company-specific preparation
+                      Ask any company-specific questions
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Mock interview practice</span>
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <span className="text-sm">
+                      Answers linked to verified PDF or YouTube sources
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <span className="text-sm">
+                      Personalized and transparent guidance
+                    </span>
                   </li>
                 </ul>
               </CardContent>
@@ -178,117 +185,97 @@ export default function HomePage() {
             <Card className="border-2 hover:border-primary/50 transition-colors">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <Building2 className="h-6 w-6 text-primary" />
+                  <GraduationCap className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Company Insights</CardTitle>
+                <CardTitle>YouTube Interview Sessions</CardTitle>
                 <CardDescription>
-                  Explore detailed profiles of companies with hiring trends and
-                  requirements
+                  Explore placement officer’s official YouTube sessions with
+                  AI-based features for quick learning.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Salary packages and roles</span>
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <span className="text-sm">
+                      AI-generated video summaries and key takeaways
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Interview process breakdown</span>
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <span className="text-sm">
+                      Segment division based on transcript
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Hiring statistics</span>
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <span className="text-sm">
+                      Auto-generated flashcards and tips
+                    </span>
                   </li>
                 </ul>
               </CardContent>
             </Card>
 
             {/* Feature 4 */}
-            <Card className="border-2 hover:border-primary/50 transition-colors">
+            {/* <Card className="border-2 hover:border-primary/50 transition-colors">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <GraduationCap className="h-6 w-6 text-primary" />
+                  <Building2 className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>College Network</CardTitle>
+                <CardTitle>Company Insights</CardTitle>
                 <CardDescription>
-                  Connect with alumni and peers from your college who cracked
-                  top companies
+                  Explore all the companies participating in campus recruitment
+                  with insights gathered from student data.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">College-wise placement data</span>
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <span className="text-sm">
+                      View company-wise interview patterns
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Alumni success stories</span>
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <span className="text-sm">
+                      Role-specific and package details
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Peer learning groups</span>
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <span className="text-sm">Yearly participation trends</span>
                   </li>
                 </ul>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Feature 5 */}
             <Card className="border-2 hover:border-primary/50 transition-colors">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <BarChart3 className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle>Analytics & Insights</CardTitle>
-                <CardDescription>
-                  Track your preparation progress with detailed analytics and
-                  recommendations
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Personalized study plans</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Progress tracking</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Weak area identification</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Feature 6 */}
-            <Card className="border-2 hover:border-primary/50 transition-colors">
-              <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <Award className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Video Tutorials</CardTitle>
+                <CardTitle>College-Specific Ecosystem</CardTitle>
                 <CardDescription>
-                  Learn from expert mentors through curated video content and
-                  mock interviews
+                  Built exclusively for Sahyadri students — your personalized
+                  hub for verified experiences, videos, and AI learning.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">DSA problem solving</span>
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <span className="text-sm">
+                      Tailored for Sahyadri students
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">System design concepts</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Behavioral interview tips</span>
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <span className="text-sm">
+                      Secure, academic-oriented environment
+                    </span>
                   </li>
                 </ul>
               </CardContent>
@@ -359,7 +346,7 @@ export default function HomePage() {
                   Ready to Start Your Journey?
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-2xl">
-                  Join thousands of students who are preparing smarter with
+                  Join  students who are preparing smarter with
                   SahyadriPrep. Get access to exclusive content and personalized
                   guidance today.
                 </p>

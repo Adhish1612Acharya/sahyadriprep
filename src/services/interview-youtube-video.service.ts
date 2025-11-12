@@ -156,15 +156,6 @@ export const youtubeService = {
         throw new Error("Failed to process video");
       }
 
-      console.log("✅ AI processing completed for video", response.data);
-
-      console.log("✅ Video processed successfully:", {
-        transcript_length: response.data.data.transcript.text.length,
-        segments_count: response.data.data.segments.count,
-        flashcards_count: response.data.data.flashcards.count,
-        tips_count: response.data.data.tips.count,
-        metadata: response.data.metadata,
-      });
 
       // ✅ FIX: Return the correctly structured data
       return {

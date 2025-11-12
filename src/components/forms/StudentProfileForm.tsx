@@ -124,7 +124,7 @@ export function StudentProfileForm({
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="9876543210"
+                        placeholder="9876543210 (optional)"
                         {...field}
                         value={field.value || ""}
                       />

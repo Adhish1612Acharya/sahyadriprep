@@ -15,7 +15,6 @@ export async function GET(
   try {
     const { id } = await params;
 
-    console.log(`🔍 Fetching interview experience: ${id}`);
 
     const supabase = await createClient();
 
@@ -48,7 +47,7 @@ export async function GET(
       throw new Error(`Failed to fetch interview experience: ${error.message}`);
     }
 
-    console.log(`✅ Fetched interview experience: ${data.id}`);
+
 
     return NextResponse.json({
       success: true,
@@ -84,7 +83,7 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    console.log(`🗑️ Deleting interview experience: ${id}`);
+
 
     // ✅ Step 1: Check authentication and admin role
     const authResult = await requireAdmin();
@@ -94,7 +93,6 @@ export async function DELETE(
     }
 
     const { user, role } = authResult;
-    console.log(`✅ Authenticated as ${role}: ${user.email}`);
 
     const supabase = await createClient();
     const v_supabase = await v_createClient();
@@ -144,14 +142,8 @@ export async function DELETE(
       );
     }
 
-    console.log(
-      `🗑️ User ${user.email} (${role}) is deleting experience: ${
-        experience.student_name || "Unknown"
-      }`
-    );
 
-    // ✅ Step 4: Delete vector embeddings from vector database
-    console.log("🗑️ Deleting vector embeddings...");
+  
     const { error: vectorDeleteError } = await v_supabase
       .from("content_chunks")
       .delete()

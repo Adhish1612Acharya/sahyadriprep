@@ -62,7 +62,6 @@ export async function PATCH(
   try {
     const { id } = await params;
 
-    console.log(`📝 Updating company: ${id}`);
 
     // ✅ Step 1: Check authentication and admin role
     const authResult = await requireAdmin();
@@ -72,7 +71,6 @@ export async function PATCH(
     }
 
     const { user, role } = authResult;
-    console.log(`✅ Authenticated as ${role}: ${user.email}`);
 
     const supabase = await createClient();
 
@@ -108,14 +106,8 @@ export async function PATCH(
         );
       }
 
-      console.log(
-        `✅ College admin has access to college: ${company.college_id}`
-      );
     }
 
-    console.log(
-      `📝 User ${user?.email} (${role}) is updating company: ${company.name}`
-    );
 
     // ✅ Step 4: Parse and validate request body
     const body = await request.json();
@@ -213,7 +205,7 @@ export async function PATCH(
       throw new Error(`Failed to update company: ${updateError.message}`);
     }
 
-    console.log(`✅ Company updated: ${id}`);
+
 
     return NextResponse.json(
       {
@@ -249,7 +241,6 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    console.log(`🗑️ Deleting company: ${id}`);
 
     // ✅ Step 1: Check authentication and admin role
     const authResult = await requireAdmin();
@@ -259,7 +250,7 @@ export async function DELETE(
     }
 
     const { user, role } = authResult;
-    console.log(`✅ Authenticated as ${role}: ${user.email}`);
+ 
 
     const supabase = await createClient();
 
@@ -295,14 +286,9 @@ export async function DELETE(
         );
       }
 
-      console.log(
-        `✅ College admin has access to college: ${company.college_id}`
-      );
     }
 
-    console.log(
-      `🗑️ User ${user.email} (${role}) is deleting company: ${company.name}`
-    );
+
 
     // ✅ Step 4: Check for dependencies (interview experiences, YouTube videos)
     const { data: interviewExperiences, error: experiencesError } =
@@ -362,7 +348,7 @@ export async function DELETE(
       throw new Error(`Failed to delete company: ${deleteError.message}`);
     }
 
-    console.log(`✅ Company deleted: ${id}`);
+
 
     return NextResponse.json(
       {

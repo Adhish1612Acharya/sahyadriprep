@@ -24,7 +24,6 @@ export async function uploadToCloudinary(
       tags = [],
     } = options;
 
-    console.log(`☁️ Uploading to Cloudinary: ${filePath}`);
 
     const result: UploadApiResponse = await cloudinary.uploader.upload(
       filePath,
@@ -39,7 +38,6 @@ export async function uploadToCloudinary(
       }
     );
 
-    console.log(`✅ Upload successful: ${result.secure_url}`);
 
     return {
       success: true,

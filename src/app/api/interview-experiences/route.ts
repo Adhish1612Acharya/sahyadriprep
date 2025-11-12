@@ -25,7 +25,7 @@ import { requireAdmin, hasCollegeAccess } from "@/helpers/auth/auth.helpers";
  */
 export async function GET(request: NextRequest) {
   try {
-    console.log("🔍 Fetching interview experiences...");
+    
 
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
@@ -70,7 +70,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log(`✅ Fetched ${data.length} interview experiences`);
 
     return NextResponse.json({
       success: true,

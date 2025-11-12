@@ -72,7 +72,7 @@ export const vectorStoreServerOperations = {
     }
   ) => {
     const supabase = await createClient();
-    console.log("🔍 Search query:", query);
+  
 
     // ✅ Use provided summary or generate new one
     let query_summary: string;

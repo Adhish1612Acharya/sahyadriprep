@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { formatDuration } from "@/helpers/youtube/youtube-video.helpers";
 import { formatDistanceToNow } from "date-fns";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,9 +67,11 @@ export default function VideoDetailPage() {
   const [enableAIQuery, setEnableAIQuery] = useState(false);
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
   const [jumpToTimestamp, setJumpToTimestamp] = useState<number | null>(null);
-  const [playerReady, setPlayerReady] = useState(false); // ✅ Track player readiness
+  const [playerReady, setPlayerReady] = useState(false);
 
-  // ✅ Get timestamp from URL
+  // ✅ Ref for auto-scroll to AI section
+  const aiSectionRef = useRef<HTMLDivElement>(null);
+
   const timestampParam = searchParams.get("t");
   const initialTimestamp = timestampParam ? parseInt(timestampParam, 10) : null;
 
@@ -79,13 +81,10 @@ export default function VideoDetailPage() {
     refetch: refetchAI,
   } = useAIContentQuery(videoId, enableAIQuery);
 
-  // ✅ Jump to timestamp when page loads AND player is ready
   useEffect(() => {
     if (initialTimestamp !== null && playerReady) {
-      console.log("🎯 Jumping to initial timestamp:", initialTimestamp);
       setJumpToTimestamp(initialTimestamp);
 
-      // Reset after the jump has been processed
       const timer = setTimeout(() => {
         setJumpToTimestamp(null);
       }, 1000);
@@ -94,27 +93,35 @@ export default function VideoDetailPage() {
     }
   }, [initialTimestamp, playerReady]);
 
-  // ✅ Callback when player is ready
   const handlePlayerReady = () => {
-    console.log("✅ YouTube player is ready");
     setPlayerReady(true);
   };
 
-  // ✅ Update handleJumpTo to properly trigger the jump
   const handleJumpTo = (seconds: number) => {
-    console.log("🎯 Jump requested to:", seconds);
     setJumpToTimestamp(seconds);
 
-    // Reset after a short delay to allow multiple jumps to the same timestamp
     setTimeout(() => {
       setJumpToTimestamp(null);
     }, 500);
   };
 
+  // ✅ Auto-scroll to AI section when data loads
+  useEffect(() => {
+    if (aiData && !processVideo.isPending && aiSectionRef.current) {
+      setTimeout(() => {
+        aiSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 300);
+    }
+  }, [aiData, processVideo.isPending]);
+
   const handleGetAIInsights = async () => {
     if (!video) return;
 
     setShowAIContent(true);
+    setActiveTab("segments"); // ✅ Always show segments first
 
     if (video.ai_process_done) {
       try {
@@ -153,6 +160,8 @@ export default function VideoDetailPage() {
 
   const handleRegenerate = () => {
     if (!video) return;
+
+    setActiveTab("segments"); // ✅ Reset to segments tab
 
     processVideo.mutate(
       {
@@ -334,7 +343,6 @@ export default function VideoDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content - Video Player */}
         <div className="lg:col-span-2 space-y-6">
-          {/* ✅ Pass all required props including onPlayerReady */}
           <YouTubePlayerController
             videoId={video.video_id}
             title={video.title}
@@ -349,7 +357,7 @@ export default function VideoDetailPage() {
             currentTime={currentVideoTime}
             onTimeUpdate={setCurrentVideoTime}
             jumpToTimestamp={jumpToTimestamp}
-            onPlayerReady={handlePlayerReady} // ✅ Add this callback
+            onPlayerReady={handlePlayerReady}
           />
 
           {/* Description */}
@@ -369,80 +377,113 @@ export default function VideoDetailPage() {
             </Card>
           )}
 
-          {/* AI Features Tabs */}
+          {/* ✅ AI Features Tabs - Responsive & Auto-scroll */}
           {showAIContent && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  AI-Powered Features
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="overview">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Overview
-                    </TabsTrigger>
-                    <TabsTrigger value="segments">
-                      <ListChecks className="h-4 w-4 mr-2" />
-                      Segments
-                    </TabsTrigger>
-                    <TabsTrigger value="flashcards">
-                      <BookOpen className="h-4 w-4 mr-2" />
-                      Flashcards
-                    </TabsTrigger>
-                    <TabsTrigger value="tips">
-                      <Lightbulb className="h-4 w-4 mr-2" />
-                      Key Tips
-                    </TabsTrigger>
-                  </TabsList>
+            <div ref={aiSectionRef}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    AI-Powered Features
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {/* ✅ Loading State - Only show loading spinner */}
+                  {(processVideo.isPending || isAIContentLoading) && (
+                    <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground">
+                        {processVideo.isPending
+                          ? "Generating AI insights..."
+                          : "Loading AI content..."}
+                      </p>
+                    </div>
+                  )}
 
-                  <TabsContent value="overview" className="mt-4">
-                    <AIOverviewPanel data={aiData?.overview} />
-                  </TabsContent>
+                  {/* ✅ Loaded State - Show tabs */}
+                  {!processVideo.isPending && !isAIContentLoading && aiData && (
+                    <Tabs value={activeTab} onValueChange={setActiveTab}>
+                      {/* ✅ Responsive TabsList */}
+                      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 h-auto p-1">
+                        <TabsTrigger
+                          value="overview"
+                          className="flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm"
+                        >
+                          <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline">Overview</span>
+                          <span className="sm:hidden">Info</span>
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="segments"
+                          className="flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm"
+                        >
+                          <ListChecks className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span>Segments</span>
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="flashcards"
+                          className="flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm"
+                        >
+                          <BookOpen className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline">Flashcards</span>
+                          <span className="sm:hidden">Cards</span>
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="tips"
+                          className="flex-col sm:flex-row gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm"
+                        >
+                          <Lightbulb className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline">Key Tips</span>
+                          <span className="sm:hidden">Tips</span>
+                        </TabsTrigger>
+                      </TabsList>
 
-                  <TabsContent value="segments" className="mt-4">
-                    <AISegmentsPanel
-                      data={aiData?.segments}
-                      onJumpTo={handleJumpTo}
-                    />
-                  </TabsContent>
+                      <TabsContent value="overview" className="mt-4">
+                        <AIOverviewPanel data={aiData?.overview} />
+                      </TabsContent>
 
-                  <TabsContent value="flashcards" className="mt-4">
-                    <AIFlashcardsPanel
-                      data={
-                        aiData?.flashcards
-                          ? aiData.flashcards.map((f) => ({
-                              ...f,
-                              timestamp: f.timestamp ?? 0,
-                            }))
-                          : undefined
-                      }
-                      onJumpTo={handleJumpTo}
-                    />
-                  </TabsContent>
+                      <TabsContent value="segments" className="mt-4">
+                        <AISegmentsPanel
+                          data={aiData?.segments}
+                          onJumpTo={handleJumpTo}
+                        />
+                      </TabsContent>
 
-                  <TabsContent value="tips" className="mt-4">
-                    <AITipsPanel
-                      data={
-                        aiData?.tips
-                          ? (aiData.tips.map((t) => ({
-                              ...t,
-                              importance:
-                                t.importance === "helpful"
-                                  ? "moderate"
-                                  : t.importance,
-                            })) as any)
-                          : undefined
-                      }
-                      onJumpTo={handleJumpTo}
-                    />
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+                      <TabsContent value="flashcards" className="mt-4">
+                        <AIFlashcardsPanel
+                          data={
+                            aiData?.flashcards
+                              ? aiData.flashcards.map((f) => ({
+                                  ...f,
+                                  timestamp: f.timestamp ?? 0,
+                                }))
+                              : undefined
+                          }
+                          onJumpTo={handleJumpTo}
+                        />
+                      </TabsContent>
+
+                      <TabsContent value="tips" className="mt-4">
+                        <AITipsPanel
+                          data={
+                            aiData?.tips
+                              ? (aiData.tips.map((t) => ({
+                                  ...t,
+                                  importance:
+                                    t.importance === "helpful"
+                                      ? "moderate"
+                                      : t.importance,
+                                })) as any)
+                              : undefined
+                          }
+                          onJumpTo={handleJumpTo}
+                        />
+                      </TabsContent>
+                    </Tabs>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
 

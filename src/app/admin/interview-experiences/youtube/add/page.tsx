@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { useInterviewYouTubeVideos } from "@/hooks/useYouTubeVideos.hook";
 import { useCompanies } from "@/hooks/useCompanies.hook";
-// import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 // ============================================
 // ZOD SCHEMA
@@ -67,7 +67,6 @@ type UploadYouTubeVideoFormData = z.infer<typeof uploadYouTubeVideoSchema>;
 
 export default function UploadYouTubeVideoPage() {
   const router = useRouter();
-  //   const { toast } = useToast();
   const { createVideo } = useInterviewYouTubeVideos();
 
   // Fetch companies using the custom hook
@@ -95,10 +94,9 @@ export default function UploadYouTubeVideoPage() {
   const onSubmit = (data: UploadYouTubeVideoFormData) => {
     createVideo.mutate(data, {
       onSuccess: (videoData) => {
-        // toast({
-        //   title: "✅ Success",
-        //   description: `Video "${videoData.title}" uploaded successfully! Processing transcript...`,
-        // });
+        toast("Success", {
+          description: `Video "${videoData.title}" uploaded successfully! Processing transcript...`,
+        });
 
         // Reset form
         form.reset();
@@ -109,11 +107,9 @@ export default function UploadYouTubeVideoPage() {
         }, 2000);
       },
       onError: (error: Error) => {
-        // toast({
-        //   title: "❌ Error",
-        //   description: error.message || "Failed to upload video",
-        //   variant: "destructive",
-        // });
+        toast.error("Error", {
+          description: error.message || "Failed to upload video",
+        });
       },
     });
   };

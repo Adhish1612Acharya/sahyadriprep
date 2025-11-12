@@ -47,14 +47,6 @@ export function useRagChatbot() {
 
       setMessages((prev) => [...prev, assistantMessage]);
       setIsTyping(false);
-
-      // Log performance
-      console.log("📊 Chat Performance:", data.metadata?.performance);
-      console.log("📚 Sources:", {
-        interview_documents: data.sources?.interview_documents.length || 0,
-        youtube_videos: data.sources?.youtube_videos.length || 0,
-        youtube_timestamps: data.sources?.youtube_timestamps.length || 0,
-      });
     },
     onError: (error: Error) => {
       // Remove optimistic user message on error
