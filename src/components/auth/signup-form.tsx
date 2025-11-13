@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-// import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, AlertCircle, User, Shield } from "lucide-react";
+import { Loader2, AlertCircle, Check, X } from "lucide-react";
 import { useAuthService } from "@/hooks/useAuth.hook";
 import { signInWithGoogle } from "@/actions/auth.actions";
+import { validatePassword } from "@/lib/validators/password.validator";
+import { cn } from "@/lib/utils";
 
 export function SignupForm() {
-
   const { signupWithEmail } = useAuthService();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -21,15 +21,28 @@ export function SignupForm() {
     role: "student" as "student" | "college_admin",
   });
 
+  // ✅ Password validation using helper
+  const passwordValidation = useMemo(() => {
+    return validatePassword(formData.password);
+  }, [formData.password]);
+
+  // ✅ Check if passwords match
+  const passwordsMatch = useMemo(() => {
+    return (
+      formData.password === formData.confirmPassword &&
+      formData.confirmPassword !== ""
+    );
+  }, [formData.password, formData.confirmPassword]);
+
+  // ✅ Overall form validity
+  const isFormValid = useMemo(() => {
+    return passwordValidation.isValid && passwordsMatch && formData.email;
+  }, [passwordValidation.isValid, passwordsMatch, formData.email]);
+
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      return;
-    }
-
-    if (formData.password.length < 6) {
+    if (!isFormValid) {
       return;
     }
 
@@ -38,8 +51,8 @@ export function SignupForm() {
     await signupWithEmail.mutateAsync({
       email: formData.email,
       password: formData.password,
-      role: "student", // ✅ Include role
-      college_id: null, // For now, sahyadri by default
+      role: "student",
+      college_id: null,
     });
   };
 
@@ -47,24 +60,15 @@ export function SignupForm() {
     setLoading(true);
 
     try {
-      // Pass role and college_id directly to the OAuth function
       await signInWithGoogle({
-        role: formData.role,
-        college_id: null, // For now, sahyadri by default
+        role: "student",
+        college_id: null,
       });
     } catch (err: any) {
       console.error("Google signup error:", err);
       setLoading(false);
     }
   };
-
-  const passwordsMatch = formData.password === formData.confirmPassword;
-  const passwordError =
-    formData.confirmPassword && !passwordsMatch
-      ? "Passwords do not match"
-      : formData.password && formData.password.length < 6
-      ? "Password must be at least 6 characters"
-      : null;
 
   const emailDomainHint =
     formData.role === "student"
@@ -73,47 +77,6 @@ export function SignupForm() {
 
   return (
     <form onSubmit={handleEmailSignup} className="space-y-4">
-      {/* Role Selection */}
-      {/* <div className="space-y-3">
-        <Label>I am a</Label>
-        <RadioGroup
-          value={formData.role}
-          onValueChange={(value: "student" | "college_admin") =>
-            setFormData({ ...formData, role: value })
-          }
-          className="grid grid-cols-2 gap-4"
-        >
-          <div>
-            <RadioGroupItem
-              value="student"
-              id="student"
-              className="peer sr-only"
-            />
-            <Label
-              htmlFor="student"
-              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-            >
-              <User className="mb-3 h-6 w-6" />
-              <span className="text-sm font-medium">Student</span>
-            </Label>
-          </div>
-          <div>
-            <RadioGroupItem
-              value="college_admin"
-              id="college_admin"
-              className="peer sr-only"
-            />
-            <Label
-              htmlFor="college_admin"
-              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-            >
-              <Shield className="mb-3 h-6 w-6" />
-              <span className="text-sm font-medium">College Admin</span>
-            </Label>
-          </div>
-        </RadioGroup>
-      </div> */}
-
       {/* Email Input */}
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
@@ -145,9 +108,39 @@ export function SignupForm() {
             setFormData({ ...formData, password: e.target.value })
           }
           required
-          minLength={6}
           disabled={signupWithEmail.isPending || loading}
         />
+
+        {/* ✅ Password Requirements Checklist */}
+        {formData.password && (
+          <div className="space-y-2 pt-2">
+            <p className="text-xs font-medium text-muted-foreground">
+              Password must contain:
+            </p>
+            <div className="space-y-1">
+              <PasswordRequirement
+                met={passwordValidation.requirements.minLength}
+                text="At least 8 characters"
+              />
+              <PasswordRequirement
+                met={passwordValidation.requirements.hasLowercase}
+                text="Lowercase letter (a-z)"
+              />
+              <PasswordRequirement
+                met={passwordValidation.requirements.hasUppercase}
+                text="Uppercase letter (A-Z)"
+              />
+              <PasswordRequirement
+                met={passwordValidation.requirements.hasDigit}
+                text="Digit (0-9)"
+              />
+              <PasswordRequirement
+                met={passwordValidation.requirements.hasSymbol}
+                text="Symbol (!@#$%^&*)"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Confirm Password Input */}
@@ -164,8 +157,13 @@ export function SignupForm() {
           required
           disabled={signupWithEmail.isPending || loading}
         />
-        {passwordError && (
-          <p className="text-xs text-destructive">{passwordError}</p>
+
+        {/* ✅ Password Match Indicator */}
+        {formData.confirmPassword && (
+          <PasswordRequirement
+            met={passwordsMatch}
+            text={passwordsMatch ? "Passwords match" : "Passwords do not match"}
+          />
         )}
       </div>
 
@@ -183,12 +181,7 @@ export function SignupForm() {
       <Button
         type="submit"
         className="w-full"
-        disabled={
-          signupWithEmail.isPending ||
-          loading ||
-          !passwordsMatch ||
-          formData.password.length < 6
-        }
+        disabled={signupWithEmail.isPending || loading || !isFormValid}
       >
         {signupWithEmail.isPending ? (
           <>
@@ -212,8 +205,8 @@ export function SignupForm() {
         </div>
       </div>
 
-      {/* Google Signup (only for students) */}
-      {/* {formData.role === "student" && ( */}
+      <div className="space-y-2">
+        {/* Google Signup */}
         <Button
           type="button"
           variant="outline"
@@ -250,7 +243,36 @@ export function SignupForm() {
             </>
           )}
         </Button>
-      {/* )} */}
+        <p className="text-xs text-muted-foreground text-center px-2">
+          Use your college email{" "}
+          <span className="font-mono text-foreground/80">
+            (@sahyadri.edu.in)
+          </span>
+        </p>
+      </div>
     </form>
+  );
+}
+
+// ✅ Password Requirement Component
+function PasswordRequirement({ met, text }: { met: boolean; text: string }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      {met ? (
+        <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-500" />
+      ) : (
+        <X className="h-3.5 w-3.5 text-muted-foreground" />
+      )}
+      <span
+        className={cn(
+          "transition-colors",
+          met
+            ? "text-green-600 dark:text-green-500 font-medium"
+            : "text-muted-foreground"
+        )}
+      >
+        {text}
+      </span>
+    </div>
   );
 }
