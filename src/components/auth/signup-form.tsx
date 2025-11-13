@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+// import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, AlertCircle, User, Shield } from "lucide-react";
 import { useAuthService } from "@/hooks/useAuth.hook";
 import { signInWithGoogle } from "@/actions/auth.actions";
@@ -38,7 +38,7 @@ export function SignupForm() {
     await signupWithEmail.mutateAsync({
       email: formData.email,
       password: formData.password,
-      role: formData.role, // ✅ Include role
+      role: "student", // ✅ Include role
       college_id: null, // For now, sahyadri by default
     });
   };
@@ -74,7 +74,7 @@ export function SignupForm() {
   return (
     <form onSubmit={handleEmailSignup} className="space-y-4">
       {/* Role Selection */}
-      <div className="space-y-3">
+      {/* <div className="space-y-3">
         <Label>I am a</Label>
         <RadioGroup
           value={formData.role}
@@ -112,7 +112,7 @@ export function SignupForm() {
             </Label>
           </div>
         </RadioGroup>
-      </div>
+      </div> */}
 
       {/* Email Input */}
       <div className="space-y-2">
@@ -213,7 +213,7 @@ export function SignupForm() {
       </div>
 
       {/* Google Signup (only for students) */}
-      {formData.role === "student" && (
+      {/* {formData.role === "student" && ( */}
         <Button
           type="button"
           variant="outline"
@@ -250,7 +250,7 @@ export function SignupForm() {
             </>
           )}
         </Button>
-      )}
+      {/* )} */}
     </form>
   );
 }

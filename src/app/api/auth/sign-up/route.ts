@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   enforceCollegeEmailOrReject,
   createUserWithProfile,
-  syncProfileToMetadata,
 } from "@/helpers/auth/auth.helpers";
 import { z } from "zod";
 
@@ -15,7 +14,6 @@ const bodySchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-
     const body = await request.json();
     const parsed = bodySchema.safeParse(body);
 
@@ -32,8 +30,9 @@ export async function POST(request: NextRequest) {
 
     const { email, password, role, college_id } = parsed.data;
 
+
     // ✅ Step 1: Validate email domain
-    if (role === "student" && college_id) {
+    if (role === "student") {
       const rejectResponse = await enforceCollegeEmailOrReject(
         email,
         college_id

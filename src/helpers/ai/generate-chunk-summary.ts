@@ -11,10 +11,10 @@ const createChunkSummary = async (text: string): Promise<string> => {
   const input = text.length > 8000 ? text.slice(0, 8000) : text;
 
   try {
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_CHUNK_SUMMARY_GENERATE;
+    const apiKey = process.env.GEMINI_API_CHUNK_SUMMARY_GENERATE;
     if (!apiKey) {
       throw new Error(
-        "NEXT_PUBLIC_GEMINI_API_CHUNK_SUMMARY_GENERATE is not set"
+        "GEMINI_API_CHUNK_SUMMARY_GENERATE is not set"
       );
     }
 

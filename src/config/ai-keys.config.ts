@@ -4,10 +4,10 @@
  */
 
 export const AI_KEYS = {
-  OVERVIEW: process.env.NEXT_PUBLIC_GEMINI_API_KEY_OVERVIEW || process.env.GEMINI_API_KEY,
-  SEGMENTS: process.env.NEXT_PUBLIC_GEMINI_API_KEY_SEGMENTS || process.env.GEMINI_API_KEY,
-  FLASHCARDS: process.env.NEXT_PUBLIC_GEMINI_API_KEY_FLASHCARDS || process.env.GEMINI_API_KEY,
-  TIPS: process.env.NEXT_PUBLIC_GEMINI_API_KEY_TIPS || process.env.GEMINI_API_KEY,
+  OVERVIEW: process.env.GEMINI_API_KEY_OVERVIEW || process.env.GEMINI_API_KEY,
+  SEGMENTS: process.env.GEMINI_API_KEY_SEGMENTS || process.env.GEMINI_API_KEY,
+  FLASHCARDS: process.env.GEMINI_API_KEY_FLASHCARDS || process.env.GEMINI_API_KEY,
+  TIPS: process.env.GEMINI_API_KEY_TIPS || process.env.GEMINI_API_KEY,
 } as const;
 
 /**

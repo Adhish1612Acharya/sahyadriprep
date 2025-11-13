@@ -366,7 +366,7 @@ export const extractYouTubeVideoId = (url: string): string | null => {
  * Fetch video metadata from YouTube Data API v3
  */
 export const fetchYouTubeMetadata = async (videoId: string) => {
-  const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+  const API_KEY = process.env.YOUTUBE_API_KEY;
 
   if (!API_KEY) {
     throw new Error("YouTube API key is not configured");

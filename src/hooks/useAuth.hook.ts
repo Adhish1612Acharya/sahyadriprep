@@ -50,7 +50,7 @@ export const useAuthService = () => {
       router.push("/auth/login?success=account_created Verify your email");
     },
     onError: (error: Error) => {
-      console.error("❌ Sign up failed:", error);
+      console.error("❌ Sign up failed:",error);
     },
   });
 

@@ -346,6 +346,9 @@ export default function CompleteProfilePage() {
                     <SelectItem value="Information Science and Engineering">
                       Information Science and Engineering
                     </SelectItem>
+                      <SelectItem value="Artificial Intelligence and Machine Learning">
+                      Artificial Intelligence and Machine Learning
+                    </SelectItem>
                     <SelectItem value="Electronics and Communication Engineering">
                       Electronics and Communication Engineering
                     </SelectItem>

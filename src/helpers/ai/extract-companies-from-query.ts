@@ -21,9 +21,9 @@ User query: "${query}"
 
 Return ONLY the JSON array, nothing else.`;
 
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY_FIND_COMPANY;
+    const apiKey = process.env.GEMINI_API_KEY_FIND_COMPANY;
     if (!apiKey) {
-      console.error("❌ GEMINI_API_KEY is not set");
+      console.error("❌ GEMINI_API_KEY_FIND_COMPANY is not set");
       return [];
     }
 

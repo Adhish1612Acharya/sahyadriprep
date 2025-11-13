@@ -77,7 +77,7 @@ export const youtubeService = {
    * Fetch metadata from YouTube API (client-side)
    */
   fetchMetadata: async (videoId: string): Promise<YouTubeAPIResponse> => {
-    const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+    const API_KEY = process.env.YOUTUBE_API_KEY;
     const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet,contentDetails&key=${API_KEY}`;
 
     const response = await axiosClient.get(url);
