@@ -22,11 +22,14 @@ import {
   X,
   Building2,
   Plus,
+  Youtube,
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function YouTubeVideosPage() {
   const { isAdmin } = useAuth(); // ✅ Get admin status
@@ -76,14 +79,6 @@ export default function YouTubeVideosPage() {
 
   const isLoading = isLoadingVideos || isLoadingCompanies;
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="container py-12 text-center">
@@ -97,6 +92,35 @@ export default function YouTubeVideosPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* ✅ Channel Attribution Section */}
+      <Alert className="mb-6 border-red-500/50 bg-red-500/5">
+        <Youtube className="h-4 w-4 text-red-500" />
+        <AlertDescription className="ml-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <p className="font-medium text-foreground mb-1">
+                Video Source: Rashmi Bhandary Placement Channel
+              </p>
+              <p className="text-sm text-muted-foreground">
+                All videos are sourced from{" "}
+                <strong>Rashmi Bhandary&apos;s YouTube channel</strong> and are
+                used here for educational purposes with proper attribution.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-shrink-0 border-red-500 text-red-500 hover:bg-red-500/10 cursor-pointer"
+              onClick={() =>
+                window.open("https://www.youtube.com/@RashmiBhandary", "_blank")
+              }
+            >
+              <Youtube className="h-4 w-4 mr-2" />
+              Visit Channel
+            </Button>
+          </div>
+        </AlertDescription>
+      </Alert>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
@@ -255,8 +279,36 @@ export default function YouTubeVideosPage() {
         )}
       </div>
 
+      {/* Loading Skeletons (for initial load and company filter change) */}
+      {isLoading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="rounded-lg overflow-hidden bg-white dark:bg-gray-950 shadow"
+            >
+              {/* Thumbnail skeleton */}
+              <Skeleton className="w-full aspect-video" />
+              <div className="p-4 space-y-3">
+                {/* Title skeleton */}
+                <Skeleton className="h-6 w-3/4" />
+                {/* Description skeleton */}
+                <Skeleton className="h-4 w-2/3" />
+                {/* Badges row skeleton */}
+                <div className="flex gap-2 mt-2">
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-6 w-24 rounded-full" />
+                </div>
+                {/* Button skeleton */}
+                <Skeleton className="h-10 w-full rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Videos Grid */}
-      {filteredVideos && filteredVideos.length > 0 ? (
+      {!isLoading && filteredVideos && filteredVideos.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredVideos.map((video) => (
             <VideoCard key={video.id} video={video} />

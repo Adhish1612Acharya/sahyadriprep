@@ -8,13 +8,74 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Mail, Linkedin, Code2, Cpu, Sparkles } from "lucide-react";
+import { Mail, Linkedin, Sparkles } from "lucide-react";
 import Image from "next/image";
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-muted/20 py-20 px-4">
       <div className="container mx-auto max-w-5xl space-y-20">
+        {/* Developer Section */}
+        <Card className="shadow-lg border-2 border-primary/20">
+          <CardHeader className="flex flex-col md:flex-row items-center gap-6">
+            <Image
+              src="https://res.cloudinary.com/dfujdlp8e/image/upload/v1762969110/My_image_goskaq.jpg"
+              alt="Adhish Profile"
+              width={160}
+              height={160}
+              className="rounded-full object-cover border-4 border-primary/20"
+            />
+            <div>
+              <CardTitle className="text-2xl">
+                Meet the Developer — Adhish P Acharya
+              </CardTitle>
+              <CardDescription>
+               Full Stack Developer | RAG & AI Enthusiast
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4 text-muted-foreground">
+            <p>
+              I’m <strong>Adhish</strong>, a 3rd Year B.E. Computer Science &
+              Engineering student at Sahyadri College of Engineering and
+              Management. I’m passionate about building full-stack systems and
+              integrating AI into practical applications that solve real student
+              and industry challenges.
+            </p>
+            {/* <p>
+              I currently serve as the{" "}
+              <strong>Tech Lead at Team Challengers</strong> and was previously
+              the <strong>Tech Lead for Team Aerofilia</strong>. My focus areas
+              include
+              <strong> RAG-based architectures</strong>, developing{" "}
+              <strong>agentic AI systems</strong>, and experimenting with{" "}
+              <strong>MCB server frameworks</strong>,{" "}
+              <strong>MCFS tools</strong>, and <strong>HATK systems</strong> for
+              adaptive AI environments.
+            </p> */}
+            <p>
+              <strong>Technical Skills:</strong> Next.js, TypeScript, Node.js,
+              Express.js, Supabase, Tailwind CSS, RAG-based systems, and agentic
+              AI development.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <a
+                href="https://www.linkedin.com/in/adhishpacharya"
+                target="_blank"
+                className="flex items-center gap-2 text-primary hover:underline"
+              >
+                <Linkedin className="h-5 w-5" /> linkedin.com/in/adhishpacharya
+              </a>
+              <a
+                href="mailto:adhisha0505@gmail.com"
+                className="flex items-center gap-2 text-primary hover:underline"
+              >
+                <Mail className="h-5 w-5" /> adhisha0505@gmail.com
+              </a>
+            </div>
+          </CardContent>
+        </Card>
         {/* Intro Section */}
         <section className="text-center space-y-6">
           <Sparkles className="h-10 w-10 text-primary mx-auto" />
@@ -97,68 +158,6 @@ export default function AboutPage() {
                 for PDFs and media content.
               </li>
             </ul>
-          </CardContent>
-        </Card>
-
-        {/* Developer Section */}
-        <Card className="shadow-lg border-2 border-primary/20">
-          <CardHeader className="flex flex-col md:flex-row items-center gap-6">
-            <Image
-              src="https://res.cloudinary.com/dfujdlp8e/image/upload/v1762969110/My_image_goskaq.jpg"
-              alt="Adhish Profile"
-              width={160}
-              height={160}
-              className="rounded-full object-cover border-4 border-primary/20"
-            />
-            <div>
-              <CardTitle className="text-2xl">
-                👋 Meet the Developer — Adhish P Acharya
-              </CardTitle>
-              <CardDescription>
-                Tech Lead | Full Stack Developer | RAG & AI Enthusiast
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4 text-muted-foreground">
-            <p>
-              I’m <strong>Adhish</strong>, a 3rd Year B.E. Computer Science &
-              Engineering student at Sahyadri College of Engineering and
-              Management. I’m passionate about building full-stack systems and
-              integrating AI into practical applications that solve real student
-              and industry challenges.
-            </p>
-            {/* <p>
-              I currently serve as the{" "}
-              <strong>Tech Lead at Team Challengers</strong> and was previously
-              the <strong>Tech Lead for Team Aerofilia</strong>. My focus areas
-              include
-              <strong> RAG-based architectures</strong>, developing{" "}
-              <strong>agentic AI systems</strong>, and experimenting with{" "}
-              <strong>MCB server frameworks</strong>,{" "}
-              <strong>MCFS tools</strong>, and <strong>HATK systems</strong> for
-              adaptive AI environments.
-            </p> */}
-            <p>
-              <strong>Technical Skills:</strong> Next.js, TypeScript, Node.js,
-              Express.js, Supabase, Tailwind CSS, RAG-based systems, and agentic
-              AI development.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <a
-                href="https://www.linkedin.com/in/adhishpacharya"
-                target="_blank"
-                className="flex items-center gap-2 text-primary hover:underline"
-              >
-                <Linkedin className="h-5 w-5" /> linkedin.com/in/adhishpacharya
-              </a>
-              <a
-                href="mailto:adhisha0505@gmail.com"
-                className="flex items-center gap-2 text-primary hover:underline"
-              >
-                <Mail className="h-5 w-5" /> adhisha0505@gmail.com
-              </a>
-            </div>
           </CardContent>
         </Card>
 

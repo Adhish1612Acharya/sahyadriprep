@@ -52,12 +52,12 @@ export default function ContactPage() {
           </CardHeader>
           <CardContent className="text-muted-foreground space-y-3">
             <p>
-              <strong>Adhish</strong> — 3rd Year B.E. Computer Science &
+              <strong>Adhish P Acharya</strong> — 3rd Year B.E. Computer Science &
               Engineering student at Sahyadri College of Engineering &
               Management.
             </p>
             <p>
-              I’m passionate about building full-stack and AI-driven systems
+              I&apos;m passionate about building full-stack and AI-driven systems
               that simplify complex workflows. SahyadriPrep is a student-built
               initiative designed to make placement preparation smarter and more
               efficient.
@@ -78,11 +78,6 @@ export default function ContactPage() {
             </p>
           </CardContent>
         </Card>
-
-        {/* Footer */}
-        <p className="text-sm text-muted-foreground pt-6">
-          Built using Next.js, ShadCN UI, and Supabase.
-        </p>
       </div>
     </div>
   );

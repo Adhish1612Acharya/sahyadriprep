@@ -268,17 +268,30 @@ export default function InterviewExperiencesPage() {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="space-y-3">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                  <Skeleton className="h-4 w-2/3" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="rounded-xl bg-white dark:bg-gray-950 shadow hover:shadow-lg transition overflow-hidden"
+            >
+              <div className="flex flex-col h-full">
+                <div className="p-6 flex-1 space-y-4">
+                  <Skeleton className="h-6 w-2/3 rounded" />
+                  <Skeleton className="h-4 w-1/2 rounded" />
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-5 w-24 rounded-full" />
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="p-4 flex justify-end">
+                  <Skeleton className="h-12 w-12 rounded-lg" />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -312,86 +325,87 @@ export default function InterviewExperiencesPage() {
       !isError &&
       filteredExperiences &&
       filteredExperiences.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredExperiences.map((exp: any) => (
             <Card
               key={exp.id}
-              className="hover:shadow-lg transition-shadow cursor-pointer"
+              className="rounded-xl shadow hover:shadow-lg transition cursor-pointer flex flex-col h-full"
               onClick={() => router.push(`/interview-experiences/${exp.id}`)}
             >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 space-y-3">
-                    {/* Title */}
-                    <div>
-                      <h3 className="text-xl font-semibold">
-                        {exp.student_name || "Anonymous"}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {exp.company_details?.name} • {exp.batch}
-                      </p>
-                    </div>
-
-                    {/* Meta Info */}
-                    <div className="flex flex-wrap gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <span>{exp.company_details?.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <School className="h-4 w-4 text-muted-foreground" />
-                        <span>{exp.college_details.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>Batch: {exp.batch}</span>
-                      </div>
-                      {exp.placed_year && (
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>Placed: {exp.placed_year}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Badges */}
-                    <div className="flex items-center gap-2">
-                      {exp.document_media_id && (
-                        <Badge
-                          variant="outline"
-                          className="flex items-center gap-1"
-                        >
-                          <FileText className="h-3 w-3" />
-                          Document Available
-                        </Badge>
-                      )}
-
-                      {exp.video_media_id && (
-                        <Badge
-                          variant="outline"
-                          className="flex items-center gap-1"
-                        >
-                          <Video className="h-3 w-3" />
-                          Video Available
-                        </Badge>
-                      )}
-                    </div>
+              <CardContent className="p-6 flex-1 flex flex-col">
+                <div className="flex flex-col gap-2 flex-1">
+                  {/* Title & Subtitle */}
+                  <div>
+                    <h3 className="text-xl font-bold mb-1 truncate">
+                      {exp.student_name || "Anonymous"}
+                    </h3>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {exp.company_details?.name} • {exp.batch}
+                    </p>
                   </div>
 
-                  {/* Company Logo */}
-                  {exp.company_details?.logo_url && (
-                    <div className="ml-4">
-                      <Image
-                        src={exp.company_details.logo_url}
-                        alt={exp.company_details.name}
-                        width={64}
-                        height={64}
-                        className="object-contain rounded-lg border"
-                        unoptimized
-                      />
-                    </div>
-                  )}
+                  {/* Meta Info */}
+                  <div className="flex flex-wrap gap-3 text-xs mt-2">
+                    {exp.company_details?.name && (
+                      <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded">
+                        <Building2 className="h-3 w-3 text-muted-foreground" />
+                        {exp.company_details?.name}
+                      </span>
+                    )}
+                    {exp.college_details?.name && (
+                      <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded">
+                        <School className="h-3 w-3 text-muted-foreground" />
+                        {exp.college_details.name}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded">
+                      <Calendar className="h-3 w-3 text-muted-foreground" />
+                      Batch: {exp.batch}
+                    </span>
+                    {exp.placed_year && (
+                      <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        Placed: {exp.placed_year}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Badges */}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {exp.document_media_id && (
+                      <Badge
+                        variant="outline"
+                        className="flex items-center gap-1"
+                      >
+                        <FileText className="h-3 w-3" />
+                        Document
+                      </Badge>
+                    )}
+                    {exp.video_media_id && (
+                      <Badge
+                        variant="outline"
+                        className="flex items-center gap-1"
+                      >
+                        <Video className="h-3 w-3" />
+                        Video
+                      </Badge>
+                    )}
+                  </div>
                 </div>
+
+                {/* Company Logo */}
+                {exp.company_details?.logo_url && (
+                  <div className="mt-4 flex justify-end">
+                    <Image
+                      src={exp.company_details.logo_url}
+                      alt={exp.company_details.name}
+                      width={48}
+                      height={48}
+                      className="object-contain rounded-lg border"
+                      unoptimized
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -415,7 +429,7 @@ export default function InterviewExperiencesPage() {
                   Clear Filters
                 </Button>
               ) : (
-                isAdmin && ( // ✅ Only show for admins in empty state
+                isAdmin && (
                   <Button
                     onClick={() =>
                       router.push("/admin/interview-experiences/add")

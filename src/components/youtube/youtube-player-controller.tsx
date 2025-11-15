@@ -104,7 +104,7 @@ export function YouTubePlayerController({
 
     try {
 
-      const ytPlayer = new window.YT.Player(playerContainerRef.current, {
+    new window.YT.Player(playerContainerRef.current, {
         videoId: videoId,
         playerVars: {
           controls: 0,

@@ -26,12 +26,16 @@ import {
   Trash2,
   AlertCircle,
   User,
+  Download,
+  ExternalLink,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import dynamic from "next/dynamic";
 import { useInterviewExperiences } from "@/hooks/useInterviewExperiences.hook";
 import Image from "next/image";
+import axios from "axios";
+import { axiosClient } from "@/lib/axiosClient";
 
 // ✅ Import PDFViewer dynamically with no SSR
 const DynamicPDFViewer = dynamic(
@@ -64,8 +68,50 @@ export default function InterviewExperienceDetailPage() {
     error,
   } = useExperienceQuery(experienceId);
 
-
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  // ✅ Ref for video section
+  const videoSectionRef = useRef<HTMLDivElement>(null);
+
+  // ✅ Scroll to video section
+  const scrollToVideo = () => {
+    videoSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  // ✅ Download PDF from Cloudinary
+  const handleDownloadPDF = async () => {
+    if (!experience?.document_media?.url) return;
+
+    setIsDownloading(true);
+    try {
+      // ✅ Use axios directly for external URLs (not axiosClient)
+      const response = await axios.get(experience.document_media.url, {
+        responseType: "blob",
+      });
+
+      const blob = response.data; // ✅ axios returns blob in .data
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${experience.companies?.name || "Interview"}_Experience_${
+        experience.student_name || experience.batch
+      }.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Failed to download PDF:", error);
+      // Fallback: open in new tab
+      window.open(experience.document_media.url, "_blank");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleDelete = () => {
     deleteExperience.mutate(experienceId, {
@@ -169,10 +215,51 @@ export default function InterviewExperienceDetailPage() {
           {/* PDF Viewer */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Interview Experience Document
-              </CardTitle>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 flex-shrink-0" />
+                  Interview Experience Document
+                </CardTitle>
+
+                {/* ✅ Action Buttons */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Download PDF Button */}
+                  {experience.document_media?.url && (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={handleDownloadPDF}
+                      disabled={isDownloading}
+                      className="font-semibold flex items-center gap-2 shadow"
+                    >
+                      {isDownloading ? (
+                        <>
+                          <Download className="h-4 w-4 mr-2 animate-pulse" />
+                          Downloading...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download PDF
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  {/* ✅ View Video Button (only if video exists) */}
+                  {experience.video_media?.url && (
+                    <Button
+                      variant="default"
+                      onClick={scrollToVideo}
+                      size="lg"
+                      className="font-semibold flex items-center gap-2 shadow"
+                    >
+                      <VideoIcon className="h-4 w-4 mr-2" />
+                      View Video Overview
+                    </Button>
+                  )}
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {experience.document_media?.url && (
@@ -181,9 +268,9 @@ export default function InterviewExperienceDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Video Preview */}
+          {/* ✅ Video Preview with ref */}
           {experience.video_media?.url && (
-            <Card>
+            <Card ref={videoSectionRef} className="scroll-mt-4">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <VideoIcon className="h-5 w-5" />
@@ -213,7 +300,7 @@ export default function InterviewExperienceDetailPage() {
             <CardContent className="space-y-4">
               {experience.student_name && (
                 <div className="flex items-start gap-3">
-                  <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <User className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium">Student Name</p>
                     <p className="text-sm text-muted-foreground">
@@ -226,8 +313,8 @@ export default function InterviewExperienceDetailPage() {
               <Separator />
 
               <div className="flex items-start gap-3">
-                <Building2 className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div className="flex-1">
+                <Building2 className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">Company</p>
                   <div className="flex items-center gap-2 mt-1">
                     {experience.companies?.logo_url && (
@@ -236,9 +323,10 @@ export default function InterviewExperienceDetailPage() {
                         alt={experience.companies.name}
                         width={24}
                         height={24}
+                        className="flex-shrink-0"
                       />
                     )}
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground truncate">
                       {experience.companies?.name}
                     </p>
                   </div>
@@ -253,10 +341,10 @@ export default function InterviewExperienceDetailPage() {
               <Separator />
 
               <div className="flex items-start gap-3">
-                <School className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div>
+                <School className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <div className="min-w-0">
                   <p className="text-sm font-medium">College</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground break-words">
                     {experience.colleges?.name}
                   </p>
                 </div>
@@ -265,7 +353,7 @@ export default function InterviewExperienceDetailPage() {
               <Separator />
 
               <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium">Batch</p>
                   <p className="text-sm text-muted-foreground">
@@ -278,7 +366,7 @@ export default function InterviewExperienceDetailPage() {
                 <>
                   <Separator />
                   <div className="flex items-start gap-3">
-                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-sm font-medium">Placed Year</p>
                       <p className="text-sm text-muted-foreground">
@@ -298,7 +386,7 @@ export default function InterviewExperienceDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium">Uploaded</p>
                   <p className="text-sm text-muted-foreground">
@@ -317,7 +405,7 @@ export default function InterviewExperienceDetailPage() {
               <Separator />
 
               <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium">Last Updated</p>
                   <p className="text-sm text-muted-foreground">
@@ -334,6 +422,47 @@ export default function InterviewExperienceDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* ✅ Quick Actions Card (Desktop) */}
+          {experience.video_media?.url && (
+            <Card className="hidden lg:block">
+              <CardHeader>
+                <CardTitle className="text-base">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={scrollToVideo}
+                  className="w-full"
+                >
+                  <VideoIcon className="h-4 w-4 mr-2" />
+                  Jump to Video
+                </Button>
+                {experience.document_media?.url && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadPDF}
+                    disabled={isDownloading}
+                    className="w-full"
+                  >
+                    {isDownloading ? (
+                      <>
+                        <Download className="h-4 w-4 mr-2 animate-pulse" />
+                        Downloading...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download PDF
+                      </>
+                    )}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

@@ -23,6 +23,8 @@ import {
   ListChecks,
   AlertCircle,
   CheckCircle,
+  ExternalLink,
+  Youtube,
 } from "lucide-react";
 import { formatDuration } from "@/helpers/youtube/youtube-video.helpers";
 import { formatDistanceToNow } from "date-fns";
@@ -47,6 +49,31 @@ import {
 } from "@/components/youtube/ai-panels";
 import { YouTubePlayerController } from "@/components/youtube/youtube-player-controller";
 import { useAuth } from "@/contexts/auth-context";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// ✅ Helper function to linkify text
+function linkifyText(text: string) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline inline-flex items-center gap-1 break-all"
+        >
+          {part}
+          <ExternalLink className="h-3 w-3 flex-shrink-0" />
+        </a>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
 
 export default function VideoDetailPage() {
   const params = useParams();
@@ -189,8 +216,32 @@ export default function VideoDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="container mx-auto px-4 py-8">
+        <div className="space-y-8">
+          {/* Title skeleton */}
+          <Skeleton className="h-8 w-2/3 mb-2" />
+
+          {/* Badges row skeleton */}
+          <div className="flex gap-2 mb-4">
+            <Skeleton className="h-6 w-24 rounded-full" />
+            <Skeleton className="h-6 w-24 rounded-full" />
+          </div>
+
+          {/* Video player skeleton */}
+          <Skeleton className="w-full aspect-video rounded-lg mb-6" />
+
+          {/* Description skeleton */}
+          <Skeleton className="h-6 w-1/2 mb-2" />
+          <Skeleton className="h-4 w-full mb-1" />
+          <Skeleton className="h-4 w-3/4 mb-1" />
+          <Skeleton className="h-4 w-2/3 mb-1" />
+
+          {/* AI features skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+            <Skeleton className="h-32 w-full rounded-lg" />
+            <Skeleton className="h-32 w-full rounded-lg" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -201,7 +252,8 @@ export default function VideoDetailPage() {
         <AlertCircle className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
         <h2 className="text-2xl font-bold mb-2">Video not found</h2>
         <p className="text-muted-foreground mb-4">
-          The video youre looking for doesnt exist or has been removed.
+          The video you&apos;re looking for doesn&apos;t exist or has been
+          removed.
         </p>
         <Button onClick={() => router.push("/interview-experiences/youtube")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -213,6 +265,38 @@ export default function VideoDetailPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* ✅ Channel Attribution */}
+      <Alert className="mb-6 border-red-500/50 bg-red-500/5">
+        <Youtube className="h-4 w-4 text-red-500" />
+        <AlertDescription className="ml-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <p className="text-sm">
+              <strong>Video Source:</strong> This video is from{" "}
+              <a
+                href="https://www.youtube.com/@RashmiBhandary"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-red-500 hover:underline font-medium"
+              >
+                Rashmi Bhandary&apos;s YouTube Channel
+              </a>{" "}
+              and is used here for educational purposes.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-shrink-0 border-red-500 text-red-500 hover:bg-red-500/10"
+              onClick={() =>
+                window.open(`https://youtu.be/${video.video_id}`, "_blank")
+              }
+            >
+              <Youtube className="h-4 w-4 mr-2" />
+              Watch on YouTube
+            </Button>
+          </div>
+        </AlertDescription>
+      </Alert>
+
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -226,8 +310,10 @@ export default function VideoDetailPage() {
         </Button>
 
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-2">{video.title}</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 break-words">
+              {video.title}
+            </h1>
 
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               {video.companies && (
@@ -258,7 +344,11 @@ export default function VideoDetailPage() {
           {isAdmin && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="flex-shrink-0"
+                >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete
                 </Button>
@@ -341,8 +431,76 @@ export default function VideoDetailPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content - Video Player */}
+        {/* ✅ Main Content - Reordered for Mobile */}
         <div className="lg:col-span-2 space-y-6">
+          {/* ✅ AI Processing Card - Shows FIRST on mobile */}
+          <Card className="lg:hidden border-primary/50 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                AI Processing
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Extract insights, create flashcards, and get AI-powered
+                summaries from this interview video.
+              </p>
+
+              {showAIContent && aiData ? (
+                <div className="space-y-3">
+                  <div className="text-sm text-muted-foreground bg-background/50 p-3 rounded-lg">
+                    <p className="font-medium text-foreground mb-2">
+                      ✅ Already Processed
+                    </p>
+                    <ul className="space-y-1 text-xs">
+                      <li>• {aiData.segments.length} segments</li>
+                      <li>• {aiData.flashcards.length} flashcards</li>
+                      <li>• {aiData.tips.length} tips</li>
+                    </ul>
+                  </div>
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    onClick={handleRegenerate}
+                    disabled={processVideo.isPending}
+                  >
+                    {processVideo.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Regenerating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Regenerate
+                      </>
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  className="w-full"
+                  onClick={handleGetAIInsights}
+                  disabled={processVideo.isPending || isAIContentLoading}
+                >
+                  {processVideo.isPending || isAIContentLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {video.ai_process_done ? "Loading..." : "Processing..."}
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Get AI Insights
+                    </>
+                  )}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Video Player */}
           <YouTubePlayerController
             videoId={video.video_id}
             title={video.title}
@@ -360,35 +518,34 @@ export default function VideoDetailPage() {
             onPlayerReady={handlePlayerReady}
           />
 
-          {/* Description */}
+          {/* ✅ Description - Fixed overflow with word-break */}
           {video.description && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <FileText className="h-5 w-5 flex-shrink-0" />
                   Description
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground whitespace-pre-wrap">
-                  {video.description}
-                </p>
+                <div className="text-sm sm:text-base text-muted-foreground whitespace-pre-wrap break-words overflow-wrap-anywhere">
+                  {linkifyText(video.description)}
+                </div>
               </CardContent>
             </Card>
           )}
 
-          {/* ✅ AI Features Tabs - Responsive & Auto-scroll */}
+          {/* AI Features Tabs */}
           {showAIContent && (
             <div ref={aiSectionRef}>
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
                     AI-Powered Features
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {/* ✅ Loading State - Only show loading spinner */}
                   {(processVideo.isPending || isAIContentLoading) && (
                     <div className="flex flex-col items-center justify-center py-12 space-y-4">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -400,10 +557,8 @@ export default function VideoDetailPage() {
                     </div>
                   )}
 
-                  {/* ✅ Loaded State - Show tabs */}
                   {!processVideo.isPending && !isAIContentLoading && aiData && (
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
-                      {/* ✅ Responsive TabsList */}
                       <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 h-auto p-1">
                         <TabsTrigger
                           value="overview"
@@ -487,8 +642,8 @@ export default function VideoDetailPage() {
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
+        {/* ✅ Sidebar - Hidden on mobile (AI card moved to top) */}
+        <div className="hidden lg:block space-y-6">
           {/* Video Info Card */}
           <Card>
             <CardHeader>
@@ -508,7 +663,7 @@ export default function VideoDetailPage() {
 
               <div>
                 <p className="text-sm font-medium mb-1">Video ID</p>
-                <p className="text-xs text-muted-foreground font-mono">
+                <p className="text-xs text-muted-foreground font-mono break-all">
                   {video.video_id}
                 </p>
               </div>
@@ -534,12 +689,13 @@ export default function VideoDetailPage() {
                 className="w-full"
                 onClick={() => window.open(video.video_url, "_blank")}
               >
+                <Youtube className="h-4 w-4 mr-2" />
                 Watch on YouTube
               </Button>
             </CardContent>
           </Card>
 
-          {/* Process Video Card */}
+          {/* Process Video Card - Desktop only */}
           <Card className="border-primary/50 bg-primary/5">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">

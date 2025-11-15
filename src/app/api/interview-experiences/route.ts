@@ -14,7 +14,6 @@ import { createClient as v_createClient } from "@/lib/vector_supabase/server";
 import doc_loader from "@/lib/rag-chatbot/load-doc";
 import create_doc_chunk from "@/lib/rag-chatbot/create-doc-chunk";
 import embeddings from "@/lib/rag-chatbot/embedding-model-config";
-import createChunkSummary from "@/helpers/ai/generate-chunk-summary";
 import { generateSummariesInBatches } from "@/helpers/batch-summary.helpers";
 import { requireAdmin, hasCollegeAccess } from "@/helpers/auth/auth.helpers";
 

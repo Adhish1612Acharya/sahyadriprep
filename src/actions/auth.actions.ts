@@ -347,7 +347,7 @@ export async function resetPasswordWithToken(
       return { error: updateError.message };
     }
 
-    const { success, error } = await signOut();
+    const {  error } = await signOut();
 
     if (error) {
       return { error: error };

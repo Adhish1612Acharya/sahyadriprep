@@ -3,7 +3,14 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, Clock, Building2, Calendar } from "lucide-react";
+import {
+  Play,
+  Clock,
+  Building2,
+  Calendar,
+  Youtube,
+  Sparkles,
+} from "lucide-react";
 import { YouTubeVideo } from "@/types/services/interview-youtube-video.types";
 import { formatDuration } from "@/helpers/youtube/youtube-video.helpers";
 import { useRouter } from "next/navigation";
@@ -21,6 +28,12 @@ export function VideoCard({ video }: VideoCardProps) {
     router.push(`/interview-experiences/youtube/${video.id}`);
   };
 
+  // ✅ Handler to open YouTube link in new tab
+  const handleYouTubeClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    window.open(`https://youtu.be/${video.video_id}`, "_blank");
+  };
+
   return (
     <Card
       className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
@@ -29,20 +42,31 @@ export function VideoCard({ video }: VideoCardProps) {
       {/* Thumbnail */}
       <div className="relative aspect-video bg-muted">
         <Image
-          src={video.thumbnail_url || "/placeholder-video.jpg"}
+          src={
+            video.thumbnail_url ||
+            `https://img.youtube.com/vi/${video.video_id}/maxresdefault.jpg`
+          }
           alt={video.title}
-          fill // ✅ Use fill instead of width/height
+          fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // ✅ Add sizes
-          priority={false} // ✅ Lazy load thumbnails
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          priority={false}
         />
 
         {/* Duration Badge */}
         {video.duration && (
-          <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-            <Clock className="h-3 w-3" />
+          <Badge className="absolute bottom-2 right-2 bg-black/80 text-white hover:bg-black/90">
+            <Clock className="h-3 w-3 mr-1" />
             {formatDuration(video.duration)}
-          </div>
+          </Badge>
+        )}
+
+        {/* ✅ AI Processing Badge - Top Left */}
+        {video.ai_process_done && (
+          <Badge className="absolute top-2 left-2 bg-primary/90 text-primary-foreground hover:bg-primary">
+            <Sparkles className="h-3 w-3 mr-1" />
+            AI
+          </Badge>
         )}
 
         {/* Play Overlay */}
@@ -69,16 +93,45 @@ export function VideoCard({ video }: VideoCardProps) {
           </p>
         )}
 
-        {/* Company Badge */}
-        {video.companies && (
-          <Badge variant="secondary" className="mb-3">
-            <Building2 className="h-3 w-3 mr-1" />
-            {video.companies.name}
+        {/* ✅ PRIMARY ACTION - Watch Interview Button (Most Prominent) */}
+        <Button size="sm" className="w-full mb-3" onClick={handleClick}>
+          <Play className="h-4 w-4 mr-2" />
+          Watch Interview
+        </Button>
+
+        {/* ✅ Badges Row - YouTube + Company (Below the main button) */}
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          {/* YouTube Badge - Smaller, less prominent */}
+          <Badge
+            variant="outline"
+            className="bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900 cursor-pointer transition-all text-xs"
+            onClick={handleYouTubeClick}
+            title="Watch on YouTube"
+          >
+            <Youtube className="h-3 w-3 mr-1" />
+            YouTube
           </Badge>
-        )}
+
+          {/* Company Badge */}
+          {video.companies && (
+            <Badge variant="secondary" className="text-xs">
+              {video.companies.logo_url && (
+                <Image
+                  src={video.companies.logo_url}
+                  alt={video.companies.name}
+                  width={16}
+                  height={16}
+                  className="rounded mr-1"
+                />
+              )}
+              <Building2 className="h-3 w-3 mr-1" />
+              {video.companies.name}
+            </Badge>
+          )}
+        </div>
 
         {/* Meta Info */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Calendar className="h-3 w-3" />
           <span>
             {formatDistanceToNow(new Date(video.created_at), {
@@ -86,12 +139,6 @@ export function VideoCard({ video }: VideoCardProps) {
             })}
           </span>
         </div>
-
-        {/* Action Button */}
-        <Button size="sm" className="w-full" onClick={handleClick}>
-          <Play className="h-4 w-4 mr-2" />
-          Watch Interview
-        </Button>
       </CardContent>
     </Card>
   );

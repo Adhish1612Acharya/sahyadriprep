@@ -11,13 +11,9 @@ import {
   Download,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// ✅ Import react-pdf CSS
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-
-// Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface PDFViewerProps {
@@ -57,7 +53,7 @@ export function PDFViewer({ url }: PDFViewerProps) {
   return (
     <div className="space-y-4">
       {/* Controls */}
-      <div className="flex items-center justify-between bg-muted p-3 rounded-lg">
+      <div className="flex items-center justify-between bg-muted p-3 rounded-lg sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -88,38 +84,50 @@ export function PDFViewer({ url }: PDFViewerProps) {
           <Button variant="outline" size="sm" onClick={zoomIn}>
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" asChild>
-            <a href={url} download target="_blank" rel="noopener noreferrer">
-              <Download className="h-4 w-4" />
-            </a>
-          </Button>
         </div>
       </div>
 
       {/* PDF Document */}
-      <div className="border rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900">
-        <div className="overflow-auto max-h-[800px]">
-          <Document
-            file={url}
-            onLoadSuccess={onDocumentLoadSuccess}
-            loading={
-              <div className="p-8 space-y-4">
-                <Skeleton className="h-96 w-full" />
-              </div>
-            }
-            error={
-              <div className="p-8 text-center">
-                <p className="text-destructive">Failed to load PDF</p>
-              </div>
-            }
-          >
-            <Page
-              pageNumber={pageNumber}
-              scale={scale}
-              loading={<Skeleton className="h-96 w-full" />}
-              className="mx-auto"
-            />
-          </Document>
+      <div
+        className="border rounded-lg bg-gray-100 dark:bg-gray-900"
+        style={{
+          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        }}
+      >
+        <div
+          className="overflow-auto max-h-[800px] w-full"
+          style={{
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          <div className="w-full min-w-[320px] sm:min-w-0 flex justify-center">
+            <Document
+              file={url}
+              onLoadSuccess={onDocumentLoadSuccess}
+              loading={
+                <div className="p-8 space-y-4">
+                  <Skeleton className="h-96 w-full" />
+                </div>
+              }
+              error={
+                <div className="p-8 text-center">
+                  <p className="text-destructive">Failed to load PDF</p>
+                </div>
+              }
+            >
+              <Page
+                pageNumber={pageNumber}
+                scale={scale}
+                loading={<Skeleton className="h-96 w-full" />}
+                className="mx-auto"
+                width={
+                  typeof window !== "undefined" && window.innerWidth < 640
+                    ? window.innerWidth - 48
+                    : undefined
+                }
+              />
+            </Document>
+          </div>
         </div>
       </div>
     </div>
