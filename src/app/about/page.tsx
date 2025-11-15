@@ -36,9 +36,9 @@ export default function AboutPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-muted-foreground">
             <p>
-              I’m <strong>Adhish</strong>, a 3rd Year B.E. Computer Science &
+              I&apos;m <strong>Adhish P Acharya</strong>, a 3rd Year B.E. Computer Science &
               Engineering student at Sahyadri College of Engineering and
-              Management. I’m passionate about building full-stack systems and
+              Management. I&apos;m passionate about building full-stack systems and
               integrating AI into practical applications that solve real student
               and industry challenges.
             </p>
