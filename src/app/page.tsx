@@ -59,7 +59,7 @@ export default function HomePage() {
                 className="text-lg px-8"
                 asChild
               >
-                <Link href="/auth/signup">Get Started Free</Link>
+                <Link href="/auth/sign-up">Get Started Free</Link>
               </Button>
             </div>
 
@@ -352,7 +352,7 @@ export default function HomePage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   <Button size="lg" className="text-lg px-8" asChild>
-                    <Link href="/auth/signup">
+                    <Link href="/auth/sign-up">
                       Create Free Account
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
