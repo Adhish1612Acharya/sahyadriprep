@@ -39,8 +39,8 @@ export default function HomePage() {
             </Badge>
 
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight max-w-4xl">
-              Ace Your Interviews with{" "}
-              <span className="text-primary">Real Experiences</span>
+               Ace your interviews with {" "}
+              <span className="text-primary">real experiences</span>
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
