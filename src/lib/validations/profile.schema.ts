@@ -9,8 +9,8 @@ export const studentProfileUpdateSchema = z
     full_name: z.string().min(1, "Full name is required").max(100),
     phone: z
       .string()
-      .regex(/^[0-9]{10}$/, "Phone must be 10 digits")
-      .optional()
+      // .regex(/^[0-9]{10}$/, "Phone must be 10 digits")
+      // .optional()
       .nullable(),
     avatar_url: z.string().url("Invalid avatar URL").optional().nullable(),
     college_id: z.string().uuid("Invalid college ID").optional().nullable(),

@@ -116,7 +116,7 @@ export function StudentProfileForm({
               />
 
 
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
@@ -132,7 +132,7 @@ export function StudentProfileForm({
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              />  */}
 
               <FormField
                 control={form.control}

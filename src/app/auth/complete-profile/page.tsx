@@ -242,7 +242,7 @@ export default function CompleteProfilePage() {
                   />
                 </div>
 
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="phone">Phone</Label>
                   <Input
                     id="phone"
@@ -254,7 +254,7 @@ export default function CompleteProfilePage() {
                     }
                     disabled={loading}
                   />
-                </div>
+                </div> */}
               </div>
 
               <div className="space-y-2">
