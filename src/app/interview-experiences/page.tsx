@@ -444,6 +444,27 @@ export default function InterviewExperiencesPage() {
           </Card>
         )
       )}
+
+      {/* Announcement Card */}
+      <Card className="mb-6 mt-6">
+        <CardContent>
+          <div className="flex flex-col items-center text-center gap-2">
+            <span className="font-semibold text-primary text-base">
+              More Senior interview experiences and Placement Officer sessions
+              will be uploaded soon. Stay tuned on our WhatsApp group for
+              updates!
+            </span>
+            <a
+              href="https://chat.whatsapp.com/HtZFz8GepZf9rzCDhl8vuI"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-2 px-4 py-2 rounded bg-green-500 text-white font-medium hover:bg-green-600 transition"
+            >
+              Join WhatsApp Group
+            </a>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -247,7 +247,7 @@ export default function CompleteProfilePage() {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="+91 98765 43210"
+                    placeholder="+91 98765 43210(optional)"
                     value={studentForm.phone}
                     onChange={(e) =>
                       setStudentForm({ ...studentForm, phone: e.target.value })
@@ -447,7 +447,7 @@ export default function CompleteProfilePage() {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="+91 98765 43210"
+                    placeholder="+91 9876543210(optional)"
                     value={adminForm.phone}
                     onChange={(e) =>
                       setAdminForm({ ...adminForm, phone: e.target.value })

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,29 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Lock, CheckCircle, ArrowLeft } from "lucide-react";
 import { updatePassword } from "@/actions/auth.actions";
+import { validatePassword } from "@/lib/validators/password.validator";
+
+// Reuse PasswordRequirement from signup-form
+function PasswordRequirement({ met, text }: { met: boolean; text: string }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      {met ? (
+        <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-500" />
+      ) : (
+        <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+      )}
+      <span
+        className={
+          met
+            ? "text-green-600 dark:text-green-500 font-medium"
+            : "text-muted-foreground"
+        }
+      >
+        {text}
+      </span>
+    </div>
+  );
+}
 
 export default function ChangePasswordPage() {
   const [newPassword, setNewPassword] = useState("");
@@ -25,16 +48,22 @@ export default function ChangePasswordPage() {
   const [success, setSuccess] = useState(false);
   const router = useRouter();
 
+  // Password validation
+  const passwordValidation = useMemo(
+    () => validatePassword(newPassword),
+    [newPassword]
+  );
+  const passwordsMatch =
+    newPassword === confirmPassword && confirmPassword !== "";
+
+  const isFormValid = passwordValidation.isValid && passwordsMatch;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters long");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+    if (!isFormValid) {
+      setError("Password does not meet requirements or does not match.");
       return;
     }
 
@@ -99,9 +128,31 @@ export default function ChangePasswordPage() {
                 disabled={loading || success}
                 required
               />
-              <p className="text-xs text-muted-foreground">
-                Minimum 8 characters
-              </p>
+              {/* Password Requirements Checklist */}
+              {newPassword && (
+                <div className="space-y-1 pt-2">
+                  <PasswordRequirement
+                    met={passwordValidation.requirements.minLength}
+                    text="At least 8 characters"
+                  />
+                  <PasswordRequirement
+                    met={passwordValidation.requirements.hasLowercase}
+                    text="Lowercase letter (a-z)"
+                  />
+                  <PasswordRequirement
+                    met={passwordValidation.requirements.hasUppercase}
+                    text="Uppercase letter (A-Z)"
+                  />
+                  <PasswordRequirement
+                    met={passwordValidation.requirements.hasDigit}
+                    text="Digit (0-9)"
+                  />
+                  <PasswordRequirement
+                    met={passwordValidation.requirements.hasSymbol}
+                    text="Symbol (!@#$%^&*)"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -114,13 +165,24 @@ export default function ChangePasswordPage() {
                 disabled={loading || success}
                 required
               />
+              {/* Password Match Indicator */}
+              {confirmPassword && (
+                <PasswordRequirement
+                  met={passwordsMatch}
+                  text={
+                    passwordsMatch
+                      ? "Passwords match"
+                      : "Passwords do not match"
+                  }
+                />
+              )}
             </div>
 
             <div className="flex gap-4">
               <Button
                 type="submit"
                 className="flex-1"
-                disabled={loading || success}
+                disabled={loading || success || !isFormValid}
               >
                 {loading ? (
                   <>

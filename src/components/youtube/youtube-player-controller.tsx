@@ -91,7 +91,6 @@ export function YouTubePlayerController({
   // ✅ Re-initialize player when videoId changes
   useEffect(() => {
     if (isReady && player && videoId) {
-
       player.loadVideoById(videoId);
     }
   }, [videoId, isReady]);
@@ -103,8 +102,7 @@ export function YouTubePlayerController({
     }
 
     try {
-
-    new window.YT.Player(playerContainerRef.current, {
+      new window.YT.Player(playerContainerRef.current, {
         videoId: videoId,
         playerVars: {
           controls: 0,
@@ -147,7 +145,10 @@ export function YouTubePlayerController({
       player &&
       isReady
     ) {
-      jumpToTime(jumpToTimestamp);
+      // Seek after a short delay to ensure player is fully loaded
+      setTimeout(() => {
+        jumpToTime(jumpToTimestamp);
+      }, 200);
     }
   }, [jumpToTimestamp, player, isReady]);
 

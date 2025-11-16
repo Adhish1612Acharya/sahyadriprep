@@ -1,6 +1,10 @@
 "use server";
 
-import { syncProfileToMetadata } from "@/helpers/auth/auth.helpers";
+import {
+  createUserProfile,
+  deleteAuthUserById,
+  syncProfileToMetadata,
+} from "@/helpers/auth/auth.helpers";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -59,13 +63,18 @@ export async function signInWithEmail(formData: {
 export async function signInWithGoogle(options?: {
   role?: "student" | "college_admin";
   college_id?: string | null;
+  redirectUrl?: string;
 }) {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      redirectTo: `${
+        process.env.NEXT_PUBLIC_SITE_URL
+      }/auth/callback?redirect=${encodeURIComponent(
+        options?.redirectUrl || "/"
+      )}`,
       // Pass role and college_id as query params (will be in user_metadata after auth)
       queryParams: {
         role: options?.role || "student",
@@ -94,7 +103,6 @@ export async function signOut() {
     console.error("❌ Sign out error:", error);
     return { error: error.message };
   }
-
 
   // revalidatePath("/", "layout");
   return { success: true };
@@ -220,7 +228,7 @@ export async function completeAdminProfile(formData: {
       syncResult.error
     );
     // Don't fail the login, metadata will sync on next request
-  } 
+  }
 
   revalidatePath("/", "layout");
 
@@ -347,7 +355,7 @@ export async function resetPasswordWithToken(
       return { error: updateError.message };
     }
 
-    const {  error } = await signOut();
+    const { error } = await signOut();
 
     if (error) {
       return { error: error };
@@ -360,7 +368,6 @@ export async function resetPasswordWithToken(
     return { error: error.message || "Failed to reset password" };
   }
 }
-
 
 export async function verifyResetToken(token: string) {
   const supabase = await createClient();
@@ -402,6 +409,26 @@ export async function confirmEmail(tokenHash: string, type: string) {
 
     if (!data.user) {
       return { error: "Failed to verify user after confirmation" };
+    }
+
+    if (type === "signup" || type === "email") {
+      // ✅ Create user profile after email confirmation
+      const profileResult = await createUserProfile({
+        userId: data.user.id,
+        role: data.user.user_metadata?.role || "student",
+        profile_completed: false,
+      });
+
+      if (!profileResult.success) {
+        console.warn(
+          "⚠️ Failed to create user profile after email confirmation",
+          profileResult.error
+        );
+        await deleteAuthUserById(data.user.id);
+        return {
+          error: "Failed to create user profile. Please sign up again.",
+        };
+      }
     }
 
     // Sync profile metadata after email confirmation

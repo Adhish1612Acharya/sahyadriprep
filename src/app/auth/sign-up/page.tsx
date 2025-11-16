@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -13,6 +14,9 @@ import { GraduationCap } from "lucide-react";
 import { SignupForm } from "@/components/auth/signup-form";
 
 export default function SignupPage() {
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 via-background to-background p-4">
       <Card className="w-full max-w-md">
@@ -30,12 +34,20 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <SignupForm />
+          {/* Pass redirectUrl to SignupForm */}
+          <SignupForm redirectUrl={redirectUrl || undefined} />
         </CardContent>
         <CardFooter>
           <p className="text-sm text-center w-full text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/auth/login" className="text-primary hover:underline">
+            <Link
+              href={`/auth/login${
+                redirectUrl
+                  ? `?redirect=${encodeURIComponent(redirectUrl)}`
+                  : ""
+              }`}
+              className="text-primary hover:underline"
+            >
               Sign in
             </Link>
           </p>

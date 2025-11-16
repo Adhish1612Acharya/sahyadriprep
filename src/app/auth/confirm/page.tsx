@@ -32,7 +32,8 @@ function ConfirmPageContent() {
         // ✅ Get token_hash and type from URL (PKCE flow)
         const tokenHash = searchParams.get("token_hash");
         const type = searchParams.get("type");
-        const next = searchParams.get("next") || "/";
+        const next =
+          searchParams.get("redirect") || searchParams.get("next") || "/auth/complete-profile";
 
         if (!tokenHash) {
           setStatus("error");
@@ -56,7 +57,7 @@ function ConfirmPageContent() {
           return;
         }
 
-        console.log("🔄 Confirming email with token...");
+      
 
         // Confirm email using server action
         const result = await confirmEmail(tokenHash, type);
@@ -68,7 +69,7 @@ function ConfirmPageContent() {
           return;
         }
 
-        console.log("✅ Email confirmed successfully");
+      
         setStatus("success");
         setMessage("Email confirmed successfully! Redirecting...");
         setIsVerifying(false);

@@ -137,10 +137,24 @@ export default function CompaniesPage() {
             <Building2 className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Companies</h1>
-            <p className="text-muted-foreground mt-1">
-              Explore companies hiring from our college
+            <h1 className="text-3xl font-bold mb-2">
+              Explore companies for which placement experiences and content are
+              available
+            </h1>
+            <p className="text-muted-foreground mb-4">
+              More company experiences, Senior interview stories, and Placement
+              Officer sessions will be added soon.
+              <br />
+              Stay tuned on our WhatsApp group for updates!
             </p>
+            <a
+              href="https://chat.whatsapp.com/HtZFz8GepZf9rzCDhl8vuI"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-2 px-4 py-2 rounded bg-green-500 text-white font-medium hover:bg-green-600 transition"
+            >
+              Join WhatsApp Group
+            </a>
           </div>
         </div>
       </div>
@@ -336,7 +350,7 @@ export default function CompaniesPage() {
             <Card
               key={company.id}
               className="group hover:shadow-lg transition-all"
-            //   onClick={() => router.push(`/companies/${company.id}`)}
+              //   onClick={() => router.push(`/companies/${company.id}`)}
             >
               <CardHeader>
                 <div className="flex items-start gap-4">

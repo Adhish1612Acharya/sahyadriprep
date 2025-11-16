@@ -18,6 +18,7 @@ export interface SignupRequest {
   password: string;
   role: "student" | "college_admin";
   college_id?: string | null;
+  redirectUrl?: string;
 }
 
 export interface SignupResponse {

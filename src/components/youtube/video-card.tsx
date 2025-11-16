@@ -94,7 +94,7 @@ export function VideoCard({ video }: VideoCardProps) {
         )}
 
         {/* ✅ PRIMARY ACTION - Watch Interview Button (Most Prominent) */}
-        <Button size="sm" className="w-full mb-3" onClick={handleClick}>
+        <Button size="sm" className="w-full mb-3 cursor-pointer" onClick={handleClick}>
           <Play className="h-4 w-4 mr-2" />
           Watch Interview
         </Button>
@@ -114,7 +114,7 @@ export function VideoCard({ video }: VideoCardProps) {
 
           {/* Company Badge */}
           {video.companies && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs cursor-default">
               {video.companies.logo_url && (
                 <Image
                   src={video.companies.logo_url}

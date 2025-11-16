@@ -264,6 +264,7 @@ export async function createAuthUser(params: {
   role: "student" | "college_admin" | "super_admin";
   college_id?: string | null;
   email_confirm?: boolean;
+  redirectUrl?: string;
 }) {
   const {
     email,
@@ -271,6 +272,7 @@ export async function createAuthUser(params: {
     role,
     college_id = null,
     email_confirm = false,
+    redirectUrl,
   } = params;
 
   try {
@@ -317,6 +319,14 @@ export async function createAuthUser(params: {
       `📝 Creating auth user (confirmation required): ${email} (${role})`
     );
 
+    const confirmUrl = redirectUrl
+      ? `${
+          process.env.NEXT_PUBLIC_SITE_URL
+        }/auth/confirm?redirect=${encodeURIComponent(redirectUrl)}`
+      : `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`;
+
+      console.log("Email confirmation URL:", confirmUrl);
+
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp(
       {
         email,
@@ -326,7 +336,7 @@ export async function createAuthUser(params: {
             role,
             college_id: college_id || null,
           },
-          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+          emailRedirectTo: confirmUrl,
         },
       }
     );
@@ -376,6 +386,10 @@ export async function createUserProfile(params: {
 
     console.log(`📝 Creating profile for user: ${userId}`);
 
+    const { data, error } = await supabase.auth.getUser();
+
+    console.log("CrateUserProfile auth user : ",data.user?.id);
+
     const { error: profileError } = await supabase.from("profiles").insert({
       id: userId,
       role,
@@ -408,8 +422,10 @@ export async function createUserWithProfile(params: {
   role: "student" | "college_admin" | "super_admin";
   college_id?: string | null;
   email_confirm?: boolean;
+  redirectUrl?: string;
 }) {
-  const { email, password, role, college_id, email_confirm } = params;
+  const { email, password, role, college_id, email_confirm, redirectUrl } =
+    params;
 
   // Step 1: Create auth user
   const authResult = await createAuthUser({
@@ -418,6 +434,7 @@ export async function createUserWithProfile(params: {
     role,
     college_id,
     email_confirm,
+    redirectUrl,
   });
 
   if (!authResult.success || !authResult.user) {
@@ -429,7 +446,7 @@ export async function createUserWithProfile(params: {
 
   const userId = authResult.user.id;
 
-  // Step 2: Create profile
+  // Step 2: Create profil
   const profileResult = await createUserProfile({
     userId,
     role,

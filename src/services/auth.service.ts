@@ -33,7 +33,7 @@ const authService = {
   signupWithEmail: async (data: SignupRequest): Promise<SignupResponse> => {
     try {
       const response = await axiosClient.post<SignupResponse>(
-        AUTH_ENDPOINTS.SIGNUP,
+        AUTH_ENDPOINTS.SIGNUP(data.redirectUrl),
         data
       );
 

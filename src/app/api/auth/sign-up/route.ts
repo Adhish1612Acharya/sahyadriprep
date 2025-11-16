@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   enforceCollegeEmailOrReject,
-  createUserWithProfile,
+  createAuthUser,
 } from "@/helpers/auth/auth.helpers";
 import { validatePassword } from "@/lib/validators/password.validator";
 import { z } from "zod";
@@ -18,6 +18,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const parsed = bodySchema.safeParse(body);
+
+    const redirect = request.nextUrl.searchParams.get("redirect");
+
+    console.log("🚀 Signup request received for email:", body.email, "with redirect:", redirect);
 
     // ✅ Basic validation
     if (!parsed.success) {
@@ -79,20 +83,35 @@ export async function POST(request: NextRequest) {
       if (rejectResponse) return rejectResponse;
     }
 
-    // ✅ Step 2: Create user + profile (with automatic rollback)
-    const result = await createUserWithProfile({
+    // ✅ Step 2: Create user
+    // const result = await createUserWithProfile({
+    //   email,
+    //   password,
+    //   role,
+    //   college_id,
+    //   email_confirm: false, // Auto-confirm email
+    // });
+
+    const result = await createAuthUser({
       email,
       password,
       role,
       college_id,
-      email_confirm: false, // Auto-confirm email
+      email_confirm: false,
+      redirectUrl: redirect || undefined,
     });
 
     if (!result.success) {
       console.error("❌ Signup failed:", result.error);
 
       // Handle specific error cases
-      if (result.error?.includes("already registered")) {
+      const errorMsg = result.error?.message || result.error;
+
+      if (
+        errorMsg?.toLowerCase().includes("already registered") ||
+        errorMsg?.toLowerCase().includes("duplicate key") ||
+        errorMsg?.toLowerCase().includes("user already exists")
+      ) {
         return NextResponse.json(
           {
             success: false,
@@ -103,22 +122,41 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (result.error?.includes("Password")) {
+      if (
+        errorMsg?.toLowerCase().includes("password") ||
+        errorMsg?.toLowerCase().includes("invalid password")
+      ) {
         return NextResponse.json(
           {
             success: false,
             error: "Invalid password",
-            details: result.error,
+            details: errorMsg,
           },
           { status: 400 }
         );
       }
 
+      // Handle invalid email domain
+      if (
+        errorMsg?.toLowerCase().includes("invalidemaildomain") ||
+        errorMsg?.toLowerCase().includes("invalid email domain")
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Invalid email domain",
+            details: "Please sign up with your college email",
+          },
+          { status: 403 }
+        );
+      }
+
+      // Default error response
       return NextResponse.json(
         {
           success: false,
-          error: result.error || "Failed to create account",
-          details: result.details,
+          error: "Signup failed",
+          details: errorMsg,
         },
         { status: 500 }
       );

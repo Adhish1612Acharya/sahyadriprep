@@ -7,12 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, Check, X } from "lucide-react";
 import { useAuthService } from "@/hooks/useAuth.hook";
-import { signInWithGoogle } from "@/actions/auth.actions";
 import { validatePassword } from "@/lib/validators/password.validator";
 import { cn } from "@/lib/utils";
 
-export function SignupForm() {
-  const { signupWithEmail } = useAuthService();
+export function SignupForm({ redirectUrl }: { redirectUrl?: string }) {
+  const { signupWithEmail, signInWithGoogle } = useAuthService();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -46,13 +45,13 @@ export function SignupForm() {
       return;
     }
 
-    console.log("Signing up with role:", formData.role);
 
     await signupWithEmail.mutateAsync({
       email: formData.email,
       password: formData.password,
       role: "student",
       college_id: null,
+      redirectUrl, // Pass redirectUrl to mutation
     });
   };
 
@@ -60,10 +59,7 @@ export function SignupForm() {
     setLoading(true);
 
     try {
-      await signInWithGoogle({
-        role: "student",
-        college_id: null,
-      });
+      await signInWithGoogle({ redirectUrl: redirectUrl || "/" });
     } catch (err: any) {
       console.error("Google signup error:", err);
       setLoading(false);

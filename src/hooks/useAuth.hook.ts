@@ -14,10 +14,6 @@ export const useAuthService = () => {
   // MUTATIONS
   // ============================================
 
-  /**
-   * Verify college email after OAuth sign-in
-   * If invalid, signs out user and deletes auth account
-   */
   const verifyCollegeEmail = useMutation({
     mutationFn: (data: VerifyCollegeRequest) =>
       authService.verifyCollegeEmail(data),
@@ -26,8 +22,6 @@ export const useAuthService = () => {
     },
     onError: async (error: Error) => {
       console.error("❌ College email verification failed:", error);
-
-      // If email not allowed, sign out and redirect
       if (
         error.message.includes("InvalidEmail") ||
         error.message.includes("not allowed")
@@ -42,21 +36,50 @@ export const useAuthService = () => {
   /**
    * Sign up with email and password
    * Validates college email domain before account creation
+   * Accepts redirectUrl for post-signup navigation
    */
   const signupWithEmail = useMutation({
-    mutationFn: (data: SignupRequest) => authService.signupWithEmail(data),
-    onSuccess: (data) => {
-      // You can redirect to login or dashboard here
-      router.push("/auth/login?success=account_created Verify your email");
+    mutationFn: (data: SignupRequest & { redirectUrl?: string }) =>
+      authService.signupWithEmail(data),
+    onSuccess: (data, variables) => {
+      // Redirect to login with redirect param if present
+      if (variables.redirectUrl) {
+        router.push(
+          `/auth/login?redirect=${encodeURIComponent(
+            variables.redirectUrl
+          )}&success=account_created`
+        );
+      } else {
+        router.push("/auth/login?success=account_created");
+      }
     },
     onError: (error: Error) => {
-      console.error("❌ Sign up failed:",error);
+      console.error("❌ Sign up failed:", error);
     },
   });
 
+  /**
+   * Google login/signup with redirect
+   */
+  const signInWithGoogle = async ({
+    redirectUrl,
+  }: {
+    redirectUrl?: string;
+  }) => {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${
+          window.location.origin
+        }/auth/callback?redirect=${encodeURIComponent(redirectUrl || "/")}`,
+      },
+    });
+  };
+
   return {
-    // Mutations
     verifyCollegeEmail,
     signupWithEmail,
+    signInWithGoogle,
   };
 };

@@ -218,7 +218,7 @@ export async function POST(
       const aiMeta = {
         last_processed_at: new Date().toISOString(),
         processing_time_ms: processingTime,
-        ai_model: "gemini-1.5-flash-latest",
+        ai_model: "gemini-2.5-flash",
         keys_used: {
           overview: !!AI_KEYS.OVERVIEW,
           segments: !!AI_KEYS.SEGMENTS,

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  MessageSquare,
   X,
   Minimize2,
   Maximize2,
@@ -65,6 +64,12 @@ export default function FloatingChatbot() {
     setIsOpen((prev) => !prev);
     if (isMinimized) setIsMinimized(false);
   };
+
+  useEffect(() => {
+    const handler = () => setIsOpen(true);
+    window.addEventListener("open-chatbot", handler);
+    return () => window.removeEventListener("open-chatbot", handler);
+  }, []);
 
   if (!isMounted) {
     return null;
@@ -141,7 +146,7 @@ export default function FloatingChatbot() {
 
                   <div className="min-w-0">
                     <CardTitle className="text-base sm:text-lg font-semibold truncate text-foreground">
-                      Sahyadri Coach (AI Assistant)
+                      Sahyadri Coach
                     </CardTitle>
                     <p className="text-[10px] sm:text-xs text-muted-foreground">
                       Powered by verified experiences

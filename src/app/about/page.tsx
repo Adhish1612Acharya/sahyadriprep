@@ -30,17 +30,17 @@ export default function AboutPage() {
                 Meet the Developer — Adhish P Acharya
               </CardTitle>
               <CardDescription>
-               Full Stack Developer | RAG & AI Enthusiast
+                Full Stack Developer | RAG & AI Enthusiast
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent className="space-y-4 text-muted-foreground">
             <p>
-              I&apos;m <strong>Adhish P Acharya</strong>, a 3rd Year B.E. Computer Science &
-              Engineering student at Sahyadri College of Engineering and
-              Management. I&apos;m passionate about building full-stack systems and
-              integrating AI into practical applications that solve real student
-              and industry challenges.
+              I&apos;m <strong>Adhish P Acharya</strong>, a 3rd Year B.E.
+              Computer Science & Engineering student at Sahyadri College of
+              Engineering and Management. I&apos;m passionate about building
+              full-stack systems and integrating AI into practical applications
+              that solve real student and industry challenges.
             </p>
             {/* <p>
               I currently serve as the{" "}
@@ -89,6 +89,27 @@ export default function AboutPage() {
             sessions, and AI-driven insights — helping students prepare smarter
             and more effectively.
           </p>
+          {/* WhatsApp Group Message */}
+          <div className="mt-6">
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="py-4 flex flex-col items-center">
+                <span className="font-semibold text-green-700 text-base text-center">
+                  For more updates, Senior interview experiences, and Placement
+                  Officer sessions,
+                  <br />
+                  join our WhatsApp group and stay tuned!
+                </span>
+                <a
+                  href="https://chat.whatsapp.com/HtZFz8GepZf9rzCDhl8vuI"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-3 px-4 py-2 rounded bg-green-500 text-white font-medium hover:bg-green-600 transition"
+                >
+                  Join WhatsApp Group
+                </a>
+              </CardContent>
+            </Card>
+          </div>
         </section>
 
         <Separator className="my-8" />
@@ -129,7 +150,7 @@ export default function AboutPage() {
           </CardHeader>
           <CardContent className="space-y-3 text-muted-foreground">
             <p>
-              The current version of <strong>SahyadriPrep (Cy3)</strong> is
+              The current version of <strong>SahyadriPrep (Cy1)</strong> is
               powered by a modern and scalable stack:
             </p>
             <ul className="list-disc list-inside space-y-2">

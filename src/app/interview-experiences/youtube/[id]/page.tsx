@@ -88,6 +88,7 @@ export default function VideoDetailPage() {
 
   const { data: video, isLoading } = useVideoQuery(videoId);
 
+
   const [activeTab, setActiveTab] = useState("overview");
   const [aiData, setAiData] = useState<ProcessVideoResponse | null>(null);
   const [showAIContent, setShowAIContent] = useState(false);
@@ -278,14 +279,14 @@ export default function VideoDetailPage() {
                 rel="noopener noreferrer"
                 className="text-red-500 hover:underline font-medium"
               >
-                Rashmi Bhandary&apos;s YouTube Channel
+                Prof.Rashmi Bhandary&apos;s YouTube Channel
               </a>{" "}
               and is used here for educational purposes.
             </p>
             <Button
               variant="outline"
               size="sm"
-              className="flex-shrink-0 border-red-500 text-red-500 hover:bg-red-500/10"
+              className="flex-shrink-0 border-red-500 text-red-500 hover:bg-red-500/10 cursor-pointer mt-2 sm:mt-0"
               onClick={() =>
                 window.open(`https://youtu.be/${video.video_id}`, "_blank")
               }

@@ -99,12 +99,13 @@ export default function YouTubeVideosPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <p className="font-medium text-foreground mb-1">
-                Video Source: Rashmi Bhandary Placement Channel
+                Video Source: Prof. Rashmi Bhandary Placement Channel
               </p>
               <p className="text-sm text-muted-foreground">
                 All videos are sourced from{" "}
-                <strong>Rashmi Bhandary&apos;s YouTube channel</strong> and are
-                used here for educational purposes with proper attribution.
+                <strong> Prof. Rashmi Bhandary&apos;s YouTube channel</strong>{" "}
+                and are used here for educational purposes with proper
+                attribution.
               </p>
             </div>
             <Button
@@ -139,7 +140,6 @@ export default function YouTubeVideosPage() {
           </Button>
         )}
       </div>
-
       {/* Filters Card */}
       <Card className="mb-6">
         <CardHeader>
@@ -266,7 +266,6 @@ export default function YouTubeVideosPage() {
           )}
         </CardContent>
       </Card>
-
       {/* Results Count */}
       <div className="mb-4 flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
@@ -278,7 +277,6 @@ export default function YouTubeVideosPage() {
           </Button>
         )}
       </div>
-
       {/* Loading Skeletons (for initial load and company filter change) */}
       {isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -306,15 +304,15 @@ export default function YouTubeVideosPage() {
           ))}
         </div>
       )}
-
       {/* Videos Grid */}
-      {!isLoading && filteredVideos && filteredVideos.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {!isLoading && filteredVideos && filteredVideos.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredVideos.map((video) => (
             <VideoCard key={video.id} video={video} />
           ))}
         </div>
-      ) : (
+      )}
+      {!isLoading && filteredVideos && filteredVideos.length === 0 && (
         <Card>
           <CardContent className="p-12 text-center">
             <Video className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-50" />
@@ -345,6 +343,27 @@ export default function YouTubeVideosPage() {
           </CardContent>
         </Card>
       )}
+      {/* Info Card about more videos and WhatsApp group */}
+      <Card className="mb-6 mt-6">
+        <CardContent>
+          <div className="flex flex-col items-center text-center gap-2">
+            <span className="font-semibold text-primary text-base">
+              More Senior interview experiences and Placement Officer sessions
+              will be uploaded soon.
+              <br />
+              Stay tuned on our WhatsApp group for updates!
+            </span>
+            <a
+              href="https://chat.whatsapp.com/HtZFz8GepZf9rzCDhl8vuI"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-2 px-4 py-2 rounded bg-green-500 text-white font-medium hover:bg-green-600 transition"
+            >
+              Join WhatsApp Group
+            </a>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

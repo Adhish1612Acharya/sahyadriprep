@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,9 +100,13 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
 
   const { user, role, profileData, isLoading, isAdmin } = useAuth();
+
+  // Get redirect param from current URL if present
+  const redirectUrl = searchParams.get("redirect");
 
   useEffect(() => {
     setMounted(true);
@@ -291,11 +295,29 @@ export function Navbar() {
               <div className="hidden md:flex items-center gap-2">
                 <Button
                   variant="ghost"
-                  onClick={() => router.push("/auth/login")}
+                  onClick={() =>
+                    router.push(
+                      `/auth/login${
+                        redirectUrl
+                          ? `?redirect=${encodeURIComponent(redirectUrl)}`
+                          : ""
+                      }`
+                    )
+                  }
                 >
                   Sign in
                 </Button>
-                <Button onClick={() => router.push("/auth/sign-up")}>
+                <Button
+                  onClick={() =>
+                    router.push(
+                      `/auth/sign-up${
+                        redirectUrl
+                          ? `?redirect=${encodeURIComponent(redirectUrl)}`
+                          : ""
+                      }`
+                    )
+                  }
+                >
                   Sign up
                 </Button>
               </div>
@@ -353,7 +375,13 @@ export function Navbar() {
                     <div className="flex flex-col gap-3 mb-6">
                       <Button
                         onClick={() => {
-                          router.push("/auth/login");
+                          router.push(
+                            `/auth/login${
+                              redirectUrl
+                                ? `?redirect=${encodeURIComponent(redirectUrl)}`
+                                : ""
+                            }`
+                          );
                           setIsOpen(false);
                         }}
                         variant="outline"
@@ -363,7 +391,13 @@ export function Navbar() {
                       </Button>
                       <Button
                         onClick={() => {
-                          router.push("/auth/sign-up");
+                          router.push(
+                            `/auth/sign-up${
+                              redirectUrl
+                                ? `?redirect=${encodeURIComponent(redirectUrl)}`
+                                : ""
+                            }`
+                          );
                           setIsOpen(false);
                         }}
                         className="w-full h-11"

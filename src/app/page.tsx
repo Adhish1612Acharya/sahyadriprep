@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,17 +14,19 @@ import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
   Award,
-  Building2,
   CheckCircle,
   GraduationCap,
   MessageSquare,
   Sparkles,
   Target,
-  BarChart3,
   BookOpen,
 } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function HomePage() {
+  const router = useRouter();
+  const { user } = useAuth();
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
@@ -41,9 +44,9 @@ export default function HomePage() {
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
-              Learn from interview experiences shared by Your Seniors.
-              Prepare smarter, not harder with AI-powered insights and
-              personalized guidance.
+              Learn from interview experiences shared by Your Seniors. Prepare
+              smarter, not harder with AI-powered insights and personalized
+              guidance.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -53,48 +56,21 @@ export default function HomePage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-lg px-8"
-                asChild
-              >
-                <Link href="/auth/sign-up">Get Started Free</Link>
-              </Button>
+              {!user && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-lg px-8"
+                  asChild
+                >
+                  <Link href="/auth/sign-up">Get Started Free</Link>
+                </Button>
+              )}
             </div>
-
-            {/* Stats
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-12 w-full max-w-4xl">
-              <div className="flex flex-col items-center">
-                <div className="text-3xl md:text-4xl font-bold text-primary">
-                  500+
-                </div>
-                <div className="text-sm text-muted-foreground">Experiences</div>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="text-3xl md:text-4xl font-bold text-primary">
-                  100+
-                </div>
-                <div className="text-sm text-muted-foreground">Companies</div>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="text-3xl md:text-4xl font-bold text-primary">
-                  50+
-                </div>
-                <div className="text-sm text-muted-foreground">Colleges</div>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="text-3xl md:text-4xl font-bold text-primary">
-                  1000+
-                </div>
-                <div className="text-sm text-muted-foreground">Students</div>
-              </div>
-            </div> */}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
       {/* Features Section */}
       <section className="py-20 md:py-32 bg-muted/30">
         <div className="container mx-auto px-4">
@@ -110,7 +86,7 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
             {/* Feature 1 */}
-            <Card className="border-2 hover:border-primary/50 transition-colors">
+            <Card className="border-2 hover:border-primary/50 transition-colors flex flex-col justify-between">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <BookOpen className="h-6 w-6 text-primary" />
@@ -122,7 +98,7 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
+                <ul className="space-y-2 mb-4">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                     <span className="text-sm">
@@ -142,11 +118,18 @@ export default function HomePage() {
                     </span>
                   </li>
                 </ul>
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={() => router.push("/interview-experiences")}
+                >
+                  View
+                </Button>
               </CardContent>
             </Card>
 
             {/* Feature 2 */}
-            <Card className="border-2 hover:border-primary/50 transition-colors">
+            <Card className="border-2 hover:border-primary/50 transition-colors flex flex-col justify-between">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <MessageSquare className="h-6 w-6 text-primary" />
@@ -158,7 +141,7 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
+                <ul className="space-y-2 mb-4">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                     <span className="text-sm">
@@ -178,11 +161,24 @@ export default function HomePage() {
                     </span>
                   </li>
                 </ul>
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={() => {
+                    if (user) {
+                      window.dispatchEvent(new CustomEvent("open-chatbot"));
+                    } else {
+                      router.push("/auth/login");
+                    }
+                  }}
+                >
+                  View
+                </Button>
               </CardContent>
             </Card>
 
             {/* Feature 3 */}
-            <Card className="border-2 hover:border-primary/50 transition-colors">
+            <Card className="border-2 hover:border-primary/50 transition-colors flex flex-col justify-between">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <GraduationCap className="h-6 w-6 text-primary" />
@@ -194,7 +190,7 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
+                <ul className="space-y-2 mb-4">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                     <span className="text-sm">
@@ -214,70 +210,57 @@ export default function HomePage() {
                     </span>
                   </li>
                 </ul>
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={() => router.push("/interview-experiences/youtube")}
+                >
+                  View
+                </Button>
               </CardContent>
             </Card>
 
             {/* Feature 4 */}
-            {/* <Card className="border-2 hover:border-primary/50 transition-colors">
-              <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <Building2 className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle>Company Insights</CardTitle>
-                <CardDescription>
-                  Explore all the companies participating in campus recruitment
-                  with insights gathered from student data.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
-                    <span className="text-sm">
-                      View company-wise interview patterns
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
-                    <span className="text-sm">
-                      Role-specific and package details
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
-                    <span className="text-sm">Yearly participation trends</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card> */}
-
-            {/* Feature 5 */}
-            <Card className="border-2 hover:border-primary/50 transition-colors">
+            <Card className="border-2 hover:border-primary/50 transition-colors flex flex-col justify-between">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <Award className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>College-Specific Ecosystem</CardTitle>
+                <CardTitle>Explore Companies</CardTitle>
                 <CardDescription>
-                  Built exclusively for Sahyadri students — your personalized
-                  hub for verified experiences, videos, and AI learning.
+                  View companies for which verified placement experiences and
+                  content are available. Discover insights and resources
+                  tailored for Sahyadri students.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
+                <ul className="space-y-2 mb-4">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                     <span className="text-sm">
-                      Tailored for Sahyadri students
+                      Company-wise interview experiences
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
                     <span className="text-sm">
-                      Secure, academic-oriented environment
+                      Search and filter by company
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <span className="text-sm">
+                      Insights tailored for Sahyadri students
                     </span>
                   </li>
                 </ul>
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={() => router.push("/companies")}
+                >
+                  View
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -346,17 +329,18 @@ export default function HomePage() {
                   Ready to Start Your Journey?
                 </h2>
                 <p className="text-lg text-muted-foreground max-w-2xl">
-                  Join  students who are preparing smarter with
-                  SahyadriPrep. Get access to exclusive content and personalized
-                  guidance today.
+                  Join students who are preparing smarter with SahyadriPrep. Get
+                  access to exclusive content and personalized guidance today.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  <Button size="lg" className="text-lg px-8" asChild>
-                    <Link href="/auth/sign-up">
-                      Create Free Account
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Link>
-                  </Button>
+                  {!user && (
+                    <Button size="lg" className="text-lg px-8" asChild>
+                      <Link href="/auth/sign-up">
+                        Create Free Account
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Link>
+                    </Button>
+                  )}
                   <Button
                     size="lg"
                     variant="outline"

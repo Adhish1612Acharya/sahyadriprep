@@ -88,7 +88,8 @@ export const USER_ENDPOINTS = {
 export const AUTH_ENDPOINTS = {
   LOGIN: `/auth/login`,
   LOGOUT: `/auth/logout`,
-  SIGNUP: `/auth/sign-up`,
+  SIGNUP: (redirectUrl?: string) =>
+    `/auth/sign-up?redirect=${encodeURIComponent(redirectUrl || "/")}`,
   REGISTER: `/auth/register`,
   REFRESH: `/auth/refresh`,
   FORGOT_PASSWORD: `/auth/forgot-password`,

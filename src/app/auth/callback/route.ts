@@ -13,7 +13,12 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get("code");
   const error = requestUrl.searchParams.get("error");
   const type = requestUrl.searchParams.get("type");
-  const next = requestUrl.searchParams.get("next") ?? "/";
+  // ✅ Get redirect param from URL, fallback to "/"
+
+  const next =
+    requestUrl.searchParams.get("next") ??
+    requestUrl.searchParams.get("redirect") ??
+    "/";
   const error_description = requestUrl.searchParams.get("error_description");
 
   // ✅ Handle OAuth errors
@@ -52,7 +57,6 @@ export async function GET(request: Request) {
 
       // ✅ SPECIAL CASE: Password Reset Flow
       if (type === "recovery") {
-        console.log(`🔑 Password recovery session created for: ${email}`);
         return NextResponse.redirect(
           new URL("/auth/reset-password", requestUrl.origin)
         );
@@ -216,15 +220,15 @@ export async function GET(request: Request) {
         );
       }
 
-      // ✅ Step 8: Profile completed - redirect based on role
+      // ✅ Step 8: Existing user - redirect to previous page if present
       const redirectMap = {
-        student: "/",
+        student: next,
         college_admin: "/admin/dashboard",
         super_admin: "/admin/dashboard",
       };
 
       const redirectTo =
-        redirectMap[profile.role as keyof typeof redirectMap] || "/";
+        redirectMap[profile.role as keyof typeof redirectMap] || next;
 
       console.log(
         `✅ User logged in: ${email} (${profile.role}) → ${redirectTo}`
