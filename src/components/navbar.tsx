@@ -347,7 +347,10 @@ export function Navbar() {
                 <div className="flex-1 overflow-y-auto px-6 py-6">
                   {/* ✅ User Info - Mobile with better spacing */}
                   {user ? (
-                    <div className="flex items-start gap-4 rounded-xl border bg-muted/50 p-4 mb-6">
+                    <div
+                      onClick={() => (window.location.href = "/profile")}
+                      className="flex items-start gap-4 rounded-xl border bg-muted/50 p-4 mb-6 cursor-pointer hover:bg-muted/70 transition"
+                    >
                       <Avatar className="h-12 w-12">
                         <AvatarImage
                           src={profileData?.avatar_url}
