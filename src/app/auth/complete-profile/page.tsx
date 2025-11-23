@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,9 @@ interface College {
 
 export default function CompleteProfilePage() {
   const router = useRouter();
+
+  const redirecct_url = useSearchParams().get("redirect") || undefined;
+
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,20 +129,23 @@ export default function CompleteProfilePage() {
     setError(null);
 
     try {
-      const result = await completeStudentProfile({
-        full_name: studentForm.full_name,
-        phone: studentForm.phone || undefined,
-        college_id: studentForm.college_id,
-        usn: studentForm.usn,
-        batch: studentForm.batch,
-        branch: studentForm.branch,
-        current_semester: studentForm.current_semester
-          ? parseInt(studentForm.current_semester)
-          : undefined,
-        current_cgpa: studentForm.current_cgpa
-          ? parseFloat(studentForm.current_cgpa)
-          : undefined,
-      });
+      const result = await completeStudentProfile(
+        {
+          full_name: studentForm.full_name,
+          phone: studentForm.phone || undefined,
+          college_id: studentForm.college_id,
+          usn: studentForm.usn,
+          batch: studentForm.batch,
+          branch: studentForm.branch,
+          current_semester: studentForm.current_semester
+            ? parseInt(studentForm.current_semester)
+            : undefined,
+          current_cgpa: studentForm.current_cgpa
+            ? parseFloat(studentForm.current_cgpa)
+            : undefined,
+        },
+        redirecct_url || "/interview-experiences"
+      );
 
       if (result.error) {
         setError(result.error);
@@ -164,14 +170,17 @@ export default function CompleteProfilePage() {
     setError(null);
 
     try {
-      const result = await completeAdminProfile({
-        full_name: adminForm.full_name,
-        phone: adminForm.phone || undefined,
-        college_id: adminForm.college_id,
-        designation: adminForm.designation,
-        department: adminForm.department || undefined,
-        employee_id: adminForm.employee_id || undefined,
-      });
+      const result = await completeAdminProfile(
+        {
+          full_name: adminForm.full_name,
+          phone: adminForm.phone || undefined,
+          college_id: adminForm.college_id,
+          designation: adminForm.designation,
+          department: adminForm.department || undefined,
+          employee_id: adminForm.employee_id || undefined,
+        },
+        redirecct_url || "/admin/dashboard"
+      );
 
       if (result.error) {
         setError(result.error);
@@ -346,7 +355,7 @@ export default function CompleteProfilePage() {
                     <SelectItem value="Information Science and Engineering">
                       Information Science and Engineering
                     </SelectItem>
-                      <SelectItem value="Artificial Intelligence and Machine Learning">
+                    <SelectItem value="Artificial Intelligence and Machine Learning">
                       Artificial Intelligence and Machine Learning
                     </SelectItem>
                     <SelectItem value="Electronics and Communication Engineering">

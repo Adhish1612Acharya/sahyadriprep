@@ -104,7 +104,7 @@ export function Footer() {
 
               <li>
                 <a
-                  href="https://chat.whatsapp.com/HtZFz8GepZf9rzCDhl8vuI?mode=wwt"
+                  href="/whatsapp/join"
                   className="hover:text-primary transition-colors"
                 >
                   Whatsapp

@@ -131,8 +131,11 @@ export async function updateSession(request: NextRequest) {
   if (!profile) {
     // Profile doesn't exist, redirect to complete profile
     if (pathname !== "/auth/complete-profile") {
-      const url = request.nextUrl.clone();
+      const next_url = request.nextUrl.clone();
+
+      const url = next_url.clone();
       url.pathname = "/auth/complete-profile";
+      url.searchParams.set("redirect", next_url.pathname + next_url.search);
       return NextResponse.redirect(url);
     }
     return supabaseResponse;
@@ -141,8 +144,11 @@ export async function updateSession(request: NextRequest) {
   // ✅ Profile completion check
   if (!profile.profile_completed) {
     if (pathname !== "/auth/complete-profile") {
-      const url = request.nextUrl.clone();
+      const next_url = request.nextUrl.clone();
+
+      const url = next_url.clone();
       url.pathname = "/auth/complete-profile";
+      url.searchParams.set("redirect", next_url.pathname + next_url.search);
       return NextResponse.redirect(url);
     }
     return supabaseResponse;

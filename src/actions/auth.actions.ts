@@ -108,16 +108,19 @@ export async function signOut() {
   return { success: true };
 }
 
-export async function completeStudentProfile(formData: {
-  full_name: string;
-  phone?: string;
-  college_id: string;
-  usn: string;
-  batch: string;
-  branch: string;
-  current_semester?: number;
-  current_cgpa?: number;
-}) {
+export async function completeStudentProfile(
+  formData: {
+    full_name: string;
+    phone?: string;
+    college_id: string;
+    usn: string;
+    batch: string;
+    branch: string;
+    current_semester?: number;
+    current_cgpa?: number;
+  },
+  redirect_url: string
+) {
   const supabase = await createClient();
 
   const {
@@ -171,17 +174,21 @@ export async function completeStudentProfile(formData: {
   revalidatePath("/", "layout");
 
   // ✅ Server-side redirect after profile completion
-  redirect("/interview-experiences"); // Student dashboard
+
+  redirect(redirect_url || "/interview-experiences"); // Student dashboard
 }
 
-export async function completeAdminProfile(formData: {
-  full_name: string;
-  phone?: string;
-  college_id: string;
-  designation: string;
-  department?: string;
-  employee_id?: string;
-}) {
+export async function completeAdminProfile(
+  formData: {
+    full_name: string;
+    phone?: string;
+    college_id: string;
+    designation: string;
+    department?: string;
+    employee_id?: string;
+  },
+  redirect_url: string
+) {
   const supabase = await createClient();
 
   const {
@@ -233,7 +240,10 @@ export async function completeAdminProfile(formData: {
   revalidatePath("/", "layout");
 
   // ✅ Server-side redirect after profile completion
-  redirect("/admin/dashboard"); // Admin dashboard
+
+  console.log("Redirecting to:", redirect_url);
+
+  redirect(redirect_url || "/admin/dashboard"); // Admin dashboard
 }
 
 export async function checkProfileCompletion() {
