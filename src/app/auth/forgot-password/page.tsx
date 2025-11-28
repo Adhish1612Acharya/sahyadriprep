@@ -33,12 +33,13 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address");
-      setIsLoading(false);
-      return;
-    }
+  // Require @sahyadri.edu.in email
+  const sahyadriEmailRegex = /^[^\s@]+@sahyadri\.edu\.in$/i;
+  if (!sahyadriEmailRegex.test(email)) {
+    setError("Please enter your Sahyadri college email address (@sahyadri.edu.in)");
+    setIsLoading(false);
+    return;
+  }
 
     const result = await sendPasswordResetEmail(email);
 
@@ -128,6 +129,7 @@ export default function ForgotPasswordPage() {
                 disabled={isLoading}
                 required
               />
+                 <p className="text-xs text-muted-foreground">@sahyadri.edu.in</p>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>

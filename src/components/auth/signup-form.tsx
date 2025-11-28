@@ -10,7 +10,13 @@ import { useAuthService } from "@/hooks/useAuth.hook";
 import { validatePassword } from "@/lib/validators/password.validator";
 import { cn } from "@/lib/utils";
 
-export function SignupForm({ redirectUrl }: { redirectUrl?: string }) {
+export function SignupForm({
+  redirectUrl,
+  onConfirmationEmailSent,
+}: {
+  redirectUrl?: string;
+  onConfirmationEmailSent?: (email: string) => void;
+}) {
   const { signupWithEmail, signInWithGoogle } = useAuthService();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -45,14 +51,16 @@ export function SignupForm({ redirectUrl }: { redirectUrl?: string }) {
       return;
     }
 
-
     await signupWithEmail.mutateAsync({
       email: formData.email,
       password: formData.password,
       role: "student",
       college_id: null,
-      redirectUrl, // Pass redirectUrl to mutation
+      redirectUrl,
     });
+     if (onConfirmationEmailSent) {
+        onConfirmationEmailSent(formData.email);
+      }
   };
 
   const handleGoogleSignup = async () => {

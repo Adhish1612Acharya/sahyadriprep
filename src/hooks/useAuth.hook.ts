@@ -43,15 +43,15 @@ export const useAuthService = () => {
       authService.signupWithEmail(data),
     onSuccess: (data, variables) => {
       // Redirect to login with redirect param if present
-      if (variables.redirectUrl) {
-        router.push(
-          `/auth/login?redirect=${encodeURIComponent(
-            variables.redirectUrl
-          )}&success=account_created`
-        );
-      } else {
-        router.push("/auth/login?success=account_created");
-      }
+      // if (variables.redirectUrl) {
+      //   router.push(
+      //     `/auth/login?redirect=${encodeURIComponent(
+      //       variables.redirectUrl
+      //     )}&success=account_created`
+      //   );
+      // } else {
+      //   router.push("/auth/login?success=account_created");
+      // }
     },
     onError: (error: Error) => {
       console.error("❌ Sign up failed:", error);
