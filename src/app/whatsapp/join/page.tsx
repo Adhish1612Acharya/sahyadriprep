@@ -34,7 +34,7 @@ export default function WhatsappJoinPage() {
           </CardTitle>
           <CardDescription className="mt-2 text-green-700/80">
             <span className="inline-flex items-center gap-1">
-              <Users className="h-4 w-4" /> 500+ students
+              <Users className="h-4 w-4" /> 200+ students
             </span>
             <span className="mx-2">·</span>
             <span className="inline-flex items-center gap-1">
