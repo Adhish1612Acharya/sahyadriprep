@@ -23,29 +23,23 @@ export function FileUpload({
 }: FileUploadProps) {
   const [error, setError] = useState<string>("");
 
-  const fileRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-const files: File[] = (() => {
-  if (typeof File === "undefined") {
-    // File is not defined in this environment (SSR), return empty array
-    console.warn("File is not defined in this environment.");
-    return [];
-  }
-  if (multiple && Array.isArray(value)) {
-    if (value.length > 0) {
-      return value.flat(Infinity).filter((f): f is File => f instanceof File);
+  const files: File[] = (() => {
+    if (typeof File === "undefined") {
+      return [];
     }
-    return [];
-  } else if (
-    value &&
-    !Array.isArray(value) &&
-    typeof value === "object"
-  ) {
-    return [value];
-  } else {
-    return [];
-  }
-})();
+    if (multiple && Array.isArray(value)) {
+      if (value.length > 0) {
+        return value.flat(Infinity).filter((f): f is File => f instanceof File);
+      }
+      return [];
+    } else if (value && !Array.isArray(value) && typeof value === "object") {
+      return [value];
+    } else {
+      return [];
+    }
+  })();
 
   const validateFile = (file: File) => {
     if (file.size > maxSize * 1024 * 1024) {
@@ -89,17 +83,14 @@ const files: File[] = (() => {
         )}
         tabIndex={0}
         role="button"
-        onClick={() =>
-          (
-            fileRef.current?.querySelector(
-              'input[type="file"]'
-            ) as HTMLInputElement | null
-          )?.click()
-        }
+        onClick={() => fileInputRef.current?.click()}
       >
         <Upload className="w-10 h-10 mx-auto mb-2 text-muted-foreground" />
-        <p className="text-sm font-semibold">Click to browse and select your files</p>
+        <p className="text-sm font-semibold">
+          Click here to browse and select your files
+        </p>
         <input
+          ref={fileInputRef}
           type="file"
           accept={accept}
           multiple={multiple}
@@ -107,11 +98,6 @@ const files: File[] = (() => {
           className="hidden"
           id="file-input"
         />
-        <label htmlFor="file-input">
-          <Button type="button" variant="outline" size="sm" asChild>
-            <span>Choose Files</span>
-          </Button>
-        </label>
         <p className="text-xs text-muted-foreground mt-2">
           Max file size: {maxSize}MB
         </p>

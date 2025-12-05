@@ -19,7 +19,7 @@ export async function updateSession(request: NextRequest) {
     "/interview-experiences/sahyadri/send"
   ];
 
-  const publicApiPaths = ["/api/auth"];
+  const publicApiPaths = ["/api/auth","/api/interview-experiences/sahyadri/send"];
 
   const isPublicPage = publicPaths.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)

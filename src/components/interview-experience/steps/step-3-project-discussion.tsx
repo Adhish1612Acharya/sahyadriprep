@@ -4,6 +4,7 @@ import { useFormContext } from "react-hook-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
+import { demoInterviewExperience } from "@/constants/placeholder.constants"
 
 export function Step3ProjectDiscussion() {
   const formContext = useFormContext()
@@ -32,7 +33,7 @@ export function Step3ProjectDiscussion() {
               <FormLabel>Project Discussion</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Describe your project discussion experience, questions asked, tech stack discussed, etc."
+                  placeholder={demoInterviewExperience.projectDiscussion}
                   rows={5}
                   {...field}
                 />
@@ -50,7 +51,7 @@ export function Step3ProjectDiscussion() {
               <FormLabel>Resume Discussion</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Describe what was discussed about your resume, experience, skills, etc."
+                  placeholder={demoInterviewExperience.resumeDiscussion}
                   rows={5}
                   {...field}
                 />

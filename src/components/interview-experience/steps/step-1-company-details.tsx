@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { demoInterviewExperience } from "@/constants/placeholder.constants"
 
 export function Step1CompanyDetails() {
   const formContext = useFormContext()
@@ -32,7 +33,7 @@ export function Step1CompanyDetails() {
             <FormItem>
               <FormLabel>Company Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Google, Microsoft, Amazon" {...field} />
+                <Input placeholder={demoInterviewExperience.company} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -46,7 +47,7 @@ export function Step1CompanyDetails() {
             <FormItem>
               <FormLabel>Role Offered</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Software Engineer, Data Analyst" {...field} />
+                <Input placeholder={demoInterviewExperience.role} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -84,7 +85,7 @@ export function Step1CompanyDetails() {
               <FormItem>
                 <FormLabel>Package (Optional)</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., 15 LPA" {...field} />
+                  <Input placeholder={demoInterviewExperience.package} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { X, Plus } from "lucide-react"
+import { demoInterviewExperience } from "@/constants/placeholder.constants"
 
 export function Step2InterviewRounds() {
   const formContext = useFormContext()
@@ -52,7 +53,7 @@ export function Step2InterviewRounds() {
                 <FormItem>
                   <FormLabel>Round Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Technical Round 1, HR Round" {...field} />
+                    <Input placeholder={demoInterviewExperience.rounds[0].roundTitle} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -89,7 +90,7 @@ export function Step2InterviewRounds() {
                 <FormItem>
                   <FormLabel>Topics Asked & Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Describe what was asked in this round..." rows={4} {...field} />
+                    <Textarea placeholder={demoInterviewExperience.rounds[0].description} rows={4} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

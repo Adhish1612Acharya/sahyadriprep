@@ -23,6 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { interviewExperienceSchema } from "@/lib/zod/interviewExperience.schema";
+import { demoInterviewExperience } from "@/constants/placeholder.constants";
 
 const branches = ["CSE", "ECE", "Mechanical", "Civil", "Electrical", "IT"];
 const batches = Array.from({ length: 5 }, (_, i) =>
@@ -54,7 +56,7 @@ export function Step0StudentDetails() {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g.Jon Doe" {...field} />
+                <Input placeholder={demoInterviewExperience.name} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -67,10 +69,7 @@ export function Step0StudentDetails() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Branch</FormLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                >
+                <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select branch" />
                   </SelectTrigger>
@@ -92,10 +91,7 @@ export function Step0StudentDetails() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Batch</FormLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                >
+                <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select batch" />
                   </SelectTrigger>
@@ -119,7 +115,7 @@ export function Step0StudentDetails() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="your@sahyadri.edu.in" {...field} />
+                <Input placeholder={demoInterviewExperience.email} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -133,7 +129,7 @@ export function Step0StudentDetails() {
               <FormLabel>LinkedIn</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="https://linkedin.com/in/yourprofile"
+                  placeholder={demoInterviewExperience.linkedin}
                   {...field}
                 />
               </FormControl>

@@ -18,13 +18,13 @@ export const interviewExperienceSchema = z.object({
       z.object({
         roundTitle: z.string().min(1, "Round title is required"),
         difficulty: z.enum(["Easy", "Medium", "Hard"]),
-        description: z.string().min(10, "Please describe the topics asked in this round and the questions"),
+        description: z.string().min(10, "Please describe the topics asked in this round and the questions in detail"),
       }),
     )
     .min(1, "Add at least one interview round"),
-  projectDiscussion: z.string().min(10, "Please describe the project discussion"),
-  resumeDiscussion: z.string().min(10, "Please describe the resume discussion"),
-  tipsForJuniors: z.string().min(20, "Please provide meaningful tips"),
+  projectDiscussion: z.string().min(10, "Please describe the project discussion in detail"),
+  resumeDiscussion: z.string().min(10, "Please describe the resume discussion in detail"),
+  tipsForJuniors: z.string().min(20, "Please provide meaningful tips for juniors in detail"),
 })
 
 export type InterviewExperienceFormValues = z.infer<typeof interviewExperienceSchema>

@@ -4,6 +4,7 @@ import { useFormContext } from "react-hook-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
+import { demoInterviewExperience } from "@/constants/placeholder.constants"
 
 export function Step4Tips() {
   const formContext = useFormContext()
@@ -32,7 +33,7 @@ export function Step4Tips() {
               <FormLabel>Your Tips & Advice</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Share tips that helped you prepare, mistakes to avoid, resources you used, etc."
+                  placeholder={demoInterviewExperience.tipsForJuniors}
                   rows={6}
                   {...field}
                 />

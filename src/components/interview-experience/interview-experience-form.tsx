@@ -30,38 +30,6 @@ const steps = [
   { title: "Review" },
 ];
 
-export const demoInterviewExperience = {
-  name: "Adhish Pacharya",
-  branch: "CSE",
-  batch: "2025",
-  email: "adhish@sahyadri.edu.in",
-  linkedin: "https://linkedin.com/in/adhishpacharya",
-  company: "Google",
-  role: "Software Engineer",
-  placementType: "Full-Time" as const,
-  package: "45 LPA",
-  rounds: [
-    {
-      roundTitle: "Online Assessment",
-      difficulty: "Medium" as const,
-      description: "Coding questions on arrays, strings, and algorithms.",
-    },
-    {
-      roundTitle: "Technical Interview",
-      difficulty: "Hard" as const,
-      description: "DSA, system design, and problem-solving questions.",
-    },
-    {
-      roundTitle: "HR Interview",
-      difficulty: "Easy" as const   ,
-      description: "Behavioral questions and company fit discussion.",
-    },
-  ],
-  projectDiscussion: "Discussed my final year project on AI-based attendance system and its real-world impact.",
-  resumeDiscussion: "Talked about internships and open-source contributions mentioned in my resume.",
-  tipsForJuniors: "Practice DSA regularly, focus on projects, and be confident during interviews. Mock interviews help a lot!",
-  // resume: (You can leave this undefined or set a File object in the browser)
-};
 
 export const InterviewExperienceForm: React.FC = () => {
   const { sendExperience } = useInterviewExperiences();
@@ -70,23 +38,21 @@ export const InterviewExperienceForm: React.FC = () => {
 
   const methods = useForm<InterviewExperienceFormValues>({
     resolver: zodResolver(interviewExperienceSchema),
-    defaultValues: demoInterviewExperience
-    // {
-    //   name: "",
-    //   branch: "",
-    //   batch: "",
-    //   email: "",
-    //   linkedin: "",
-    //   company: "",
-    //   role: "",
-    //   placementType: "Full-Time",
-    //   package: "",
-    //   rounds: [{ roundTitle: "", difficulty: "Medium", description: "" }],
-    //   projectDiscussion: "",
-    //   resumeDiscussion: "",
-    //   tipsForJuniors: "",
-    // },
-    ,
+    defaultValues: {
+      name: "",
+      branch: "",
+      batch: "",
+      email: "",
+      linkedin: "",
+      company: "",
+      role: "",
+      placementType: "Full-Time",
+      package: "",
+      rounds: [{ roundTitle: "", difficulty: "Medium", description: "" }],
+      projectDiscussion: "",
+      resumeDiscussion: "",
+      tipsForJuniors: "",
+    },
     mode: "onTouched",
   });
 
@@ -105,7 +71,7 @@ export const InterviewExperienceForm: React.FC = () => {
       fieldsToValidate.push("projectDiscussion", "resumeDiscussion");
     } else if (currentStep === 4) {
       fieldsToValidate.push("tipsForJuniors");
-    } 
+    }
 
     const valid = await trigger(fieldsToValidate);
     if (valid) {
