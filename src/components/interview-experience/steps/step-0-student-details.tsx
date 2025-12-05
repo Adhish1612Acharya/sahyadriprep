@@ -23,12 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { interviewExperienceSchema } from "@/lib/zod/interviewExperience.schema";
 import { demoInterviewExperience } from "@/constants/placeholder.constants";
 
 const branches = ["CSE", "ECE", "Mechanical", "Civil", "Electrical", "IT"];
-const batches = Array.from({ length: 5 }, (_, i) =>
-  (new Date().getFullYear() - i).toString()
+const batches = Array.from({ length: 7 }, (_, i) =>
+  (new Date().getFullYear()+1 - i).toString()
 );
 
 export function Step0StudentDetails() {
