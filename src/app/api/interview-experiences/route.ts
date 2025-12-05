@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { validate_pdf } from "@/helpers/validation/validate-pdf.helpers";
 import { validate_video } from "@/helpers/validation/validate-video.helpers";
 import { createInterviewExperienceSchema } from "@/lib/validations/interview-experience.schema";
-import { save_uploaded_file, cleanup_temp_files } from "@/helpers/file.helpers";
+import {
+  save_uploaded_file,
+  cleanup_temp_files,
+} from "@/helpers/file/file.helpers";
 import {
   uploadInterviewExperiencePDF,
   uploadInterviewExperienceVideo,
@@ -24,8 +27,6 @@ import { requireAdmin, hasCollegeAccess } from "@/helpers/auth/auth.helpers";
  */
 export async function GET(request: NextRequest) {
   try {
-    
-
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
 
@@ -68,7 +69,6 @@ export async function GET(request: NextRequest) {
         `Failed to fetch interview experiences: ${error.message}`
       );
     }
-
 
     return NextResponse.json({
       success: true,

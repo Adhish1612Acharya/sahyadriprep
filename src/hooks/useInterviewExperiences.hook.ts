@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { interviewExperienceService } from "@/services/interview-experience.service";
 
 import { CreateInterviewExperienceInput } from "@/types/services/interview-experience.types";
+import { InterviewExperienceFormValues } from "@/lib/zod/interviewExperience.schema";
 
 export const useInterviewExperiences = () => {
   const queryClient = useQueryClient();
@@ -79,7 +80,6 @@ export const useInterviewExperiences = () => {
       queryClient.invalidateQueries({
         queryKey: ["interview-experiences"],
       });
-
     },
     onError: (error: Error) => {
       console.error("❌ Error creating interview experience:", error);
@@ -99,10 +99,23 @@ export const useInterviewExperiences = () => {
       queryClient.removeQueries({
         queryKey: ["interview-experience", deletedId],
       });
-
     },
     onError: (error: Error) => {
       console.error("❌ Error deleting interview experience:", error);
+    },
+  });
+
+  const sendExperience = useMutation({
+    mutationFn: (input: InterviewExperienceFormValues) =>
+      interviewExperienceService.sendExperience(input),
+    onSuccess: () => {
+      // Optionally show a toast or refetch
+      // toast.success("Interview experience sent!");
+    },
+    onError: (error: Error) => {
+      // Optionally show a toast
+      // toast.error("Failed to send interview experience");
+      console.error("❌ Error sending interview experience:", error);
     },
   });
 
@@ -117,5 +130,6 @@ export const useInterviewExperiences = () => {
     // Mutations
     createExperience,
     deleteExperience,
+    sendExperience,
   };
 };

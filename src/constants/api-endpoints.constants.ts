@@ -22,6 +22,7 @@ export const INTERVIEW_EXPERIENCE_ENDPOINTS = {
   BY_COMPANY: (companyId: string) =>
     `/interview-experiences?company_id=${companyId}`,
   BY_BATCH: (batch: string) => `/interview-experiences?batch=${batch}`,
+  SEND: `/interview-experiences/sahyadri/send`, 
 } as const;
 
 // ============================================

@@ -46,7 +46,7 @@ function LoginForm() {
       });
       cleanupUrlParams();
     }
-  }, [searchParams, toast]);
+  }, []);
 
   const cleanupUrlParams = () => {
     const url = new URL(window.location.href);

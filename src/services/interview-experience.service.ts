@@ -5,6 +5,7 @@ import {
   InterviewExperience,
   InterviewExperienceResponse,
 } from "@/types/services/interview-experience.types";
+import { InterviewExperienceFormValues } from "@/lib/zod/interviewExperience.schema";
 
 export const interviewExperienceService = {
   /**
@@ -44,12 +45,32 @@ export const interviewExperienceService = {
             const percentCompleted = Math.round(
               (progressEvent.loaded * 100) / progressEvent.total
             );
-           
           }
         },
       }
     );
 
+    return response.data;
+  },
+
+  sendExperience: async (input: InterviewExperienceFormValues) => {
+    // Use FormData for file uploads
+    const formData = new FormData();
+    Object.entries(input).forEach(([key, value]) => {
+      if (key === "resume" && value instanceof File) {
+        formData.append(key, value);
+      }  else if (typeof value === "object" && value !== null) {
+        formData.append(key, JSON.stringify(value));
+      } else {
+        formData.append(key, value as any);
+      }
+    });
+
+    const response = await axiosClient.post(
+      INTERVIEW_EXPERIENCE_ENDPOINTS.SEND,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
     return response.data;
   },
 

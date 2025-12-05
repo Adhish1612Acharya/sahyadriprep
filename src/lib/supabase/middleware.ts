@@ -16,6 +16,7 @@ export async function updateSession(request: NextRequest) {
     "/contact",
     "/privacy-policy",
     "/terms-of-service",
+    "/interview-experiences/sahyadri/send"
   ];
 
   const publicApiPaths = ["/api/auth"];
