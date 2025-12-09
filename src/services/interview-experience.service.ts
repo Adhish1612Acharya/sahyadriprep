@@ -35,19 +35,7 @@ export const interviewExperienceService = {
 
     const response = await axiosClient.post<InterviewExperienceResponse>(
       INTERVIEW_EXPERIENCE_ENDPOINTS.BASE,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
-          }
-        },
-      }
+      formData
     );
 
     return response.data;
@@ -59,7 +47,7 @@ export const interviewExperienceService = {
     Object.entries(input).forEach(([key, value]) => {
       if (key === "resume" && value instanceof File) {
         formData.append(key, value);
-      }  else if (typeof value === "object" && value !== null) {
+      } else if (typeof value === "object" && value !== null) {
         formData.append(key, JSON.stringify(value));
       } else {
         formData.append(key, value as any);
@@ -68,8 +56,7 @@ export const interviewExperienceService = {
 
     const response = await axiosClient.post(
       INTERVIEW_EXPERIENCE_ENDPOINTS.SEND,
-      formData,
-      { headers: { "Content-Type": "multipart/form-data" } }
+      formData
     );
     return response.data;
   },

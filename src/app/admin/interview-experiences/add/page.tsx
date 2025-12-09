@@ -115,7 +115,7 @@ export default function UploadInterviewExperiencePage() {
       const documentFile = values.document[0];
       const videoFile = values.video_preview?.[0];
 
-      createExperience.mutate(
+      await createExperience.mutateAsync(
         {
           document: documentFile,
           video_preview: videoFile,
