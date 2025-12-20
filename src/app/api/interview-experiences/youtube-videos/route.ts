@@ -4,15 +4,21 @@ import { createClient as v_createclient } from "@/lib/vector_supabase/server";
 import {
   chunkTranscriptByTokens,
   extractYouTubeVideoId,
-  fetchYouTubeMetadata,
-  fetchYouTubeTranscript,
   formatTimestamp,
 } from "@/helpers/youtube/youtube-video.helpers";
-import createChunkSummary from "@/helpers/ai/generate-chunk-summary";
-import embeddings from "@/lib/rag-chatbot/embedding-model-config";
-import embedDocumentsWithHandling from "@/lib/rag-chatbot/embed-documents";
-import { requireAdmin, hasCollegeAccess } from "@/helpers/auth/auth.helpers"; // ✅ Import auth helpers
-import { generateSummariesInBatches } from "@/helpers/batch-summary.helpers";
+import createChunkSummary from "@/features/rag/generate-chunk-summary";
+import embeddings from "@/integrations/hf/hf-embeddings";
+import embedDocumentsWithHandling from "@/features/rag/ingest/embed-documents";
+import { generateSummariesInBatches } from "@/features/rag/batch/generate-batch-summaries";
+import {
+  requireAdmin,
+  requireAuth,
+} from "@/lib/services/auth/auth-guards.service";
+import { hasCollegeAccess } from "@/lib/services/auth/auth-college.service";
+import {
+  fetchYouTubeMetadata,
+  fetchYouTubeTranscript,
+} from "@/features/youtube/transcript-fetcher";
 
 /**
  * GET /api/interview-experiences/youtube-videos
@@ -25,6 +31,12 @@ export async function GET(request: NextRequest) {
     const college_id = searchParams.get("college_id");
 
     const supabase = await createClient();
+
+    const authResult = await requireAuth(supabase);
+
+    if (authResult.error) {
+      return authResult.error;
+    }
 
     let query = supabase
       .from("youtube_videos")
@@ -77,8 +89,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
     // ✅ 1. Check if user is admin
-    const { error: authError, user, role } = await requireAdmin();
+    const { error: authError, user, role } = await requireAdmin(supabase);
 
     if (authError) {
       return authError; // Return 401 or 403 response
@@ -102,7 +115,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ✅ 3. Check if user has access to this college
-    const hasAccess = await hasCollegeAccess(user!.id, college_id);
+    const hasAccess = await hasCollegeAccess(supabase, user!.id, college_id);
 
     if (!hasAccess) {
       return NextResponse.json(
@@ -117,7 +130,6 @@ export async function POST(request: NextRequest) {
 
     console.log("🎬 Creating YouTube video:", video_url);
 
-    const supabase = await createClient();
     const vectorSupabase = await v_createclient();
 
     // Extract video ID from URL

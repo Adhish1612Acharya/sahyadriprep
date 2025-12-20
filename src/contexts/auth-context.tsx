@@ -14,7 +14,6 @@ import {
   ProfileData,
   Role,
 } from "@/types/contexts/auth-context";
-// ✅ Import client-side version
 import { fetchProfileByUserId } from "@/helpers/database/profiles/fetch.client";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

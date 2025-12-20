@@ -1,24 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validate_pdf } from "@/helpers/validation/validate-pdf.helpers";
 import { validate_video } from "@/helpers/validation/validate-video.helpers";
-import { createInterviewExperienceSchema } from "@/lib/validations/interview-experience.schema";
-import {
-  save_uploaded_file,
-  cleanup_temp_files,
-} from "@/helpers/file/file.helpers";
+import { createInterviewExperienceSchema } from "@/lib/zod/schema/interview-experience.schema";
+import { save_uploaded_file } from "@/helpers/file/server-files";
 import {
   uploadInterviewExperiencePDF,
   uploadInterviewExperienceVideo,
-} from "@/lib/cloudinary/upload";
-import { deleteFromCloudinary } from "@/lib/cloudinary/delete";
+} from "@/integrations/cloudinary/upload";
+import { deleteFromCloudinary } from "@/integrations/cloudinary/delete";
 import { UPLOAD_DIRECTORIES } from "@/constants/upload-directories.constants";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as v_createClient } from "@/lib/vector_supabase/server";
-import doc_loader from "@/lib/rag-chatbot/load-doc";
-import create_doc_chunk from "@/lib/rag-chatbot/create-doc-chunk";
-import embeddings from "@/lib/rag-chatbot/embedding-model-config";
-import { generateSummariesInBatches } from "@/helpers/batch-summary.helpers";
-import { requireAdmin, hasCollegeAccess } from "@/helpers/auth/auth.helpers";
+import embeddings from "@/integrations/hf/hf-embeddings";
+import { generateSummariesInBatches } from "@/features/rag/batch/generate-batch-summaries";
+import {
+  requireAdmin,
+  requireAuth,
+} from "@/lib/services/auth/auth-guards.service";
+import { hasCollegeAccess } from "@/lib/services/auth/auth-college.service";
+import { cleanup_temp_files } from "@/helpers/file/file-downloads";
+import { doc_loader } from "@/features/rag/ingest/load-doc";
+import { create_doc_chunk } from "@/features/rag/ingest/create-doc-chunk";
 
 /**
  * GET /api/interview-experiences
@@ -29,6 +31,12 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
+
+    const authResult = await requireAuth(supabase);
+
+    if (authResult.error) {
+      return authResult.error;
+    }
 
     // Extract optional filters
     const company_id = searchParams.get("company_id");
@@ -114,8 +122,10 @@ export async function POST(request: NextRequest) {
   try {
     console.log("🚀 Starting interview experience upload...");
 
+    const supabase = await createClient();
+
     // ✅ Step 1: Check authentication and admin role
-    const authResult = await requireAdmin();
+    const authResult = await requireAdmin(supabase);
 
     if (authResult.error) {
       return authResult.error;
@@ -124,7 +134,6 @@ export async function POST(request: NextRequest) {
     const { user, role } = authResult;
     console.log(`✅ Authenticated as ${role}: ${user!.email}`);
 
-    const supabase = await createClient();
     const vector_supabase = await v_createClient();
 
     // ✅ Step 2: Parse FormData
@@ -210,6 +219,7 @@ export async function POST(request: NextRequest) {
     // ✅ Step 6: Check if college admin has access to this college
     if (role === "college_admin") {
       const hasAccess = await hasCollegeAccess(
+        supabase,
         user!.id,
         validatedData.college_id
       );
@@ -336,8 +346,14 @@ export async function POST(request: NextRequest) {
               url: videoCloudinaryResult.secureUrl!,
               public_id: videoCloudinaryResult.publicId!,
               file_name: videoFile.name,
-              file_type: videoCloudinaryResult.format,
+              file_type:
+                videoCloudinaryResult.resourceType === "video"
+                  ? `video/${videoCloudinaryResult.format || "mp4"}`
+                  : "video/mp4",
               file_size: videoCloudinaryResult.bytes,
+              width: videoCloudinaryResult.width || null,
+              height: videoCloudinaryResult.height || null,
+              duration: videoCloudinaryResult.duration || null,
               uploaded_by: user!.id,
             })
             .select("id")
@@ -362,8 +378,14 @@ export async function POST(request: NextRequest) {
         url: cloudinaryResult.secureUrl!,
         public_id: cloudinaryResult.publicId!,
         file_name: file.name,
-        file_type: cloudinaryResult.format,
+        file_type:
+          cloudinaryResult.resourceType === "raw"
+            ? `application/${cloudinaryResult.format || "pdf"}`
+            : "application/pdf",
         file_size: cloudinaryResult.bytes,
+        width: cloudinaryResult.width || null,
+        height: cloudinaryResult.height || null,
+        duration: cloudinaryResult.duration || null,
         uploaded_by: user!.id,
       })
       .select("id")
@@ -405,6 +427,56 @@ export async function POST(request: NextRequest) {
 
     const experience_id = experienceData.id;
     console.log(`   Experience created: ${experience_id}`);
+
+    // ✅ Step 12.1: Update metadata for PDF media
+    console.log("📝 Updating metadata for PDF media...");
+
+    const { error: pdfMetaError } = await supabase
+      .from("media")
+      .update({
+        usage_type: "interview_experience",
+        metadata: {
+          experience_id: experience_id,
+          student_name: validatedData.student_name,
+          file_kind: "document",
+          source: "interview_experience",
+        },
+      })
+      .eq("id", media_id); // <-- PDF media row
+
+    if (pdfMetaError) {
+      throw new Error(
+        `Failed to update PDF media metadata: ${pdfMetaError.message}`
+      );
+    }
+
+    console.log(`   Metadata updated for PDF media ${media_id}`);
+
+    // ✅ Step 12.2: Update metadata for VIDEO media
+    if (video_media_id) {
+      console.log("📝 Updating metadata for video media...");
+
+      const { error: videoMetaError } = await supabase
+        .from("media")
+        .update({
+          usage_type: "interview_experience",
+          metadata: {
+            experience_id: experience_id,
+            student_name: validatedData.student_name,
+            file_kind: "video",
+            source: "interview_experience",
+          },
+        })
+        .eq("id", video_media_id);
+
+      if (videoMetaError) {
+        throw new Error(
+          `Failed to update video media metadata: ${videoMetaError.message}`
+        );
+      }
+
+      console.log(`   Metadata updated for video media ${video_media_id}`);
+    }
 
     // ✅ Step 13: Store embeddings in vector DB
     console.log("🗄️ Storing embeddings in vector DB...");

@@ -22,7 +22,7 @@ export const INTERVIEW_EXPERIENCE_ENDPOINTS = {
   BY_COMPANY: (companyId: string) =>
     `/interview-experiences?company_id=${companyId}`,
   BY_BATCH: (batch: string) => `/interview-experiences?batch=${batch}`,
-  SEND: `/interview-experiences/sahyadri/send`, 
+  SEND: `/interview-experiences/sahyadri/send`,
 } as const;
 
 // ============================================
@@ -157,6 +157,13 @@ export const PROFILE_ENDPOINTS = {
 } as const;
 
 // ============================================
+// STUDENT ENDPOINTS
+// ============================================
+export const STUDENT_ENDPOINTS = {
+  GET: `/students`,
+} as const;
+
+// ============================================
 // AGGREGATE ALL ENDPOINTS (for reference)
 // ============================================
 export const API_ENDPOINTS = {
@@ -174,4 +181,5 @@ export const API_ENDPOINTS = {
   IMPORTANT_TOPICS: IMPORTANT_TOPIC_ENDPOINTS,
   YOUTUBE: YOUTUBE_ENDPOINTS,
   PROFILE: PROFILE_ENDPOINTS,
+  STUDENT: STUDENT_ENDPOINTS,
 } as const;

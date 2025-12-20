@@ -6,9 +6,9 @@ import {
   VectorDocument,
 } from "@/types/vector-store-service.types";
 import { CHUNKS_CONTENT_TYPES } from "@/constants/chunks-content-types.constants";
-import embeddings from "@/lib/rag-chatbot/embedding-model-config";
+import embeddings from "@/integrations/hf/hf-embeddings";
 import { ContentType } from "@/models/content-chunk.types";
-import createChunkSummary from "@/helpers/ai/generate-chunk-summary";
+import createChunkSummary from "@/features/rag/generate-chunk-summary";
 
 // Server-side vector store operations
 export const vectorStoreServerOperations = {
@@ -72,7 +72,6 @@ export const vectorStoreServerOperations = {
     }
   ) => {
     const supabase = await createClient();
-  
 
     // ✅ Use provided summary or generate new one
     let query_summary: string;

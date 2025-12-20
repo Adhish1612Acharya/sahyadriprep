@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/services/auth/auth-guards.service";
 
 /**
  * GET /api/interview-experiences/youtube-videos/:id/ai
@@ -21,6 +22,13 @@ export async function GET(
     }
 
     const supabase = await createClient();
+
+    const authResult = await requireAuth(supabase);
+
+    if (authResult.error) {
+      return authResult.error;
+    }
+    
 
     const [
       { data: overviewData, error: overviewError },

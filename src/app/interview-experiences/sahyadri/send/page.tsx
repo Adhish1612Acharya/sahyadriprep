@@ -1,6 +1,6 @@
 "use client"
 
-import { InterviewExperienceForm } from "@/components/interview-experience/interview-experience-form"
+import { InterviewExperienceForm } from "@/components/forms/interview-experience/interview-experience-form"
 
 export default function InterviewExperiencePage() {
   return (

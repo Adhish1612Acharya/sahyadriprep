@@ -5,7 +5,7 @@ import {
   CompanyFilters,
   CompanyStats,
 } from "@/types/services/company.types";
-import { CompanyInput, CompanyUpdate } from "@/lib/validations/company.schema";
+import { CompanyInput, CompanyUpdate } from "@/lib/zod/schema/company.schema";
 
 // ============================================
 // SERVICE

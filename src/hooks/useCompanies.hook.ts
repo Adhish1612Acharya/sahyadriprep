@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { companyService } from "@/services/company.service";
-import { CompanyInput, CompanyUpdate } from "@/lib/validations/company.schema";
+import { CompanyInput, CompanyUpdate } from "@/lib/zod/schema/company.schema";
 import { CompanyFilters } from "@/types/services/company.types";
 import { toast } from "sonner";
 

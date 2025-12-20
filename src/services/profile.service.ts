@@ -7,7 +7,7 @@ import {
   StudentProfileUpdate,
   CollegeAdminProfileUpdate,
   SuperAdminProfileUpdate,
-} from "@/lib/validations/profile.schema";
+} from "@/lib/zod/schema/profile.schema";
 import {
   ProfileResponse,
   ProfileUpdateResponse,
@@ -50,7 +50,6 @@ export const profileService = {
   updateCollegeAdminProfile: async (
     data: CollegeAdminProfileUpdate
   ): Promise<ProfileUpdateResponse> => {
-    
     const response = await axiosClient.patch<ProfileUpdateResponse>(
       API_ENDPOINTS.PROFILE.BASE,
       data

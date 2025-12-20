@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { isUserSuperAdmin, requireAdmin } from "@/helpers/auth/auth.helpers";
+import {
+  requireAdmin,
+  requireAuth,
+} from "@/lib/services/auth/auth-guards.service";
+import { isUserSuperAdmin } from "@/lib/services/auth/auth-session.service";
 
 /**
  * GET /api/youtube-videos/:id
@@ -21,6 +25,12 @@ export async function GET(
     }
 
     const supabase = await createClient();
+
+    const authResult = await requireAuth(supabase);
+
+    if (authResult.error) {
+      return authResult.error;
+    }
 
     const { data, error } = await supabase
       .from("youtube_videos")
@@ -79,8 +89,10 @@ export async function DELETE(
       );
     }
 
+    const supabase = await createClient();
+
     // ✅ Step 1: Check authentication and admin role
-    const authResult = await requireAdmin();
+    const authResult = await requireAdmin(supabase);
 
     if (authResult.error) {
       return authResult.error;
@@ -88,8 +100,6 @@ export async function DELETE(
 
     const { user, role } = authResult;
     console.log(`✅ Authenticated as ${role}: ${user.email}`);
-
-    const supabase = await createClient();
 
     // ✅ Step 2: Fetch the video to check ownership
     const { data: video, error: fetchError } = await supabase
@@ -114,7 +124,7 @@ export async function DELETE(
 
     // ✅ Step 3: Check ownership (only owner or super admin can delete)
     const isOwner = video.created_by === user.id;
-    const isSuperAdminUser = await isUserSuperAdmin(user.id);
+    const isSuperAdminUser = await isUserSuperAdmin(supabase, user.id);
 
     if (!isOwner && !isSuperAdminUser) {
       return NextResponse.json(

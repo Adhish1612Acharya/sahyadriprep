@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import {
-  isEmailAllowedForCollege,
-  deleteAuthUserById,
-} from "@/helpers/auth/auth.helpers";
+import { isEmailAllowedForCollege } from "@/lib/services/auth/auth-college.service";
+import { deleteAuthUserById } from "@/lib/services/auth/auth-user-lifecycle.service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +31,11 @@ export async function POST(request: NextRequest) {
     }
 
     const email = userData.user.email || "";
-    const allowed = await isEmailAllowedForCollege(email, college_id ?? null);
+    const allowed = await isEmailAllowedForCollege(
+      supabase,
+      email,
+      college_id ?? null
+    );
 
     if (!allowed) {
       // delete the auth user (server side)

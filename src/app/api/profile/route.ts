@@ -5,16 +5,15 @@ import {
   updateCollegeAdminProfile,
 } from "@/helpers/database/profiles/update";
 import {
-  requireAuth,
-  getUserRole,
-  syncProfileToMetadata,
-} from "@/helpers/auth/auth.helpers";
-import {
   studentProfileUpdateSchema,
   collegeAdminProfileUpdateSchema,
   superAdminProfileUpdateSchema,
-} from "@/lib/validations/profile.schema";
-import { validateRequestBody } from "@/helpers/validation";
+} from "@/lib/zod/schema/profile.schema";
+import { requireAuth } from "@/lib/services/auth/auth-guards.service";
+import { createClient } from "@/lib/supabase/server";
+import { getUserRole } from "@/lib/services/auth/auth-session.service";
+import { syncProfileToMetadata } from "@/lib/services/auth/auth-metadata.service";
+import { validateRequestBody } from "@/lib/zod/validateRequest";
 
 /**
  * GET /api/profile
@@ -22,8 +21,9 @@ import { validateRequestBody } from "@/helpers/validation";
  */
 export async function GET() {
   try {
+    const supabase = await createClient();
     // ✅ Use auth helper
-    const { error, user } = await requireAuth();
+    const { error, user } = await requireAuth(supabase);
     if (error) return error;
 
     const userId = user!.id;
@@ -68,8 +68,9 @@ export async function GET() {
  */
 export async function PATCH(request: NextRequest) {
   try {
+    const supabase = await createClient();
     // ✅ Use auth helper
-    const { error: authError, user } = await requireAuth();
+    const { error: authError, user } = await requireAuth(supabase);
     if (authError) return authError;
 
     const userId = user!.id;
@@ -77,7 +78,7 @@ export async function PATCH(request: NextRequest) {
     console.log(`📝 Updating profile for user: ${userId}`);
 
     // ✅ Get user role
-    const role = await getUserRole(userId);
+    const role = await getUserRole(supabase, userId);
 
     if (!role) {
       console.error("❌ Role not found for user:", userId);
@@ -101,7 +102,14 @@ export async function PATCH(request: NextRequest) {
       );
 
       if (!validation.success) {
-        return validation.error; // Returns formatted error response
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Validation failed",
+            details: validation.errors,
+          },
+          { status: 400 }
+        );
       }
 
       const { profile, error: updateError } = await updateStudentProfile(
@@ -123,7 +131,7 @@ export async function PATCH(request: NextRequest) {
       console.log(`✅ Student profile updated: ${userId}`);
 
       // ✅ Sync to metadata cache
-      await syncProfileToMetadata(userId);
+      await syncProfileToMetadata(supabase, userId);
 
       return NextResponse.json({
         success: true,
@@ -140,7 +148,14 @@ export async function PATCH(request: NextRequest) {
       );
 
       if (!validation.success) {
-        return validation.error; // Returns formatted error response
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Validation failed",
+            details: validation.errors,
+          },
+          { status: 400 }
+        ); 
       }
 
       const { profile, error: updateError } = await updateCollegeAdminProfile(
@@ -162,7 +177,7 @@ export async function PATCH(request: NextRequest) {
       console.log(`✅ College admin profile updated: ${userId}`);
 
       // ✅ Sync to metadata cache
-      await syncProfileToMetadata(userId);
+      await syncProfileToMetadata(supabase, userId);
 
       return NextResponse.json({
         success: true,
@@ -179,7 +194,14 @@ export async function PATCH(request: NextRequest) {
       );
 
       if (!validation.success) {
-        return validation.error; // Returns formatted error response
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Validation failed",
+            details: validation.errors,
+          },
+          { status: 400 }
+        ); 
       }
 
       const { createClient } = await import("@/lib/supabase/server");
@@ -209,7 +231,7 @@ export async function PATCH(request: NextRequest) {
       console.log(`✅ Super admin profile updated: ${userId}`);
 
       // ✅ Sync to metadata cache
-      await syncProfileToMetadata(userId);
+      await syncProfileToMetadata(supabase, userId);
 
       return NextResponse.json({
         success: true,

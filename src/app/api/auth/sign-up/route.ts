@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  enforceCollegeEmailOrReject,
-  createAuthUser,
-} from "@/helpers/auth/auth.helpers";
-import { validatePassword } from "@/lib/validators/password.validator";
+import { createAuthUser } from "@/lib/services/auth/auth-user-lifecycle.service";
 import { z } from "zod";
+import { enforceCollegeEmailOrReject } from "@/lib/services/auth/auth-college.service";
+import { createClient } from "@/lib/supabase/server";
 
 // ✅ Email + Role validation
 const bodySchema = z.object({
@@ -21,7 +19,12 @@ export async function POST(request: NextRequest) {
 
     const redirect = request.nextUrl.searchParams.get("redirect");
 
-    console.log("🚀 Signup request received for email:", body.email, "with redirect:", redirect);
+    console.log(
+      "🚀 Signup request received for email:",
+      body.email,
+      "with redirect:",
+      redirect
+    );
 
     // ✅ Basic validation
     if (!parsed.success) {
@@ -74,9 +77,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const supabase = await createClient();
+
     // ✅ Step 1: Validate email domain
     if (role === "student") {
       const rejectResponse = await enforceCollegeEmailOrReject(
+        supabase,
         email,
         college_id
       );
@@ -92,7 +98,7 @@ export async function POST(request: NextRequest) {
     //   email_confirm: false, // Auto-confirm email
     // });
 
-    const result = await createAuthUser({
+    const result = await createAuthUser(supabase, {
       email,
       password,
       role,

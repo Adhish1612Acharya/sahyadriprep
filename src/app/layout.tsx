@@ -6,8 +6,8 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { ConditionalChatbot } from "@/components/chatbot/conditional-chatbot";
-import { getCurrentUser } from "@/helpers/auth/auth.helpers";
 import { Toaster } from "sonner";
+import { getCurrentUserForLayout } from "@/lib/services/auth/auth-session.service";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,7 +21,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
+  const user = await getCurrentUserForLayout();
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>

@@ -3,14 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { vectorStoreServerOperations } from "@/services/supabase/vector-store.service";
 
 // ✅ Clean, organized imports
-import { generateRAGResponse, createChunkSummary } from "@/helpers/ai";
-import { processCompanyFilter } from "@/helpers/rag";
+import { generateRAGResponse } from "@/features/rag/generate-rag-response";
+import { createChunkSummary } from "@/features/rag/generate-chunk-summary";
+import { processCompanyFilter } from "@/features/ai-query-understanding/process-company-filter";
 import {
   formatChunkAsSource,
   buildContextFromChunks,
   groupAndDeduplicateSources,
-  type RAGSource,
 } from "@/helpers/formatting";
+import { requireAuth } from "@/lib/services/auth/auth-guards.service";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * POST /api/rag/chat
@@ -25,6 +27,11 @@ export async function POST(request: NextRequest) {
       search_limit = 5,
       similarity_threshold = 0.5,
     } = body;
+
+    const supabase = await createClient();
+
+    const authResponse = await requireAuth(supabase);
+    if (authResponse.error) return authResponse.error;
 
     // ✅ Validation
     if (!message || message.trim().length === 0) {
@@ -155,12 +162,7 @@ export async function POST(request: NextRequest) {
 
     // ✅ Step 5: Generate AI response
     const responseStartTime = Date.now();
-    const response = await generateRAGResponse(
-      message,
-      context,
-      relevantChunks,
-      conversation_history
-    );
+    const response = await generateRAGResponse(message, context);
     const responseTime = Date.now() - responseStartTime;
 
     console.log(`🤖 AI response generated in ${responseTime}ms`);

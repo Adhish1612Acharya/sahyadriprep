@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { interviewExperienceSchema } from "@/lib/zod/interviewExperience.schema";
+import { interviewExperienceSchema } from "@/lib/zod/schema/interview-experience.schema";
 
-import { sendEmailWithAttachment } from "@/lib/email/send-email-with-attachment";
-import { generateFileBuffer } from "@/helpers/file/file.helpers";
-import { createInterviewPdf } from "@/lib/pdf/createInterviewPdf";
+import { sendEmailWithAttachment } from "@/integrations/email/send-email-with-attachment";
+import { ENV } from "@/config/env";
+import { generateFileBuffer } from "@/helpers/file/file-downloads";
+import { createInterviewPdf } from "@/features/pdf/create-interview-pdf";
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,7 +81,7 @@ Please find the detailed interview experience attached as a PDF.
         attachments,
       }),
       sendEmailWithAttachment({
-        to: process.env.SMTP_USER!,
+        to: ENV.SMTP_USER!,
         subject: "New Interview Experience Submission",
         text: emailBody,
         attachments,

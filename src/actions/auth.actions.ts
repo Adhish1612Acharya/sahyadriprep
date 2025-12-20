@@ -1,10 +1,11 @@
 "use server";
 
+import { ENV } from "@/config/env";
+import { syncProfileToMetadata } from "@/lib/services/auth/auth-metadata.service";
 import {
   createUserProfile,
   deleteAuthUserById,
-  syncProfileToMetadata,
-} from "@/helpers/auth/auth.helpers";
+} from "@/lib/services/auth/auth-user-lifecycle.service";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -32,7 +33,7 @@ export async function signInWithEmail(formData: {
 
   // ✅ Sync profile to metadata cache after successful login
   if (data.user) {
-    syncResult = await syncProfileToMetadata(data.user.id);
+    syncResult = await syncProfileToMetadata(supabase, data.user.id);
 
     if (!syncResult.success) {
       console.warn(
@@ -71,7 +72,7 @@ export async function signInWithGoogle(options?: {
     provider: "google",
     options: {
       redirectTo: `${
-        process.env.NEXT_PUBLIC_SITE_URL
+        ENV.NEXT_PUBLIC_SITE_URL
       }/auth/callback?redirect=${encodeURIComponent(
         options?.redirectUrl || "/"
       )}`,
@@ -161,7 +162,7 @@ export async function completeStudentProfile(
     return { error: updateError.message };
   }
 
-  const syncResult = await syncProfileToMetadata(user.id);
+  const syncResult = await syncProfileToMetadata(supabase, user.id);
 
   if (!syncResult.success) {
     console.warn(
@@ -227,7 +228,7 @@ export async function completeAdminProfile(
     return { error: updateError.message };
   }
 
-  const syncResult = await syncProfileToMetadata(user.id);
+  const syncResult = await syncProfileToMetadata(supabase, user.id);
 
   if (!syncResult.success) {
     console.warn(
@@ -292,7 +293,7 @@ export async function sendPasswordResetEmail(email: string) {
     const supabase = await createClient();
 
     // Use your token exchange URL (step 1 from PKCE flow)
-    const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`;
+    const redirectUrl = `${ENV.NEXT_PUBLIC_SITE_URL}/auth/confirm`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
@@ -421,10 +422,15 @@ export async function confirmEmail(tokenHash: string, type: string) {
       return { error: "Failed to verify user after confirmation" };
     }
 
+    if (!data.user.email) {
+      return { error: "User email is missing after confirmation" };
+    }
+
     if (type === "signup" || type === "email") {
       // ✅ Create user profile after email confirmation
-      const profileResult = await createUserProfile({
+      const profileResult = await createUserProfile(supabase, {
         userId: data.user.id,
+        email: data.user.email,
         role: data.user.user_metadata?.role || "student",
         profile_completed: false,
       });
@@ -442,7 +448,7 @@ export async function confirmEmail(tokenHash: string, type: string) {
     }
 
     // Sync profile metadata after email confirmation
-    const syncResult = await syncProfileToMetadata(data.user.id);
+    const syncResult = await syncProfileToMetadata(supabase, data.user.id);
     if (!syncResult.success) {
       console.warn(
         "⚠️ Failed to sync profile metadata after email confirmation"
@@ -575,7 +581,7 @@ export async function verifyConfirmationToken(tokenHash: string, type: string) {
     }
 
     // Sync profile metadata after verification
-    const syncResult = await syncProfileToMetadata(data.user.id);
+    const syncResult = await syncProfileToMetadata(supabase, data.user.id);
     if (!syncResult.success) {
       console.warn(
         "⚠️ Failed to sync profile metadata after token verification"

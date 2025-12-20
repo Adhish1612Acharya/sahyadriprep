@@ -1,11 +1,7 @@
-const ALLOWED_VIDEO_TYPES = [
-  "video/mp4",
-  "video/webm",
-  "video/quicktime", // .mov
-  "video/x-msvideo", // .avi
-];
-
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
+import {
+  ALLOWED_VIDEO_TYPES,
+  MAX_VIDEO_SIZE,
+} from "@/constants/file.constants";
 
 /**
  * Validates if a file is a valid video

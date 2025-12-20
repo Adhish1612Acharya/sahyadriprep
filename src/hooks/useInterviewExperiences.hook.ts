@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { interviewExperienceService } from "@/services/interview-experience.service";
 
 import { CreateInterviewExperienceInput } from "@/types/services/interview-experience.types";
-import { InterviewExperienceFormValues } from "@/lib/zod/interviewExperience.schema";
+import { InterviewExperienceFormValues } from "@/lib/zod/schema/interview-experience.schema";
 
 export const useInterviewExperiences = () => {
   const queryClient = useQueryClient();

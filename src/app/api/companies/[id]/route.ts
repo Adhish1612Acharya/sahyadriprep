@@ -1,6 +1,7 @@
+import { hasCollegeAccess } from "@/lib/services/auth/auth-college.service";
+import { requireAdmin } from "@/lib/services/auth/auth-guards.service";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin, hasCollegeAccess } from "@/helpers/auth/auth.helpers";
 
 // GET - Fetch single company by ID (public access)
 export async function GET(
@@ -62,17 +63,16 @@ export async function PATCH(
   try {
     const { id } = await params;
 
+    const supabase = await createClient();
 
     // ✅ Step 1: Check authentication and admin role
-    const authResult = await requireAdmin();
+    const authResult = await requireAdmin(supabase);
 
     if (authResult.error) {
       return authResult.error;
     }
 
     const { user, role } = authResult;
-
-    const supabase = await createClient();
 
     // ✅ Step 2: Fetch the company to check ownership
     const { data: company, error: fetchError } = await supabase
@@ -93,7 +93,11 @@ export async function PATCH(
 
     // ✅ Step 3: Check college access for college_admin
     if (role === "college_admin") {
-      const hasAccess = await hasCollegeAccess(user.id, company.college_id);
+      const hasAccess = await hasCollegeAccess(
+        supabase,
+        user.id,
+        company.college_id
+      );
 
       if (!hasAccess) {
         return NextResponse.json(
@@ -105,9 +109,7 @@ export async function PATCH(
           { status: 403 }
         );
       }
-
     }
-
 
     // ✅ Step 4: Parse and validate request body
     const body = await request.json();
@@ -205,8 +207,6 @@ export async function PATCH(
       throw new Error(`Failed to update company: ${updateError.message}`);
     }
 
-
-
     return NextResponse.json(
       {
         success: true,
@@ -241,18 +241,16 @@ export async function DELETE(
   try {
     const { id } = await params;
 
+    const supabase = await createClient();
 
     // ✅ Step 1: Check authentication and admin role
-    const authResult = await requireAdmin();
+    const authResult = await requireAdmin(supabase);
 
     if (authResult.error) {
       return authResult.error;
     }
 
     const { user, role } = authResult;
- 
-
-    const supabase = await createClient();
 
     // ✅ Step 2: Fetch the company to check ownership
     const { data: company, error: fetchError } = await supabase
@@ -273,7 +271,7 @@ export async function DELETE(
 
     // ✅ Step 3: Check college access for college_admin
     if (role === "college_admin") {
-      const hasAccess = await hasCollegeAccess(user.id, company.college_id);
+      const hasAccess = await hasCollegeAccess(supabase, user.id, company.college_id);
 
       if (!hasAccess) {
         return NextResponse.json(
@@ -285,10 +283,7 @@ export async function DELETE(
           { status: 403 }
         );
       }
-
     }
-
-
 
     // ✅ Step 4: Check for dependencies (interview experiences, YouTube videos)
     const { data: interviewExperiences, error: experiencesError } =
@@ -347,8 +342,6 @@ export async function DELETE(
     if (deleteError) {
       throw new Error(`Failed to delete company: ${deleteError.message}`);
     }
-
-
 
     return NextResponse.json(
       {

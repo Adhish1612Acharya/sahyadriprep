@@ -12,6 +12,7 @@ import {
   YouTubeAPIResponse,
   YouTubeVideo,
 } from "@/types/services/interview-youtube-video.types";
+import { ENV } from "@/config/env";
 
 // ============================================
 // SERVICE
@@ -77,7 +78,7 @@ export const youtubeService = {
    * Fetch metadata from YouTube API (client-side)
    */
   fetchMetadata: async (videoId: string): Promise<YouTubeAPIResponse> => {
-    const API_KEY = process.env.YOUTUBE_API_KEY;
+    const API_KEY = ENV.YOUTUBE_API_KEY;
     const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet,contentDetails&key=${API_KEY}`;
 
     const response = await axiosClient.get(url);
@@ -155,7 +156,6 @@ export const youtubeService = {
       if (!response.data.success) {
         throw new Error("Failed to process video");
       }
-
 
       // ✅ FIX: Return the correctly structured data
       return {

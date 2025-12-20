@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { deleteFromCloudinary } from "@/lib/cloudinary/delete";
+import { deleteFromCloudinary } from "@/integrations/cloudinary/delete";
 import { createClient as v_createClient } from "@/lib/vector_supabase/server";
-import { isUserSuperAdmin, requireAdmin } from "@/helpers/auth/auth.helpers";
+import { requireAdmin } from "@/lib/services/auth/auth-guards.service";
+import { isUserSuperAdmin } from "@/lib/services/auth/auth-session.service";
 
 /**
  * GET /api/interview-experiences/[id]
@@ -14,7 +15,6 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-
 
     const supabase = await createClient();
 
@@ -46,8 +46,6 @@ export async function GET(
 
       throw new Error(`Failed to fetch interview experience: ${error.message}`);
     }
-
-
 
     return NextResponse.json({
       success: true,
@@ -83,10 +81,10 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-
+    const supabase = await createClient();
 
     // ✅ Step 1: Check authentication and admin role
-    const authResult = await requireAdmin();
+    const authResult = await requireAdmin(supabase);
 
     if (authResult.error) {
       return authResult.error;
@@ -94,7 +92,6 @@ export async function DELETE(
 
     const { user, role } = authResult;
 
-    const supabase = await createClient();
     const v_supabase = await v_createClient();
 
     // ✅ Step 2: Fetch the interview experience to check ownership
@@ -128,7 +125,7 @@ export async function DELETE(
 
     // ✅ Step 3: Check ownership (only owner or super admin can delete)
     const isOwner = experience.created_by === user.id;
-    const isSuperAdminUser = await isUserSuperAdmin(user.id);
+    const isSuperAdminUser = await isUserSuperAdmin(supabase, user.id);
 
     if (!isOwner && !isSuperAdminUser) {
       return NextResponse.json(
@@ -142,8 +139,6 @@ export async function DELETE(
       );
     }
 
-
-  
     const { error: vectorDeleteError } = await v_supabase
       .from("content_chunks")
       .delete()
@@ -291,8 +286,10 @@ export async function PATCH(
 
     console.log(`📝 Updating interview experience: ${id}`);
 
+    const supabase = await createClient();
+
     // ✅ Step 1: Check authentication and admin role
-    const authResult = await requireAdmin();
+    const authResult = await requireAdmin(supabase);
 
     if (authResult.error) {
       return authResult.error;
@@ -300,8 +297,6 @@ export async function PATCH(
 
     const { user, role } = authResult;
     console.log(`✅ Authenticated as ${role}: ${user.email}`);
-
-    const supabase = await createClient();
 
     // ✅ Step 2: Fetch the interview experience to check ownership
     const { data: existingExperience, error: fetchError } = await supabase
@@ -328,7 +323,7 @@ export async function PATCH(
 
     // ✅ Step 3: Check ownership (only owner or super admin can update)
     const isOwner = existingExperience.created_by === user.id;
-    const isSuperAdminUser = await isUserSuperAdmin(user.id);
+    const isSuperAdminUser = await isUserSuperAdmin(supabase, user.id);
 
     if (!isOwner && !isSuperAdminUser) {
       return NextResponse.json(

@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Lock, CheckCircle } from "lucide-react";
 import { resetPasswordWithToken } from "@/actions/auth.actions";
-import { validatePassword } from "@/lib/validators/password.validator";
+import { validatePassword } from "@/helpers/validation/validate-password";
 
 // Reuse PasswordRequirement from signup-form
 function PasswordRequirement({ met, text }: { met: boolean; text: string }) {

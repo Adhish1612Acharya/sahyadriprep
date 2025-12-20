@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { isEmailAllowedForCollege } from "@/lib/services/auth/auth-college.service";
 import {
-  deleteAuthUserById,
-  isEmailAllowedForCollege,
   syncProfileToMetadata,
   updateUserMetadata,
-} from "@/helpers/auth/auth.helpers";
+} from "@/lib/services/auth/auth-metadata.service";
+import { deleteAuthUserById } from "@/lib/services/auth/auth-user-lifecycle.service";
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -33,7 +33,6 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-
     // ✅ Step 1: Exchange code for session
     const { data, error: exchangeError } =
       await supabase.auth.exchangeCodeForSession(code);
@@ -66,7 +65,7 @@ export async function GET(request: Request) {
       if (type === "signup" || type === "email") {
         console.log(`✅ Email confirmed for: ${email}`);
 
-        const syncResult = await syncProfileToMetadata(user.id);
+        const syncResult = await syncProfileToMetadata(supabase, user.id);
         if (!syncResult.success) {
           console.warn("⚠️ Failed to sync profile after email confirmation");
         }
@@ -87,7 +86,11 @@ export async function GET(request: Request) {
         .single();
 
       // ✅ Step 3: Verify email domain against college
-      const isAllowed = await isEmailAllowedForCollege(email, collegeId);
+      const isAllowed = await isEmailAllowedForCollege(
+        supabase,
+        email,
+        collegeId
+      );
 
       if (!isAllowed) {
         console.error(
@@ -154,6 +157,7 @@ export async function GET(request: Request) {
 
         const { error: profileError } = await supabase.from("profiles").insert({
           id: user.id,
+          email: email,
           role: role,
           profile_completed: false,
         });
@@ -201,7 +205,7 @@ export async function GET(request: Request) {
       ) {
         console.log(`🔄 Metadata out of sync for user ${user.id}, syncing...`);
 
-        const syncResult = await syncProfileToMetadata(user.id);
+        const syncResult = await syncProfileToMetadata(supabase, user.id);
 
         if (!syncResult.success) {
           console.warn(

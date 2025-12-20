@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, Check, X } from "lucide-react";
 import { useAuthService } from "@/hooks/useAuth.hook";
-import { validatePassword } from "@/lib/validators/password.validator";
 import { cn } from "@/lib/utils";
+import { validatePassword } from "@/helpers/validation/validate-password";
 
 export function SignupForm({
   redirectUrl,

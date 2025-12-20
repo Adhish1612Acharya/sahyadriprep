@@ -1,17 +1,3 @@
-export interface TranscriptSegment {
-  text: string;
-  start: number;
-  duration: number;
-  index?: number;
-}
-
-export interface TranscriptData {
-  text: string;
-  segments: TranscriptSegment[];
-  duration: number;
-  language: string;
-}
-
 export interface TranscriptChunk {
   text: string;
   start_time: number;

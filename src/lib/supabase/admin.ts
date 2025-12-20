@@ -1,3 +1,4 @@
+import { ENV } from "@/config/env";
 import { createClient } from "@supabase/supabase-js"; // ✅ Admin client
 
 /**
@@ -6,8 +7,8 @@ import { createClient } from "@supabase/supabase-js"; // ✅ Admin client
  * NEVER expose to client
  */
 export function createAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // ✅ Service role key
+  const supabaseUrl = ENV.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = ENV.SUPABASE_SERVICE_ROLE_KEY; // ✅ Service role key
 
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error("Missing Supabase admin credentials");

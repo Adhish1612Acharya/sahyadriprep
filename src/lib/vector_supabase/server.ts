@@ -1,3 +1,4 @@
+import { ENV } from "@/config/env";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -5,8 +6,8 @@ export async function createClient() {
   const cookieStore = await cookies();
 
   return createServerClient(
-    process.env.VECTOR_STORE_SUPABASE_URL!,
-    process.env.VECTOR_STORE_SUPABASE_PUBLISHABLE_KEY!,
+    ENV.VECTOR_STORE_SUPABASE_URL!,
+    ENV.VECTOR_STORE_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
         getAll() {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useProfile } from "@/hooks/useProfile.hook";
-import { StudentProfileForm } from "@/components/forms/StudentProfileForm";
-import { CollegeAdminProfileForm } from "@/components/forms/CollegeAdminProfileForm";
+import { StudentProfileForm } from "@/components/forms/student-profile-form";
+import { CollegeAdminProfileForm } from "@/components/forms/college-admin-profile-form";
 import {
   Card,
   CardContent,

@@ -4,7 +4,7 @@ import {
   StudentProfileUpdate,
   CollegeAdminProfileUpdate,
   SuperAdminProfileUpdate,
-} from "@/lib/validations/profile.schema";
+} from "@/lib/zod/schema/profile.schema";
 import { toast } from "sonner";
 // import { useToast } from "@/hooks/use-toast";
 
@@ -66,7 +66,7 @@ export const useProfile = () => {
       profileService.updateSuperAdminProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
-      toast("Profile Updated", {  
+      toast("Profile Updated", {
         description: "Your profile has been updated successfully",
       });
     },

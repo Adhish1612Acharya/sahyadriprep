@@ -5,7 +5,7 @@ import {
   InterviewExperience,
   InterviewExperienceResponse,
 } from "@/types/services/interview-experience.types";
-import { InterviewExperienceFormValues } from "@/lib/zod/interviewExperience.schema";
+import { InterviewExperienceFormValues } from "@/lib/zod/schema/interview-experience.schema";
 
 export const interviewExperienceService = {
   /**

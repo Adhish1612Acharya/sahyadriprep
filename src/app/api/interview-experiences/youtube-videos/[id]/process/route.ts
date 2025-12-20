@@ -1,16 +1,15 @@
-import { fetchYouTubeTranscript } from "@/helpers/youtube/youtube-video.helpers";
-import { AI_KEYS, validateAIKeys } from "@/config/ai-keys.config";
+import { AI_KEYS } from "@/config/ai-keys.config";
 import {
   generateOverview,
   generateSegments,
   generateFlashcards,
   generateKeyTips,
-} from "@/helpers/ai/ai-generation.helpers";
+} from "@/features/youtube/ai/ai-generation";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-
-// Validate API keys on startup
-validateAIKeys();
+import { requireAuth } from "@/lib/services/auth/auth-guards.service";
+import { ENV } from "@/config/env";
+import { fetchYouTubeTranscript } from "@/features/youtube/transcript-fetcher";
 
 /**
  * POST /api/interview-experiences/youtube-videos/:id/process
@@ -29,6 +28,12 @@ export async function POST(
 
     // Initialize Supabase client
     const supabase = await createClient();
+
+    const authResult = await requireAuth(supabase);
+
+    if (authResult.error) {
+      return authResult.error;
+    }
 
     // Verify video exists
     const { data: videoData, error: videoError } = await supabase
@@ -67,10 +72,23 @@ export async function POST(
     const startTime = Date.now();
 
     const [overview, segments, flashcards, tips] = await Promise.all([
-      generateOverview(title, description, transcript.text, AI_KEYS.OVERVIEW!),
-      generateSegments(title, transcript.segments, AI_KEYS.SEGMENTS!),
-      generateFlashcards(title, transcript.text, AI_KEYS.FLASHCARDS!),
-      generateKeyTips(title, transcript.text, AI_KEYS.TIPS!),
+      generateOverview(
+        title,
+        description,
+        transcript.text,
+        ENV.GEMINI_API_KEY_OVERVIEW!
+      ),
+      generateSegments(
+        title,
+        transcript.segments,
+        ENV.GEMINI_API_KEY_SEGMENTS!
+      ),
+      generateFlashcards(
+        title,
+        transcript.text,
+        ENV.GEMINI_API_KEY_FLASHCARDS!
+      ),
+      generateKeyTips(title, transcript.text, ENV.GEMINI_API_KEY_TIPS!),
     ]);
 
     const processingTime = Date.now() - startTime;
