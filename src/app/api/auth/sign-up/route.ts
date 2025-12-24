@@ -3,6 +3,7 @@ import { createAuthUser } from "@/lib/services/auth/auth-user-lifecycle.service"
 import { z } from "zod";
 import { enforceCollegeEmailOrReject } from "@/lib/services/auth/auth-college.service";
 import { createClient } from "@/lib/supabase/server";
+import { validatePassword } from "@/helpers/validation/validate-password";
 
 // ✅ Email + Role validation
 const bodySchema = z.object({

@@ -10,4 +10,4 @@ export async function create_doc_chunk(document: string) {
   return texts;
 };
 
-export default create_doc_chunk;
+

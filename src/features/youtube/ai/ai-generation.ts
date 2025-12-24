@@ -1,7 +1,7 @@
 import { AI_OUTPUT_SCHEMAS } from "@/constants/ai-output-schemas";
 import { AI_PROMPTS } from "@/constants/ai-prompts";
 import { generateStructuredAiOutput } from "@/features/ai/structured-output";
-import { Flashcard, OverviewResponse, Segment, Tip } from "../types";
+import { Flashcard, OverviewResponse, Segment, Tip, TranscriptSegment } from "../types";
 
 export async function generateOverview(
   title: string,

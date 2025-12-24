@@ -1,12 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { fetchAdminCollegeByUserId } from "@/lib/repositories/admin/admin.repository";
-import { fetchProfileByUserId } from "@/lib/repositories/profile/profile.repository";
+import { fetchProfileByUserId } from "@/lib/repositories/profiles/fetch";
+import { fetchCollegeAdminByUserId } from "@/lib/repositories/admin";
 
 export async function getAdminCollegeId(
   supabase: SupabaseClient,
   userId: string
 ): Promise<string | null> {
-  const admin = await fetchAdminCollegeByUserId(supabase, userId);
+  const admin = await fetchCollegeAdminByUserId(supabase, userId);
   if (!admin) return null;
 
   const profile = await fetchProfileByUserId(supabase, userId);
@@ -14,5 +14,5 @@ export async function getAdminCollegeId(
     return null;
   }
 
-  return admin.collegeId;
+  return admin.college_id;
 }

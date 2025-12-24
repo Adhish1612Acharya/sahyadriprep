@@ -1,3 +1,4 @@
+import { TranscriptSegment } from "@/features/youtube/types";
 import {
   ChunkWithMetadata,
 } from "@/types/youtube-videos.types";

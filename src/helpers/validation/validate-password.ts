@@ -1,3 +1,4 @@
+import { PASSWORD_REQUIREMENTS } from "@/constants/password-requirements";
 import { PasswordValidationResult } from "./types";
 
 export function validatePassword(password: string): PasswordValidationResult {

@@ -1,11 +1,10 @@
+import { AuthProfile, CollegeAdminProfile } from "@/models";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { ProfileRow } from "./profile.repository.types";
-import z from "zod";
 
 export async function fetchProfileByUserId(
   supabase: SupabaseClient,
   userId: string
-): Promise<ProfileRow | null> {
+): Promise<AuthProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
@@ -19,7 +18,7 @@ export async function fetchProfileByUserId(
 export async function fetchProfilesByUserIds(
   supabase: SupabaseClient,
   userIds: string[]
-): Promise<ProfileRow[]> {
+): Promise<AuthProfile[]> {
   if (userIds.length === 0) return [];
 
   const { data, error } = await supabase
@@ -28,13 +27,13 @@ export async function fetchProfilesByUserIds(
     .in("id", userIds);
 
   if (error) throw error;
-  return (data ?? []) as ProfileRow[];
+  return (data ?? []) as AuthProfile[];
 }
 
 export async function fetchProfilesByCollegeIds(
   supabase: SupabaseClient,
   collegeIds: string[]
-): Promise<ProfileRow[]> {
+): Promise<AuthProfile[]> {
   if (collegeIds.length === 0) return [];
 
   const { data, error } = await supabase
@@ -43,14 +42,14 @@ export async function fetchProfilesByCollegeIds(
     .in("college_id", collegeIds);
 
   if (error) throw error;
-  return data ?? ([] as ProfileRow[]);
+  return data ?? ([] as AuthProfile[]);
 }
 
 // Fetch a single profile by college ID
 export async function fetchProfilesByCollegeId(
   supabase: SupabaseClient,
   collegeId: string
-): Promise<ProfileRow[]> {
+): Promise<AuthProfile[]> {
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
@@ -58,13 +57,13 @@ export async function fetchProfilesByCollegeId(
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return (data as ProfileRow[]) ?? [];
+  return (data as AuthProfile[]) ?? [];
 }
 
 export async function fetchStudentProfilesByCollegeId(
   supabase: SupabaseClient,
   collegeId: string
-): Promise<ProfileRow[]> {
+): Promise<AuthProfile[]> {
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
@@ -73,5 +72,19 @@ export async function fetchStudentProfilesByCollegeId(
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return (data as ProfileRow[]) ?? [];
+  return (data as AuthProfile[]) ?? [];
+}
+
+export async function fetchCollegeAdminProfile(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<CollegeAdminProfile | null> {
+  const { data, error } = await supabase
+    .from("college_admin_profiles")
+    .select("*")
+    .eq("id", userId)
+    .single();
+
+  if (error || !data) return null;
+  return data as CollegeAdminProfile;
 }

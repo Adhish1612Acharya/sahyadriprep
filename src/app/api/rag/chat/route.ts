@@ -13,6 +13,7 @@ import {
 } from "@/helpers/formatting";
 import { requireAuth } from "@/lib/services/auth/auth-guards.service";
 import { createClient } from "@/lib/supabase/server";
+import { RAGSource } from "@/helpers/formatting/types";
 
 /**
  * POST /api/rag/chat
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
 
     // ✅ Step 1: Process company filter (extract + fetch IDs)
-    const companyIds = await processCompanyFilter(message);
+    const companyIds = await processCompanyFilter(supabase, message);
 
     console.log("Companies ids : ", companyIds);
 

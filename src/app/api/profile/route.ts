@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchProfileByUserId } from "@/helpers/database/profiles/fetch.server";
-import {
-  updateStudentProfile,
-  updateCollegeAdminProfile,
-} from "@/helpers/database/profiles/update";
 import {
   studentProfileUpdateSchema,
   collegeAdminProfileUpdateSchema,
@@ -14,6 +9,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserRole } from "@/lib/services/auth/auth-session.service";
 import { syncProfileToMetadata } from "@/lib/services/auth/auth-metadata.service";
 import { validateRequestBody } from "@/lib/zod/validateRequest";
+import {
+  fetchCompleteUserProfile,
+  updateUserProfile,
+} from "@/lib/services/profiles";
 
 /**
  * GET /api/profile
@@ -30,14 +29,14 @@ export async function GET() {
 
     console.log(`📖 Fetching profile for user: ${userId}`);
 
-    const result = await fetchProfileByUserId(userId);
+    const result = await fetchCompleteUserProfile(supabase, userId);
 
-    if ((result as any).error) {
-      console.error("❌ Profile not found:", (result as any).error);
+    if (result.type === "error") {
+      console.error("❌ Profile not found:", result.error);
       return NextResponse.json(
         {
           success: false,
-          error: (result as any).error,
+          error: result.error,
         },
         { status: 404 }
       );
@@ -69,185 +68,77 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient();
-    // ✅ Use auth helper
+
+    // ✅ Auth
     const { error: authError, user } = await requireAuth(supabase);
     if (authError) return authError;
 
     const userId = user!.id;
-
     console.log(`📝 Updating profile for user: ${userId}`);
 
     // ✅ Get user role
     const role = await getUserRole(supabase, userId);
-
     if (!role) {
       console.error("❌ Role not found for user:", userId);
       return NextResponse.json(
+        { success: false, error: "Profile meta not found" },
+        { status: 400 }
+      );
+    }
+    console.log(`👤 User role: ${role}`);
+
+    // ✅ Single validation schema per role
+    const schemaMap: Record<string, any> = {
+      student: studentProfileUpdateSchema,
+      college_admin: collegeAdminProfileUpdateSchema,
+      super_admin: superAdminProfileUpdateSchema,
+    };
+
+    const schema = schemaMap[role];
+    if (!schema) {
+      return NextResponse.json(
+        { success: false, error: "Invalid role for profile updates" },
+        { status: 400 }
+      );
+    }
+
+    // ✅ Validate request body
+    const validation = await validateRequestBody(request, schema);
+    if (!validation.success) {
+      return NextResponse.json(
         {
           success: false,
-          error: "Profile meta not found",
+          error: "Validation failed",
+          details: validation.errors,
         },
         { status: 400 }
       );
     }
 
-    console.log(`👤 User role: ${role}`);
-
-    // ✅ Handle student profile update
-    if (role === "student") {
-      // ✅ Validate request body
-      const validation = await validateRequestBody(
-        request,
-        studentProfileUpdateSchema
-      );
-
-      if (!validation.success) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Validation failed",
-            details: validation.errors,
-          },
-          { status: 400 }
-        );
-      }
-
-      const { profile, error: updateError } = await updateStudentProfile(
-        userId,
-        validation.data
-      );
-
-      if (updateError) {
-        console.error("❌ Student profile update failed:", updateError);
-        return NextResponse.json(
-          {
-            success: false,
-            error: updateError,
-          },
-          { status: 400 }
-        );
-      }
-
-      console.log(`✅ Student profile updated: ${userId}`);
-
-      // ✅ Sync to metadata cache
-      await syncProfileToMetadata(supabase, userId);
-
-      return NextResponse.json({
-        success: true,
-        profile,
-      });
-    }
-
-    // ✅ Handle college admin profile update
-    if (role === "college_admin") {
-      // ✅ Validate request body
-      const validation = await validateRequestBody(
-        request,
-        collegeAdminProfileUpdateSchema
-      );
-
-      if (!validation.success) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Validation failed",
-            details: validation.errors,
-          },
-          { status: 400 }
-        ); 
-      }
-
-      const { profile, error: updateError } = await updateCollegeAdminProfile(
-        userId,
-        validation.data
-      );
-
-      if (updateError) {
-        console.error("❌ College admin profile update failed:", updateError);
-        return NextResponse.json(
-          {
-            success: false,
-            error: updateError,
-          },
-          { status: 400 }
-        );
-      }
-
-      console.log(`✅ College admin profile updated: ${userId}`);
-
-      // ✅ Sync to metadata cache
-      await syncProfileToMetadata(supabase, userId);
-
-      return NextResponse.json({
-        success: true,
-        profile,
-      });
-    }
-
-    // ✅ Handle super admin profile update (limited fields)
-    if (role === "super_admin") {
-      // ✅ Validate request body
-      const validation = await validateRequestBody(
-        request,
-        superAdminProfileUpdateSchema
-      );
-
-      if (!validation.success) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Validation failed",
-            details: validation.errors,
-          },
-          { status: 400 }
-        ); 
-      }
-
-      const { createClient } = await import("@/lib/supabase/server");
-      const supabase = await createClient();
-
-      const { data, error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          ...validation.data,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", userId)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error("❌ Super admin profile update failed:", updateError);
-        return NextResponse.json(
-          {
-            success: false,
-            error: updateError.message,
-          },
-          { status: 400 }
-        );
-      }
-
-      console.log(`✅ Super admin profile updated: ${userId}`);
-
-      // ✅ Sync to metadata cache
-      await syncProfileToMetadata(supabase, userId);
-
-      return NextResponse.json({
-        success: true,
-        profile: data,
-      });
-    }
-
-    // ✅ Unknown role
-    console.error("❌ Unknown role:", role);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Invalid user role",
-      },
-      { status: 400 }
+    // ✅ SINGLE SERVICE CALL - Handles ALL roles
+    const updateResult = await updateUserProfile(
+      supabase,
+      userId,
+      validation.data
     );
+
+    if (updateResult.type === "error") {
+      console.error("❌ Profile update failed:", updateResult.error);
+      return NextResponse.json(
+        { success: false, error: updateResult.error },
+        { status: 400 }
+      );
+    }
+
+    console.log(`✅ ${role} profile updated: ${userId}`);
+
+    // ✅ Sync metadata cache
+    await syncProfileToMetadata(supabase, userId);
+
+    return NextResponse.json({
+      success: true,
+      profile,
+    });
   } catch (err: any) {
     console.error("❌ Error in PATCH /api/profile:", err);
     return NextResponse.json(

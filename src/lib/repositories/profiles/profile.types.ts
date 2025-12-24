@@ -6,3 +6,8 @@ export interface ProfileRow {
   updated_at: string;
   profile_completed: boolean;
 }
+
+export type CollegeAdminProfileRow = {
+  id: string;
+  college_id: string;
+};

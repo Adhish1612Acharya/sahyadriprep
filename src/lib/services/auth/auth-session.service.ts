@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { type UserRole } from "@/lib/repositories/auth/auth.repository";
-import { fetchProfileByUserId } from "@/lib/repositories/profile/profile.repository";
 import { createClient } from "@/lib/supabase/server";
+import { fetchProfileByUserId } from "@/lib/repositories/profiles";
+import { UserRole } from "@/types/common.types";
 
 export async function getCurrentUser(supabase: SupabaseClient) {
   const {

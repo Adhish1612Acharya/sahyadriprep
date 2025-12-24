@@ -14,7 +14,7 @@ import {
   ProfileData,
   Role,
 } from "@/types/contexts/auth-context";
-import { fetchProfileByUserId } from "@/helpers/database/profiles/fetch.client";
+import { fetchCompleteUserProfile } from "@/lib/services/profiles";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -44,9 +44,9 @@ export function AuthProvider({
 
     try {
       // ✅ Use client-side helper
-      const result = await fetchProfileByUserId(currentUser.id);
+      const result = await fetchCompleteUserProfile(supabase, currentUser.id);
 
-      if ("error" in result) {
+      if (result.type === "error") {
         console.log("Error fetching profile:", result.error);
 
         const roleFromMetadata = currentUser.user_metadata?.role as Role;

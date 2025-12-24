@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/services/auth/auth-guards.service";
-import { getStudentsForCurrentCollegeAdmin } from "@/lib/services/student/student.service";
+import { getStudentsForCurrentCollegeAdmin } from "@/lib/services/students/student.service";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 

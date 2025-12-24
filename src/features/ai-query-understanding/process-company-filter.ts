@@ -1,12 +1,16 @@
 import { extractCompaniesFromQuery } from "@/features/ai-query-understanding/extract-companies-from-query";
-import { getCompanyIds } from "@/helpers/database/companies/fetch.helpers";
+import { fetchCompanyIdsByNames } from "@/lib/services/companies";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Extract companies from query and return their IDs
  * @param query - User's search query
  * @returns Array of company IDs or empty array
  */
-export async function processCompanyFilter(query: string): Promise<string[]> {
+export async function processCompanyFilter(
+  supabase: SupabaseClient,
+  query: string
+): Promise<string[]> {
   try {
     console.log("🔍 Processing company filter from query...");
     const startTime = Date.now();
@@ -22,7 +26,7 @@ export async function processCompanyFilter(query: string): Promise<string[]> {
     console.log(`📋 Extracted companies: ${companyNames.join(", ")}`);
 
     // Step 2: Fetch company IDs from database
-    const companyIds = await getCompanyIds(companyNames);
+    const companyIds = await fetchCompanyIdsByNames(supabase, companyNames);
 
     const duration = Date.now() - startTime;
     console.log(

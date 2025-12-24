@@ -1,13 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  insertUserProfile,
-  type UserRole,
-} from "@/lib/repositories/auth/auth.repository";
+
+import { ENV } from "@/config/env";
+import { insertUserProfile } from "@/lib/repositories/profiles";
+import { UserRole } from "@/types/common.types";
 import {
   adminCreateAuthUser,
   adminDeleteAuthUser,
-} from "@/lib/repositories/auth/authAdmin.repository";
-import { ENV } from "@/config/env";
+} from "@/lib/repositories/auth";
 
 export async function createAuthUser(
   supabase: SupabaseClient,
@@ -47,9 +46,9 @@ export async function createAuthUser(
   // CASE 2: email confirmation required – use the passed-in request client
   try {
     const confirmUrl = redirectUrl
-      ? `${
-          ENV.NEXT_PUBLIC_SITE_URL
-        }/auth/confirm?redirect=${encodeURIComponent(redirectUrl)}`
+      ? `${ENV.NEXT_PUBLIC_SITE_URL}/auth/confirm?redirect=${encodeURIComponent(
+          redirectUrl
+        )}`
       : `${ENV.NEXT_PUBLIC_SITE_URL}/auth/confirm`;
 
     const { data, error } = await supabase.auth.signUp({
