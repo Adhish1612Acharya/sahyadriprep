@@ -11,6 +11,9 @@ export async function fetchProfileByUserId(
     .eq("id", userId)
     .single();
 
+  // Not found
+  if (error?.code === "PGRST116") return null;
+
   if (error) throw error;
   return data ?? null;
 }

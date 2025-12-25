@@ -1,4 +1,9 @@
-export type CompanySize = 'startup' | 'small' | 'medium' | 'large' | 'enterprise';
+export type CompanySize =
+  | "startup"
+  | "small"
+  | "medium"
+  | "large"
+  | "enterprise";
 
 export interface Company {
   id: string;
@@ -11,4 +16,6 @@ export interface Company {
   glassdoor_rating?: number; // 0-5
   created_at: string;
   updated_at: string;
+  college_id: string;
+  created_by: string;
 }

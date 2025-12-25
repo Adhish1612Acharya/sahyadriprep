@@ -25,14 +25,11 @@ export type {
 
 export * from "./auth-profile.types";
 
-export type {
-  CollegeAdminProfile,
-  CollegeAdminPermissions,
-  CreateCollegeAdminProfileInput,
-  UpdateCollegeAdminProfileInput,
-} from "./college-admin-profile.types";
+export * from "./college-admin-profile.types";
 
 export * from "./student-profile.types";
+
+export * from "./company.types";
 
 // Type unions for common use cases
 export type Answer =

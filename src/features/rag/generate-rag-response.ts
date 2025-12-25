@@ -1,10 +1,10 @@
 // features/rag/generate-rag-response.ts
 import { callGroqChatMessages } from "@/integrations/groq/groq";
-import { AI_PROMPTS } from "@/constants/ai-prompts";
+import { AI_PROMPTS } from "@/constants/ai-prompts.constants";
 
 export async function generateRAGResponse(
   userMessage: string,
-  context: string,
+  context: string
 ): Promise<{ content: string }> {
   try {
     const systemPrompt = AI_PROMPTS.ragGroqSystem();

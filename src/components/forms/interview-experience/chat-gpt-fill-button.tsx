@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { CHATGPT_INTERVIEW_PROMPT } from "@/constants/chatgpt-interview-experience-prompt";
+import { CHATGPT_INTERVIEW_PROMPT } from "@/constants/chatgpt-interview-experience-prompt.constants";
 import { toast } from "sonner";
 import { ClipboardCopy } from "lucide-react";
 

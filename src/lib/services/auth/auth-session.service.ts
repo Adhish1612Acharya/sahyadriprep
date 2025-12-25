@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { fetchProfileByUserId } from "@/lib/repositories/profiles";
 import { UserRole } from "@/types/common.types";
+import { AuthProfile } from "@/models";
 
 export async function getCurrentUser(supabase: SupabaseClient) {
   const {
@@ -31,6 +32,13 @@ export async function getUserRole(
 ): Promise<UserRole | null> {
   const profile = await fetchProfileByUserId(supabase, userId);
   return profile?.role ?? null;
+}
+
+export function getUserRoleFromProfile(
+  profile: AuthProfile | null
+): string | null {
+  if (!profile) return null;
+  return profile.role ?? null;
 }
 
 export async function isUserAdmin(supabase: SupabaseClient, userId: string) {

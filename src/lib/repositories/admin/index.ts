@@ -1,3 +1,3 @@
 export * from "./fetch";
-export * from "./admin.types";
+export * from "./types";
 export * from "./update";

@@ -1,6 +1,6 @@
 import { ENV } from "@/config/env";
-import { AI_OUTPUT_SCHEMAS } from "@/constants/ai-output-schemas";
-import { AI_PROMPTS } from "@/constants/ai-prompts";
+import { AI_OUTPUT_SCHEMAS } from "@/constants/ai-output-schemas.constants";
+import { AI_PROMPTS } from "@/constants/ai-prompts.constants";
 import { generateStructuredAiOutput } from "@/features/ai/structured-output";
 
 /**

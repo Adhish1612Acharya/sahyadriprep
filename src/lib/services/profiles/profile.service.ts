@@ -86,3 +86,14 @@ export async function updateUserProfile(
 
   return { type: "error", error: "Unsupported role for profile updates" };
 }
+
+export async function fetchAuthProfileByUserId(
+  supabase: SupabaseClient,
+  userId: string
+) {
+  const userAuthProfile = await fetchProfileByUserId(supabase, userId);
+
+  if (!userAuthProfile) return null;
+
+  return userAuthProfile;
+}

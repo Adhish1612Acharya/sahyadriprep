@@ -39,6 +39,38 @@ export const companySchema = z.object({
 // Export type for company input
 export type CompanyInput = z.infer<typeof companySchema>;
 
+export const updateCompanySchema = z.object({
+  name: z.string().trim().min(1, "Company name cannot be empty").optional(),
+  logoUrl: z
+    .string()
+    .trim()
+    .url()
+    .nullable()
+    .optional()
+    .or(z.literal("").transform(() => null)),
+  website: z
+    .string()
+    .trim()
+    .url()
+    .nullable()
+    .optional()
+    .or(z.literal("").transform(() => null)),
+  industry: z.string().trim().optional(),
+  headquarters: z.string().trim().optional(),
+  companySize: z
+    .enum(["startup", "small", "medium", "large", "enterprise"])
+    .optional(),
+  glassdoorRating: z
+    .union([z.number(), z.string()])
+    .transform((v) => (v === "" || v == null ? null : Number(v)))
+    .refine((v) => v === null || (!Number.isNaN(v) && v >= 0 && v <= 5), {
+      message: "Glassdoor rating must be between 0 and 5",
+    })
+    .optional(),
+});
+
+export type UpdateCompanyBody = z.infer<typeof updateCompanySchema>;
+
 // Schema for updating (all fields optional except they can be provided)
 export const companyUpdateSchema = companySchema.partial();
 

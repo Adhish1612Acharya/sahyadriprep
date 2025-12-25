@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { CollegeRow } from "./college.types";
-
+import { CollegeRow } from "./types";
 
 export async function fetchCollegeById(
   supabase: SupabaseClient,

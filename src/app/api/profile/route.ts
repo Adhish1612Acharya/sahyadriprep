@@ -137,7 +137,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      profile,
+      profile: updateResult.profile,
     });
   } catch (err: any) {
     console.error("❌ Error in PATCH /api/profile:", err);
