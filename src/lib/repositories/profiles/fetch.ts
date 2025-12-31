@@ -4,18 +4,13 @@ import { SupabaseClient } from "@supabase/supabase-js";
 export async function fetchProfileByUserId(
   supabase: SupabaseClient,
   userId: string
-): Promise<AuthProfile | null> {
+): Promise<{ data: AuthProfile | null; error: any }> {
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", userId)
     .single();
-
-  // Not found
-  if (error?.code === "PGRST116") return null;
-
-  if (error) throw error;
-  return data ?? null;
+  return { data, error };
 }
 
 export async function fetchProfilesByUserIds(
@@ -66,7 +61,7 @@ export async function fetchProfilesByCollegeId(
 export async function fetchStudentProfilesByCollegeId(
   supabase: SupabaseClient,
   collegeId: string
-): Promise<AuthProfile[]> {
+): Promise<{ data: AuthProfile[] | null; error: any }> {
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
@@ -74,8 +69,7 @@ export async function fetchStudentProfilesByCollegeId(
     .eq("role", "student")
     .order("created_at", { ascending: true });
 
-  if (error) throw error;
-  return (data as AuthProfile[]) ?? [];
+  return { data, error };
 }
 
 export async function fetchCollegeAdminProfile(

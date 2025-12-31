@@ -1,18 +1,34 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchProfileByUserId } from "@/lib/repositories/profiles/fetch";
-import { fetchCollegeAdminByUserId } from "@/lib/repositories/admin";
+import { handleSupabaseResult } from "@/helpers/supabase";
+import { AuthProfile } from "@/models";
+import { HttpError } from "@/lib/api/http";
 
 export async function getAdminCollegeId(
   supabase: SupabaseClient,
   userId: string
-): Promise<string | null> {
-  const admin = await fetchCollegeAdminByUserId(supabase, userId);
-  if (!admin) return null;
+): Promise<string> {
+  const { data: profileData, error: profileDataError } =
+    await fetchProfileByUserId(supabase, userId);
 
-  const profile = await fetchProfileByUserId(supabase, userId);
-  if (profile?.role !== "college_admin" && profile?.role !== "super_admin") {
-    return null;
+  const adminAuthProfile = handleSupabaseResult<AuthProfile>(
+    { data: profileData, error: profileDataError },
+    "strict",
+    "Profile",
+    { notFoundMessage: "Admin profile not found" }
+  );
+
+  if (
+    adminAuthProfile.role !== "college_admin" &&
+    adminAuthProfile.role !== "super_admin"
+  ) {
+    throw new HttpError(
+      "User is not a college admin or super admin",
+      403,
+      "FORBIDDEN",
+      { userId }
+    );
   }
 
-  return admin.college_id;
+  return adminAuthProfile.college_id;
 }

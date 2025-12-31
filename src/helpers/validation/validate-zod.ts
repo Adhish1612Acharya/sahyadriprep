@@ -1,23 +1,21 @@
 import { z } from "zod";
-import { ValidationError, ValidationSuccess } from "./types";
-
-export type ValidationResult<T> = ValidationSuccess<T> | ValidationError;
+import { HttpError } from "@/lib/api/http";
 
 export function validateRequest<T extends z.ZodTypeAny>(
   schema: T,
-  data: unknown
-): ValidationResult<z.infer<T>> {
+  data: any
+): z.infer<T> {
   const result = schema.safeParse(data);
 
   if (!result.success) {
-    const errors = result.error.errors.map((err) => ({
-      field: err.path.join("."),
-      message: err.message,
-      code: err.code,
-    }));
-
-    return { success: false, errors };
+    const firstError = result.error.errors[0];
+    throw new HttpError(
+      firstError?.message ?? "Invalid request body",
+      400,
+      "BAD_REQUEST",
+      { details: result.error.errors }
+    );
   }
 
-  return { success: true, data: result.data };
+  return result.data;
 }

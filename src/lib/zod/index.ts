@@ -1,2 +1,2 @@
 export * from "./schema";
-export * from "./va"
+export * from "./validateRequest"

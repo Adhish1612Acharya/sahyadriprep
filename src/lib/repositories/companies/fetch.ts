@@ -1,7 +1,7 @@
 // src/lib/repositories/companies/fetch.ts
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Company } from "@/models/company.types";
-import { CompanyLight, CompanyWithColleges } from "./types";
+import { CompanyLight, CompanyListFilters, CompanyWithColleges } from "./types";
 import { TABLES } from "@/constants";
 
 /**
@@ -11,7 +11,7 @@ import { TABLES } from "@/constants";
 export async function fetchCompaniesByNames(
   supabase: SupabaseClient,
   companyNames: string[]
-): Promise<Company[]> {
+): Promise<{ data: Company[] | null; error: any }> {
   const orQuery = companyNames.map((name) => `name.ilike.%${name}%`).join(",");
 
   const { data, error } = await supabase
@@ -19,18 +19,13 @@ export async function fetchCompaniesByNames(
     .select("*")
     .or(orQuery);
 
-  if (error) {
-    console.error("❌ Error fetching companies:", error);
-    return [];
-  }
-
-  return data || [];
+  return { data, error };
 }
 
 export async function fetchCompanyWithCollegeById(
   supabase: SupabaseClient,
   id: string
-): Promise<CompanyWithColleges | null> {
+): Promise<{ data: CompanyWithColleges | null; error: any }> {
   const { data, error } = await supabase
     .from(TABLES.companies)
     .select(
@@ -45,17 +40,14 @@ export async function fetchCompanyWithCollegeById(
     .eq("id", id)
     .single();
 
-  if (error?.code === "PGRST116") return null; // Not found
-  if (error) throw new Error(`Failed to fetch company: ${error.message}`);
-
-  return data as CompanyWithColleges;
+  return { data, error };
 }
 
 export async function fetchCompanyWithCollegeForCollegeById(
   supabase: SupabaseClient,
   id: string,
   collegeId: string
-): Promise<CompanyWithColleges | null> {
+): Promise<{ data: CompanyWithColleges | null; error: any }> {
   const { data, error } = await supabase
     .from(TABLES.companies)
     .select(
@@ -71,17 +63,14 @@ export async function fetchCompanyWithCollegeForCollegeById(
     .eq("college_id", collegeId)
     .single();
 
-  if (error?.code === "PGRST116") return null; // Not found or not in this college
-  if (error) throw new Error(`Failed to fetch company: ${error.message}`);
-
-  return data as CompanyWithColleges;
+  return { data, error };
 }
 
 export async function fetchCompanyLightByIdForCollege(
   supabase: SupabaseClient,
   id: string,
   collegeId: string
-): Promise<CompanyLight | null> {
+): Promise<{ data: CompanyLight | null; error: any }> {
   const { data, error } = await supabase
     .from(TABLES.companies)
     .select("id, name, college_id, created_by")
@@ -89,8 +78,35 @@ export async function fetchCompanyLightByIdForCollege(
     .eq("college_id", collegeId)
     .single();
 
-  if (error?.code === "PGRST116") return null;
-  if (error) throw new Error(`Failed to fetch company: ${error.message}`);
+  return { data, error };
+}
 
-  return data as CompanyLight;
+export async function fetchCompaniesForCollege(
+  supabase: SupabaseClient,
+  collegeId: string,
+  filters?: CompanyListFilters
+): Promise<{ data: CompanyWithColleges[] | null; error: any | null }> {
+  let query = supabase
+    .from(TABLES.companies)
+    .select(
+      `
+      *,
+      colleges(id, name)
+    `
+    )
+    .eq("college_id", collegeId)
+    .order("name", { ascending: true });
+
+  // Optional search filter
+  if (filters?.search) {
+    query = query.ilike("name", `%${filters.search}%`);
+  }
+
+  // Optional industry filter
+  if (filters?.industry) {
+    query = query.eq("industry", filters.industry);
+  }
+
+  const { data, error } = await query;
+  return { data, error };
 }

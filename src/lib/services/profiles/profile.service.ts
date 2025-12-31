@@ -8,92 +8,113 @@ import {
   updateStudentProfileRepository,
 } from "@/lib/repositories/students";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { CompleteProfileResult, UpdateProfileResult } from "./types";
+import { CompleteProfileResult } from "./types";
+import { handleSupabaseResult } from "@/helpers/supabase";
+import { AuthProfile, CollegeAdminProfile, StudentProfile } from "@/models";
 
 export async function fetchCompleteUserProfile(
   supabase: SupabaseClient,
   userId: string
 ): Promise<CompleteProfileResult> {
-  try {
-    // 1. Get base auth profile FIRST (determines role)
-    const baseProfile = await fetchProfileByUserId(supabase, userId);
-    if (!baseProfile) {
-      return { type: "error", error: "Base profile not found" };
-    }
+  // 1. Get base auth profile FIRST (determines role)
+  const { data: baseProfileData, error: baseProfileError } =
+    await fetchProfileByUserId(supabase, userId);
 
-    const { role } = baseProfile;
+  const baseProfile = handleSupabaseResult<AuthProfile>(
+    { data: baseProfileData, error: baseProfileError },
+    "strict",
+    "AuthProfile",
+    { userId }
+  );
 
-    // 2. Route by role to extended profile
-    if (role === "student") {
-      const studentProfile = await fetchStudentById(supabase, userId);
-      if (!studentProfile) {
-        return { type: "error", error: "Student profile not found" };
-      }
-      return { type: "success", role, profile: studentProfile };
-    }
+  const { role } = baseProfile;
 
-    if (role === "college_admin") {
-      const adminProfile = await fetchCollegeAdminByUserId(supabase, userId);
-      if (!adminProfile) {
-        return { type: "error", error: "College admin profile not found" };
-      }
-      return { type: "success", role, profile: adminProfile };
-    }
-
-    // 3. Super admin or other roles: return base profile
-    return { type: "success", role, profile: baseProfile };
-  } catch (error) {
-    return {
-      type: "error",
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
+  // 2. Route by role to extended profile
+  if (role === "student") {
+    const { data: studentProfileData, error: studentProfileError } =
+      await fetchStudentById(supabase, userId);
+    const studentProfile = handleSupabaseResult<StudentProfile>(
+      { data: studentProfileData, error: studentProfileError },
+      "strict",
+      "StudentProfile",
+      { userId }
+    );
+    return { profile: studentProfile, role };
   }
+
+  if (role === "college_admin") {
+    const { data: adminProfileData, error: adminProfileError } =
+      await fetchCollegeAdminByUserId(supabase, userId);
+    const adminProfile = handleSupabaseResult<CollegeAdminProfile>(
+      { data: adminProfileData, error: adminProfileError },
+      "strict",
+      "CollegeAdminProfile",
+      { userId }
+    );
+    return { profile: adminProfile, role };
+  }
+
+  // 3. Super admin or other roles: return base profile
+  return { profile: baseProfile, role };
 }
 
 export async function updateUserProfile(
   supabase: SupabaseClient,
   userId: string,
   updates: Record<string, any>
-): Promise<UpdateProfileResult> {
+): Promise<CompleteProfileResult> {
   // 1. Get user role first
   const profileResult = await fetchCompleteUserProfile(supabase, userId);
-  if (profileResult.type === "error") {
-    return { type: "error", error: profileResult.error };
-  }
 
   const { role } = profileResult;
 
   // 2. Route to correct repository
   if (role === "student") {
-    const result = await updateStudentProfileRepository(
+    const { data, error } = await updateStudentProfileRepository(
       supabase,
       userId,
       updates
     );
-    if (result.error) return { type: "error", error: result.error };
-    return { type: "success", role, profile: result.profile };
+    const updatedProfile = handleSupabaseResult<StudentProfile>(
+      { data, error },
+      "strict",
+      "StudentProfile",
+      { userId }
+    );
+    return { profile: updatedProfile, role };
   }
 
   if (role === "college_admin") {
-    const result = await updateCollegeAdminProfileRepository(
+    const { data, error } = await updateCollegeAdminProfileRepository(
       supabase,
       userId,
       updates
     );
-    if (result.error) return { type: "error", error: result.error };
-    return { type: "success", role, profile: result.profile };
+    const updatedProfile = handleSupabaseResult<CollegeAdminProfile>(
+      { data, error },
+      "strict",
+      "CollegeAdminProfile",
+      { userId }
+    );
+    return { profile: updatedProfile, role };
   }
 
-  return { type: "error", error: "Unsupported role for profile updates" };
+  return { profile: profileResult.profile, role };
 }
 
 export async function fetchAuthProfileByUserId(
   supabase: SupabaseClient,
   userId: string
-) {
-  const userAuthProfile = await fetchProfileByUserId(supabase, userId);
+): Promise<AuthProfile> {
+  const { data: userAuthProfile, error } = await fetchProfileByUserId(
+    supabase,
+    userId
+  );
 
-  if (!userAuthProfile) return null;
-
-  return userAuthProfile;
+  return handleSupabaseResult<AuthProfile>(
+    { data: userAuthProfile, error },
+    "strict",
+    "AuthProfile",
+    { userId }
+  );
 }

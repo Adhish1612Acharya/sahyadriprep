@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fetchProfileByUserId } from "@/lib/repositories/profiles";
 import { UserRole } from "@/types/common.types";
 import { AuthProfile } from "@/models";
+import { handleSupabaseResult } from "@/helpers/supabase/handle-supabase-result";
 
 export async function getCurrentUser(supabase: SupabaseClient) {
   const {
@@ -29,9 +30,16 @@ export async function getCurrentUserForLayout() {
 export async function getUserRole(
   supabase: SupabaseClient,
   userId: string
-): Promise<UserRole | null> {
-  const profile = await fetchProfileByUserId(supabase, userId);
-  return profile?.role ?? null;
+): Promise<UserRole> {
+  const { data, error } = await fetchProfileByUserId(supabase, userId);
+  const profileData = handleSupabaseResult<AuthProfile>(
+    { data, error },
+    "strict",
+    "AuthProfile",
+    { userId }
+  );
+
+  return profileData.role;
 }
 
 export function getUserRoleFromProfile(

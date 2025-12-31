@@ -1,19 +1,18 @@
 import { TABLES } from "@/constants";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export async function hasInterviewSessionsForCompanyInCollege(
+export async function interviewSessionsCountForCompanyInCollege(
   supabase: SupabaseClient,
   companyId: string,
   collegeId: string
-): Promise<boolean> {
-  const { data, error } = await supabase
+): Promise<{ data: number | null; error: any | null }> {
+  const { count, error } = await supabase
     .from(TABLES.interviewSessions)
-    .select("id")
+    .select("id", { count: "exact", head: true })
     .eq("company_id", companyId)
-    .eq("college_id", collegeId)
-    .limit(1);
+    .eq("college_id", collegeId);
 
-  if (error)
-    throw new Error(`Failed to check YouTube videos: ${error.message}`);
-  return data?.length > 0;
+  const data = count || null;
+
+  return { data, error };
 }

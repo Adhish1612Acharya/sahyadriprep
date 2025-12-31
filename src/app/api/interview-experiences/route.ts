@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validate_pdf } from "@/helpers/validation/validate-pdf.helpers";
-import { validate_video } from "@/helpers/validation/validate-video.helpers";
+import { validate_pdf } from "@/helpers/validation/validate-pdf";
+import { validate_video } from "@/helpers/validation/validate-video";
 import { createInterviewExperienceSchema } from "@/lib/zod/schema/interview-experience.schema";
 import { save_uploaded_file } from "@/helpers/file/server-files";
 import {

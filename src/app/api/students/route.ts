@@ -1,31 +1,24 @@
+import { NextRequest, NextResponse } from "next/server";
+import { toCamelCase } from "@/helpers/transformers";
 import { requireAdmin } from "@/lib/services/auth/auth-guards.service";
 import { getStudentsForCurrentCollegeAdmin } from "@/lib/services/students/student.service";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { withApiHandler } from "@/lib/api/server";
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+  return withApiHandler(async () => {
+    const supabase = await createClient();
 
-  const auth = await requireAdmin(supabase);
-  if (auth.error) return auth.error;
+    const { user } = await requireAdmin(supabase);
 
-  const { user } = auth;
+    const students = await getStudentsForCurrentCollegeAdmin(supabase, user.id);
 
-  try {
-    const students = await getStudentsForCurrentCollegeAdmin(
-      supabase,
-      user!.id
-    );
-    
     return NextResponse.json(
-      { success: true, data: students },
+      {
+        success: true,
+        data: toCamelCase(students),
+      },
       { status: 200 }
     );
-  } catch (err: any) {
-    console.error("❌ Error in GET /api/students:", err);
-    return NextResponse.json(
-      { success: false, error: err?.message ?? "Failed to load students" },
-      { status: 500 }
-    );
-  }
+  });
 }

@@ -6,7 +6,7 @@ export async function updateStudentProfileRepository(
   supabase: SupabaseClient,
   userId: string,
   updates: Record<string, any>
-): Promise<{ profile: StudentProfile | null; error?: string }> {
+): Promise<{ data: StudentProfile | null; error: any }> {
   const { data, error } = await supabase
     .from("student_profiles")
     .update({
@@ -17,6 +17,5 @@ export async function updateStudentProfileRepository(
     .select("*")
     .single();
 
-  if (error) return { profile: null, error: error.message };
-  return { profile: data as StudentProfile, error: undefined };
+  return { data, error };
 }
