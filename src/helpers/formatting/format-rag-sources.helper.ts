@@ -1,4 +1,58 @@
-import { RAGSource } from "./types";
+import {
+  FormattedInterviewSource,
+  FormattedYouTubeTimestampSource,
+  FormattedYouTubeVideoSource,
+  RAGSource,
+} from "./types";
+import { ContentChunk } from "@/models";
+
+export function formatRAGSourceAsInterview(
+  ragSource: RAGSource
+): FormattedInterviewSource {
+  return {
+    id: ragSource.id,
+    title: ragSource.title || "Interview Experience",
+    student_name: ragSource.student_name || "Anonymous",
+    company: ragSource.company || "",
+    batch: ragSource.batch || "Unknown",
+    similarity: Math.round(ragSource.similarity * 1000) / 1000,
+    excerpt: ragSource.excerpt || "",
+    document_url: ragSource.document_url || "",
+    has_video_preview: Boolean(ragSource.has_video_preview),
+  };
+}
+
+export function formatRAGSourceAsYouTubeVideo(
+  ragSource: RAGSource
+): FormattedYouTubeVideoSource {
+  return {
+    id: ragSource.id,
+    title: ragSource.title || "YouTube Video",
+    video_url: ragSource.video_url || "",
+    thumbnail_url: ragSource.thumbnail_url || "",
+    company: ragSource.company || "",
+    similarity: Math.round(ragSource.similarity * 1000) / 1000,
+    content_section: ragSource.content_section || "description",
+    excerpt: ragSource.excerpt || "",
+  };
+}
+
+export function formatRAGSourceAsYouTubeTimestamp(
+  ragSource: RAGSource
+): FormattedYouTubeTimestampSource {
+  return {
+    id: ragSource.id,
+    video_title: ragSource.title || "YouTube Timestamp",
+    video_url: ragSource.video_url || "",
+    timestamp_url: ragSource.timestamp_url || "",
+    start_timestamp: ragSource.start_timestamp || "",
+    end_timestamp: ragSource.end_timestamp || "",
+    duration_seconds: ragSource.duration_seconds || 0,
+    company: ragSource.company || "",
+    similarity: Math.round(ragSource.similarity * 1000) / 1000,
+    excerpt: ragSource.excerpt || "",
+  };
+}
 
 /**
  * Format a chunk into a standardized source object
@@ -55,7 +109,7 @@ export function formatChunkAsSource(chunk: any): RAGSource {
 /**
  * Build context string from chunks for LLM
  */
-export function buildContextFromChunks(chunks: any[]): string {
+export function buildContextFromChunks(chunks: ContentChunk[]): string {
   return chunks
     .map((chunk: any, index: number) => {
       const metadata = chunk.metadata || {};
@@ -125,13 +179,13 @@ ${chunk.content || "No content available"}`;
  * Group sources by type and deduplicate
  */
 export function groupAndDeduplicateSources(sources: RAGSource[]): {
-  interview_documents: RAGSource[];
-  youtube_videos: RAGSource[];
-  youtube_timestamps: RAGSource[];
+  interviewDocuments: RAGSource[];
+  youtubeVideos: RAGSource[];
+  youtubeTimestamps: RAGSource[];
 } {
-  const interview_documents: RAGSource[] = [];
-  const youtube_videos: RAGSource[] = [];
-  const youtube_timestamps: RAGSource[] = [];
+  const interviewDocuments: RAGSource[] = [];
+  const youtubeVideos: RAGSource[] = [];
+  const youtubeTimestamps: RAGSource[] = [];
 
   // Track seen IDs to avoid duplicates
   const seenInterviewDocs = new Set<string>();
@@ -140,25 +194,25 @@ export function groupAndDeduplicateSources(sources: RAGSource[]): {
   for (const source of sources) {
     if (source.type === "interview_document") {
       if (!seenInterviewDocs.has(source.id)) {
-        interview_documents.push(source);
+        interviewDocuments.push(source);
         seenInterviewDocs.add(source.id);
       }
     } else if (source.type === "youtube_video") {
       // Transcript sources go to timestamps
       if (source.content_section === "transcript" && source.timestamp_url) {
-        youtube_timestamps.push(source);
+        youtubeTimestamps.push(source);
       }
       // Video-level sources (title/description) go to videos
       else if (!seenYouTubeVideos.has(source.id)) {
-        youtube_videos.push(source);
+        youtubeVideos.push(source);
         seenYouTubeVideos.add(source.id);
       }
     }
   }
 
   return {
-    interview_documents,
-    youtube_videos,
-    youtube_timestamps,
+    interviewDocuments,
+    youtubeVideos,
+    youtubeTimestamps,
   };
 }

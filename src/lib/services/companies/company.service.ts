@@ -41,19 +41,18 @@ export async function fetchCompanyNames(
 
 export async function fetchCompanyIdsByNames(
   supabase: SupabaseClient,
-  companyNames: string[],
-  mode: "strict" | "lenient" = "strict"
+  companyNames: string[]
 ): Promise<string[]> {
   const { data, error } = await fetchCompaniesByNames(supabase, companyNames);
   const companies = handleSupabaseResult<Company[]>(
     { data, error },
-    mode,
+    "lenient",
     "Company",
     {
       companyNames,
     }
   );
-  return companies ? companies.map((company) => company.id) : [];
+  return companies.map((company) => company.id);
 }
 
 export async function fetchCompanyLightForCollege(

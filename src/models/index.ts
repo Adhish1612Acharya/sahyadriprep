@@ -31,6 +31,8 @@ export * from "./student-profile.types";
 
 export * from "./company.types";
 
+export * from "./content-chunk.types";
+
 // Type unions for common use cases
 export type Answer =
   | ImportantTopicTextAnswer

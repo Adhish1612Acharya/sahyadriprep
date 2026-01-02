@@ -39,4 +39,11 @@ export async function createChunkSummary(text: string): Promise<string> {
   }
 }
 
-export default createChunkSummary;
+export async function createChunkSummarySafe(message: string): Promise<string> {
+  try {
+    return await createChunkSummary(message);
+  } catch (error: any) {
+    console.warn("⚠️ Query summary failed, using original:", error.message);
+    return message;
+  }
+}
