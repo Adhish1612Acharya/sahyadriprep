@@ -11,7 +11,7 @@ import { deleteFromCloudinary } from "@/integrations/cloudinary/delete";
 import { UPLOAD_DIRECTORIES } from "@/constants/upload-directories.constants";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as v_createClient } from "@/lib/vector_supabase/server";
-import embeddings from "@/integrations/hf/hf-embeddings";
+import { embeddings } from "@/integrations/hf";
 import { generateSummariesInBatches } from "@/features/rag/batch/generate-batch-summaries";
 import {
   requireAdmin,
@@ -21,90 +21,36 @@ import { hasCollegeAccess } from "@/lib/services/auth/auth-college.service";
 import { cleanup_temp_files } from "@/helpers/file/file-downloads";
 import { doc_loader } from "@/features/rag/ingest/load-doc";
 import { create_doc_chunk } from "@/features/rag/ingest/create-doc-chunk";
+import { withApiHandler } from "@/lib/api/server";
+import { listInterviewExperiencesForUser } from "@/lib/services/interview-experiences";
+import { toCamelCase } from "@/helpers/transformers";
 
-/**
- * GET /api/interview-experiences
- * Fetch all interview experiences with optional filters
- * Query params: company_id, college_id, batch, placed_year
- */
 export async function GET(request: NextRequest) {
-  try {
+  return withApiHandler(async () => {
     const supabase = await createClient();
+
+    const user = await requireAuth(supabase);
+
     const { searchParams } = new URL(request.url);
+    const filters = {
+      companyId: searchParams.get("company_id") || null,
+      batch: searchParams.get("batch") || null,
+      placedYear: searchParams.get("placed_year")
+        ? parseInt(searchParams.get("placed_year")!)
+        : null,
+    };
 
-    const authResult = await requireAuth(supabase);
-
-    if (authResult.error) {
-      return authResult.error;
-    }
-
-    // Extract optional filters
-    const company_id = searchParams.get("company_id");
-    const college_id = searchParams.get("college_id");
-    const batch = searchParams.get("batch");
-    const placed_year = searchParams.get("placed_year");
-
-    // Build query with filters
-    let query = supabase
-      .from("interview_experiences")
-      .select(
-        `
-        *,
-        company_details:company_id(id, name, logo_url, industry),
-        college_details:college_id(id, name)
-      `
-      )
-      .order("created_at", { ascending: false });
-
-    // Apply filters if provided
-    if (company_id) {
-      query = query.eq("company_id", company_id);
-    }
-    if (college_id) {
-      query = query.eq("college_id", college_id);
-    }
-    if (batch) {
-      query = query.eq("batch", batch);
-    }
-    if (placed_year) {
-      query = query.eq("placed_year", parseInt(placed_year));
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      throw new Error(
-        `Failed to fetch interview experiences: ${error.message}`
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      count: data.length,
-      data,
-      filters: {
-        company_id: company_id || null,
-        college_id: college_id || null,
-        batch: batch || null,
-        placed_year: placed_year || null,
-      },
+    const result = await listInterviewExperiencesForUser({
+      supabase,
+      userId: user.id,
+      filters,
     });
-  } catch (error: unknown) {
-    console.error("❌ Error fetching interview experiences:", error);
-
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Failed to fetch interview experiences";
 
     return NextResponse.json(
-      {
-        success: false,
-        error: message,
-      },
-      { status: 500 }
+      { success: true, ...toCamelCase(result) },
+      { status: 200 }
     );
-  }
+  });
 }
 
 /**

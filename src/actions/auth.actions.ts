@@ -53,6 +53,8 @@ export async function signInWithEmail(formData: {
 
   const profile = syncResult?.profile;
 
+  console.log("User profile after login:", profile);
+
   const redirectTo =
     redirectMap[profile.role as keyof typeof redirectMap] || "/";
   //redirect(redirectTo); // ✅ Server-side redirect

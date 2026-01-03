@@ -26,9 +26,9 @@ export function SourcesDisplayComponent({
   className,
 }: SourcesDisplayProps) {
   const totalSources =
-    (sources.interview_documents?.length ?? 0) +
-    (sources.youtube_videos?.length ?? 0) +
-    (sources.youtube_timestamps?.length ?? 0);
+    (sources.interviewDocuments?.length ?? 0) +
+    (sources.youtubeVideos?.length ?? 0) +
+    (sources.youtubeTimestamps?.length ?? 0);
 
   if (totalSources === 0) {
     return (
@@ -40,7 +40,7 @@ export function SourcesDisplayComponent({
   }
 
   // Group timestamps by video
-  const timestampsByVideo = (sources.youtube_timestamps ?? []).reduce(
+  const timestampsByVideo = (sources.youtubeTimestamps ?? []).reduce(
     (acc, ts) => {
       if (!acc[ts.id]) {
         acc[ts.id] = {
@@ -57,7 +57,7 @@ export function SourcesDisplayComponent({
       {
         video_title: string;
         video_url: string;
-        timestamps: typeof sources.youtube_timestamps;
+        timestamps: typeof sources.youtubeTimestamps;
       }
     >
   );
@@ -65,15 +65,15 @@ export function SourcesDisplayComponent({
   return (
     <div className={cn("space-y-4", className)}>
       {/* Interview Documents */}
-      {sources.interview_documents &&
-        sources.interview_documents.length > 0 && (
+      {sources.interviewDocuments &&
+        sources.interviewDocuments.length > 0 && (
           <div className="space-y-2">
             <h4 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
               <FileText className="h-3.5 w-3.5" />
-              Interview Experiences ({sources.interview_documents.length})
+              Interview Experiences ({sources.interviewDocuments.length})
             </h4>
             <div className="space-y-2">
-              {sources.interview_documents.map((doc, index) => (
+              {sources.interviewDocuments.map((doc, index) => (
                 <Link
                   key={doc.id}
                   href={`/interview-experiences/${doc.id}`}
@@ -122,21 +122,21 @@ export function SourcesDisplayComponent({
           </div>
         )}
 
-      {sources.interview_documents &&
-        sources.interview_documents.length > 0 &&
-        ((sources.youtube_videos && sources.youtube_videos.length > 0) ||
-          (sources.youtube_timestamps &&
-            sources.youtube_timestamps.length > 0)) && <Separator />}
+      {sources.interviewDocuments &&
+        sources.interviewDocuments.length > 0 &&
+        ((sources.youtubeVideos && sources.youtubeVideos.length > 0) ||
+          (sources.youtubeTimestamps &&
+            sources.youtubeTimestamps.length > 0)) && <Separator />}
 
       {/* YouTube Videos (Non-Transcript) */}
-      {sources.youtube_videos && sources.youtube_videos.length > 0 && (
+      {sources.youtubeVideos && sources.youtubeVideos.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
             <Video className="h-3.5 w-3.5" />
-            YouTube Videos ({sources.youtube_videos.length})
+            YouTube Videos ({sources.youtubeVideos.length})
           </h4>
           <div className="space-y-2">
-            {sources.youtube_videos.map((video, index) => (
+            {sources.youtubeVideos.map((video, index) => (
               <Link
                 key={`${video.id}-${index}`}
                 href={`/interview-experiences/youtube/${video.id}`}
@@ -148,7 +148,7 @@ export function SourcesDisplayComponent({
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-mono text-muted-foreground">
                           [
-                          {(sources.interview_documents?.length ?? 0) +
+                          {(sources.interviewDocuments?.length ?? 0) +
                             index +
                             1}
                           ]
@@ -181,17 +181,17 @@ export function SourcesDisplayComponent({
         </div>
       )}
 
-      {sources.youtube_videos &&
-        sources.youtube_videos.length > 0 &&
-        sources.youtube_timestamps &&
-        sources.youtube_timestamps.length > 0 && <Separator />}
+      {sources.youtubeVideos &&
+        sources.youtubeVideos .length > 0 &&
+        sources.youtubeTimestamps &&
+        sources.youtubeTimestamps.length > 0 && <Separator />}
 
       {/* YouTube Timestamps (Grouped by Video) */}
       {Object.keys(timestampsByVideo).length > 0 && (
         <div className="space-y-3">
           <h4 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
             <Clock className="h-3.5 w-3.5" />
-            Video Timestamps ({sources.youtube_timestamps?.length ?? 0})
+            Video Timestamps ({sources.youtubeTimestamps?.length ?? 0})
           </h4>
           {Object.entries(timestampsByVideo).map(
             ([videoId, videoData], videoIndex) => (
@@ -221,7 +221,7 @@ export function SourcesDisplayComponent({
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-mono text-muted-foreground">
                                 [
-                                {(sources.interview_documents?.length ?? 0) +
+                                {(sources.interviewDocuments?.length ?? 0) +
                                   (sources.youtube_videos?.length ?? 0) +
                                   videoIndex * videoData.timestamps.length +
                                   tsIndex +

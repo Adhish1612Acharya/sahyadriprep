@@ -20,14 +20,14 @@ export const MessageItem = memo(({ message }: MessageItemProps) => {
   const hasSources =
     !isUser &&
     message.sources &&
-    ((message.sources.interview_documents?.length ?? 0) > 0 ||
-      (message.sources.youtube_videos?.length ?? 0) > 0 ||
-      (message.sources.youtube_timestamps?.length ?? 0) > 0);
+    ((message.sources.interviewDocuments?.length ?? 0) > 0 ||
+      (message.sources.youtubeVideos?.length ?? 0) > 0 ||
+      (message.sources.youtubeTimestamps?.length ?? 0) > 0);
 
   const totalSources = hasSources
-    ? (message.sources?.interview_documents?.length ?? 0) +
-      (message.sources?.youtube_videos?.length ?? 0) +
-      (message.sources?.youtube_timestamps?.length ?? 0)
+    ? (message.sources?.interviewDocuments?.length ?? 0) +
+      (message.sources?.youtubeVideos?.length ?? 0) +
+      (message.sources?.youtubeTimestamps?.length ?? 0)
     : 0;
 
   return (

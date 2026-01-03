@@ -115,6 +115,6 @@ export async function fetchAuthProfileByUserId(
     { data: userAuthProfile, error },
     "strict",
     "AuthProfile",
-    { userId }
+    {}
   );
 }
