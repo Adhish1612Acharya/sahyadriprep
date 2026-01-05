@@ -1,4 +1,5 @@
 import { uploadInterviewExperiencePDF, uploadInterviewExperienceVideo } from "@/integrations/cloudinary";
+import { InterviewUploadCloudinaryAssets } from "./types";
 
 export async function uploadInterviewFilesToCloudinary(
   pdfTempPath: string,

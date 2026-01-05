@@ -11,7 +11,7 @@ export async function insertUserProfile(
     profile_completed: boolean;
   }
 ): Promise<void> {
-  const { error } = await supabase.from(TABLES.).insert({
+  const { error } = await supabase.from(TABLES.profiles).insert({
     id: params.userId,
     email: params.email,
     role: params.role,

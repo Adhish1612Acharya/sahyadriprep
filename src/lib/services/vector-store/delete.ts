@@ -18,4 +18,6 @@ export async function deleteVectorEmbeddingsForInterviewExperienceService(
     "ContentChunk",
     { interviewExperienceId }
   );
+
+  return result || [];
 }

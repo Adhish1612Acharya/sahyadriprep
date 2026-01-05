@@ -1,10 +1,6 @@
-import {
-  fetchCollegeAdminByUserId,
-} from "@/lib/repositories/admin";
+import { fetchCollegeAdminByUserId } from "@/lib/repositories/admin";
 import { fetchProfileByUserId } from "@/lib/repositories/profiles";
-import {
-  fetchStudentById,
-} from "@/lib/repositories/students";
+import { fetchStudentById } from "@/lib/repositories/students";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { CompleteProfileResult } from "./types";
 import { handleSupabaseResult } from "@/helpers/supabase";
@@ -71,4 +67,13 @@ export async function fetchAuthProfileByUserId(
     "AuthProfile",
     {}
   );
+}
+
+export async function fetchUserCollegeIdFromProfile(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<string> {
+  const userAuthProfile = await fetchAuthProfileByUserId(supabase, userId);
+
+  return userAuthProfile.college_id;
 }

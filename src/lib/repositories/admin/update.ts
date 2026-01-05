@@ -1,4 +1,4 @@
-import { TABLES } from "@/constants/tables.constants";
+import { TABLES } from "@/constants";
 import { CollegeAdminProfile } from "@/models";
 import { SupabaseClient } from "@supabase/supabase-js";
 

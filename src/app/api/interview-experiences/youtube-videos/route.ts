@@ -19,68 +19,37 @@ import {
   fetchYouTubeMetadata,
   fetchYouTubeTranscript,
 } from "@/features/youtube/transcript-fetcher";
+import { withApiHandler } from "@/lib/api/server";
+import { getInterviewSessionsForCollege } from "@/lib/services/interview-sessions";
+import {
+  fetchAuthProfileByUserId,
+  fetchUserCollegeIdFromProfile,
+} from "@/lib/services/profiles";
 
-/**
- * GET /api/interview-experiences/youtube-videos
- * Get all YouTube videos with optional filters
- */
 export async function GET(request: NextRequest) {
-  try {
+  return withApiHandler(async () => {
     const { searchParams } = new URL(request.url);
-    const company_id = searchParams.get("company_id");
-    const college_id = searchParams.get("college_id");
+    const companyId = searchParams.get("company_id");
+
+    const filters = {};
+
+    Object.assign(filters, companyId ? { companyId } : {});
 
     const supabase = await createClient();
+    const user = await requireAuth(supabase);
 
-    const authResult = await requireAuth(supabase);
+    const userId = user.id;
 
-    if (authResult.error) {
-      return authResult.error;
-    }
+    const collegeId = await fetchUserCollegeIdFromProfile(supabase, userId);
 
-    let query = supabase
-      .from("youtube_videos")
-      .select(
-        `
-        *,
-        companies:company_id(id, name, logo_url),
-        colleges:college_id(id, name)
-      `
-      )
-      .order("created_at", { ascending: false });
-
-    // Apply filters if provided
-    if (company_id) {
-      query = query.eq("company_id", company_id);
-    }
-
-    if (college_id) {
-      query = query.eq("college_id", college_id);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    console.log("✅ Fetched videos:", data?.length || 0);
-
-    return NextResponse.json({
-      success: true,
-      data: data || [],
-      total: data?.length || 0,
-    });
-  } catch (error: any) {
-    console.error("❌ Error fetching YouTube videos:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error.message || "Failed to fetch videos",
-      },
-      { status: 500 }
+    const videos = await getInterviewSessionsForCollege(
+      supabase,
+      collegeId,
+      filters
     );
-  }
+
+    return NextResponse.json({ success: true, data: videos });
+  });
 }
 
 /**
