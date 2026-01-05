@@ -2,8 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { getUserRole } from "./auth-session.service";
 import { NextResponse } from "next/server";
-import { fetchCollegeAdminProfile } from "@/lib/repositories/profiles";
 import { fetchCollegeById } from "@/lib//repositories/colleges";
+import { handleSupabaseResult } from "@/helpers/supabase";
+import { AuthProfile } from "@/models";
+import { fetchProfileByUserId } from "@/lib/repositories/profiles";
 
 export async function hasCollegeAccess(
   supabase: SupabaseClient,
@@ -15,7 +17,13 @@ export async function hasCollegeAccess(
   if (role === "super_admin") return true;
 
   if (role === "college_admin") {
-    const adminProfile = await fetchCollegeAdminProfile(supabase, userId);
+    const { data, error } = await fetchProfileByUserId(supabase, userId);
+
+    const adminProfile = handleSupabaseResult<AuthProfile>(
+      { data, error },
+      "strict",
+      "College Admin Profile"
+    );
     return adminProfile?.college_id === collegeId;
   }
 

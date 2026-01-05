@@ -1,3 +1,4 @@
+import { TABLES } from "@/constants";
 import { AuthProfile, CollegeAdminProfile } from "@/models";
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -6,7 +7,7 @@ export async function fetchProfileByUserId(
   userId: string
 ): Promise<{ data: AuthProfile | null; error: any }> {
   const { data, error } = await supabase
-    .from("profiles")
+    .from(TABLES.profiles)
     .select("*")
     .eq("id", userId)
     .single();
@@ -20,7 +21,7 @@ export async function fetchProfilesByUserIds(
   if (userIds.length === 0) return [];
 
   const { data, error } = await supabase
-    .from("profiles")
+    .from(TABLES.profiles)
     .select("*")
     .in("id", userIds);
 
@@ -35,7 +36,7 @@ export async function fetchProfilesByCollegeIds(
   if (collegeIds.length === 0) return [];
 
   const { data, error } = await supabase
-    .from("profiles")
+    .from(TABLES.profiles)
     .select("*")
     .in("college_id", collegeIds);
 
@@ -49,7 +50,7 @@ export async function fetchProfilesByCollegeId(
   collegeId: string
 ): Promise<AuthProfile[]> {
   const { data, error } = await supabase
-    .from("profiles")
+    .from(TABLES.profiles)
     .select("*")
     .eq("college_id", collegeId)
     .order("created_at", { ascending: true });
@@ -63,25 +64,11 @@ export async function fetchStudentProfilesByCollegeId(
   collegeId: string
 ): Promise<{ data: AuthProfile[] | null; error: any }> {
   const { data, error } = await supabase
-    .from("profiles")
+    .from(TABLES.profiles)
     .select("*")
     .eq("college_id", collegeId)
     .eq("role", "student")
     .order("created_at", { ascending: true });
 
   return { data, error };
-}
-
-export async function fetchCollegeAdminProfile(
-  supabase: SupabaseClient,
-  userId: string
-): Promise<CollegeAdminProfile | null> {
-  const { data, error } = await supabase
-    .from("college_admin_profiles")
-    .select("*")
-    .eq("id", userId)
-    .single();
-
-  if (error || !data) return null;
-  return data as CollegeAdminProfile;
 }

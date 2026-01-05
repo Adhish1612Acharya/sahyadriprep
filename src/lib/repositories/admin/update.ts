@@ -1,3 +1,4 @@
+import { TABLES } from "@/constants/tables.constants";
 import { CollegeAdminProfile } from "@/models";
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -7,7 +8,7 @@ export async function updateCollegeAdminProfileRepository(
   updates: Record<string, any>
 ): Promise<{ data: CollegeAdminProfile | null; error: any }> {
   const { data, error } = await supabase
-    .from("college_admin_profiles")
+    .from(TABLES.collegeAdminProfiles)
     .update({
       ...updates,
       updated_at: new Date().toISOString(),

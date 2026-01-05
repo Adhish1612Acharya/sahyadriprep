@@ -1,16 +1,4 @@
-export interface CloudinaryUploadResult {
-  success: boolean;
-  url?: string;
-  publicId?: string;
-  secureUrl?: string;
-  format?: string;
-  resourceType?: string;
-  bytes?: number;
-  width?: number;
-  height?: number;
-  duration?: number;
-  error?: string;
-}
+import { SupabaseClient } from "@supabase/supabase-js";
 
 export interface CloudinaryConfig {
   cloudName: string;
@@ -31,10 +19,25 @@ export interface CloudinaryAsset {
   url: string;
   secureUrl: string;
   format: string;
-  resourceType: string;
+  resourceType: "image" | "video" | "raw";
+  createdAt: string;
   bytes: number;
+  fileName: string;
   width?: number;
   height?: number;
   duration?: number;
-  createdAt: string;
+}
+
+export interface CloudinaryUploadResult {
+  success: boolean;
+  error?: string;
+  asset: CloudinaryAsset | null;
+}
+
+export interface RollbackContext {
+  tempFiles: string[];
+  cloudinaryAssets: CloudinaryAsset[];
+  mediaIds: string[];
+  experienceId?: string | null;
+  supabase: SupabaseClient;
 }

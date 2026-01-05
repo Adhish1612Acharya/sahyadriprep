@@ -1,3 +1,4 @@
+import { TABLES } from "@/constants";
 import { UserRole } from "@/types/common.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -10,7 +11,7 @@ export async function insertUserProfile(
     profile_completed: boolean;
   }
 ): Promise<void> {
-  const { error } = await supabase.from("profiles").insert({
+  const { error } = await supabase.from(TABLES.).insert({
     id: params.userId,
     email: params.email,
     role: params.role,

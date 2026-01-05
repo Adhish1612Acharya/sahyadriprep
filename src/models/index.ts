@@ -33,6 +33,8 @@ export * from "./company.types";
 
 export * from "./content-chunk.types";
 
+export * from "./media.types";
+
 // Type unions for common use cases
 export type Answer =
   | ImportantTopicTextAnswer

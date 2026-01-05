@@ -39,3 +39,7 @@ export const TABLES = {
   importantTopicTextAnswers: "important__topic__text__answers" as const,
   importantTopicVideoAnswers: "important__topic__video__answers" as const,
 } as const;
+
+export const vectorStoreTables = {
+  contentChunks: "content_chunks" as const,
+} as const;

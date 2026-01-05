@@ -1,9 +1,11 @@
 import { TABLES } from "@/constants";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  InterviewExpereinceWithMediaAndCompanyCollegeDetails,
   InterviewExperienceWithCompanyCollegeDetails,
   InterviewFilters,
 } from "./types";
+import { InterviewExperience } from "@/models";
 
 export async function interviewExperiencesCountForCompanyInCollege(
   supabase: SupabaseClient,
@@ -30,7 +32,7 @@ export async function fetchInterviewExperiences(
   error: any;
 }> {
   let query = supabase
-    .from("interview_experiences")
+    .from(TABLES.interviewExperiences)
     .select(
       `
       *,
@@ -47,6 +49,52 @@ export async function fetchInterviewExperiences(
   if (filters?.placedYear) query = query.eq("placed_year", filters.placedYear);
 
   const { data, error } = await query;
+
+  return { data, error };
+}
+
+export async function fetchInterviewExperienceByIdForCollege(
+  supabase: SupabaseClient,
+  interviewExperienceId: string,
+  collegeId: string
+): Promise<{
+  data: InterviewExpereinceWithMediaAndCompanyCollegeDetails | null;
+  error: any;
+}> {
+  const { data, error } = await supabase
+    .from(TABLES.interviewExperiences)
+    .select(
+      `
+      *,
+      company_details:company_id(id, name, logo_url, industry),
+      college_details:college_id(id, name),
+      document_media:document_media_id(id, url, file_name, file_type, file_size),
+      video_media:video_media_id(id, url, file_name, file_type, file_size)
+    `
+    )
+    .eq("id", interviewExperienceId)
+    .eq("college_id", collegeId)
+    .single();
+
+  return { data, error };
+}
+
+export async function fetchInterviewExperienceOwnCreatedByIdForCollege(
+  supabase: SupabaseClient,
+  interviewExperienceId: string,
+  collegeId: string,
+  userId: string
+): Promise<{
+  data: InterviewExperience | null;
+  error: any;
+}> {
+  const { data, error } = await supabase
+    .from(TABLES.interviewExperiences)
+    .select("*")
+    .eq("id", interviewExperienceId)
+    .eq("college_id", collegeId)
+    .eq("created_by", userId)
+    .single();
 
   return { data, error };
 }

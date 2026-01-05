@@ -1,12 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CollegeRow } from "./types";
+import { TABLES } from "@/constants";
 
 export async function fetchCollegeById(
   supabase: SupabaseClient,
   collegeId: string
 ): Promise<CollegeRow | null> {
   const { data, error } = await supabase
-    .from("colleges")
+    .from(TABLES.colleges)
     .select("id, email_domain")
     .eq("id", collegeId)
     .single();

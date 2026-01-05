@@ -1,2 +1,3 @@
-export * from "./profile.service";
+export * from "./fetch";
+export * from "./types";
 export * from "./types";

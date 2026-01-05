@@ -31,29 +31,35 @@ export async function ensure_uploads_dir_exists(
  * @param options - Save options
  * @returns Path to saved file
  */
+
 export async function save_uploaded_file(
   file: File,
   options?: {
     customFilename?: string;
-    subdirectory?: string; // ✅ NEW: Support subdirectories
+    subdirectory?: string;
   }
-): Promise<string> {
-  const { customFilename, subdirectory } = options || {};
+): Promise<{ path: string | null; error: string | null }> {
+  try {
+    const { customFilename, subdirectory } = options || {};
 
-  // ✅ Create directory with optional subdirectory
-  const uploadsDir = await ensure_uploads_dir_exists(subdirectory);
+    const uploadsDir = await ensure_uploads_dir_exists(subdirectory);
+    const timestamp = Date.now();
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const filename = customFilename || `${timestamp}-${safeName}`;
+    const filePath = path.join(uploadsDir, filename);
 
-  const timestamp = Date.now();
-  const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-  const filename = customFilename || `${timestamp}-${safeName}`;
-  const filePath = path.join(uploadsDir, filename);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await writeFile(filePath, buffer);
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  await writeFile(filePath, buffer);
-  console.log(`💾 Saved file to: ${filePath}`);
-
-  return filePath;
+    console.log(`💾 Saved: ${filePath}`);
+    return { path: filePath, error: null };
+  } catch (error: any) {
+    console.error("Temp save failed:", error);
+    return {
+      error: error.message || "Failed to save temporary file",
+      path: null,
+    };
+  }
 }
 
 /**
@@ -70,5 +76,3 @@ export async function delete_file(filePath: string): Promise<void> {
     throw error;
   }
 }
-
-

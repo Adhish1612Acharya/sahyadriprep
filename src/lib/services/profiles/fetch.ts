@@ -1,11 +1,9 @@
 import {
   fetchCollegeAdminByUserId,
-  updateCollegeAdminProfileRepository,
 } from "@/lib/repositories/admin";
 import { fetchProfileByUserId } from "@/lib/repositories/profiles";
 import {
   fetchStudentById,
-  updateStudentProfileRepository,
 } from "@/lib/repositories/students";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { CompleteProfileResult } from "./types";
@@ -56,50 +54,6 @@ export async function fetchCompleteUserProfile(
 
   // 3. Super admin or other roles: return base profile
   return { profile: baseProfile, role };
-}
-
-export async function updateUserProfile(
-  supabase: SupabaseClient,
-  userId: string,
-  updates: Record<string, any>
-): Promise<CompleteProfileResult> {
-  // 1. Get user role first
-  const profileResult = await fetchCompleteUserProfile(supabase, userId);
-
-  const { role } = profileResult;
-
-  // 2. Route to correct repository
-  if (role === "student") {
-    const { data, error } = await updateStudentProfileRepository(
-      supabase,
-      userId,
-      updates
-    );
-    const updatedProfile = handleSupabaseResult<StudentProfile>(
-      { data, error },
-      "strict",
-      "StudentProfile",
-      { userId }
-    );
-    return { profile: updatedProfile, role };
-  }
-
-  if (role === "college_admin") {
-    const { data, error } = await updateCollegeAdminProfileRepository(
-      supabase,
-      userId,
-      updates
-    );
-    const updatedProfile = handleSupabaseResult<CollegeAdminProfile>(
-      { data, error },
-      "strict",
-      "CollegeAdminProfile",
-      { userId }
-    );
-    return { profile: updatedProfile, role };
-  }
-
-  return { profile: profileResult.profile, role };
 }
 
 export async function fetchAuthProfileByUserId(

@@ -9,6 +9,20 @@ import {
   formatRAGSourceAsYouTubeVideo,
 } from "@/helpers/formatting";
 import { RAGResponse } from "./types";
+import {
+  create_doc_chunk,
+  doc_loader,
+  embedDocumentsWithHandling,
+} from "@/features/rag/ingest";
+import { generateSummariesInBatches } from "@/features/rag/batch";
+import { embeddings } from "@/integrations/hf";
+import {
+  ContentChunkCreateInput,
+  insertInterviewExperienceContentChunks,
+} from "@/lib/repositories/vector-store";
+import { InterviewUploadData } from "../interview-experiences";
+import { handleSupabaseResult } from "@/helpers/supabase";
+import { ContentChunk } from "@/models";
 
 export async function processRAGQuery(
   supabase: SupabaseClient,
@@ -120,4 +134,74 @@ export async function processRAGQuery(
       },
     },
   };
+}
+
+export async function processInterviewExperiencePdfToChunks(
+  vectorSupabase: SupabaseClient,
+  tempFilePath: string,
+  experienceId: string,
+  mediaId: string,
+  videoMediaId: string | null,
+  documentMediaFileTitle: string,
+  validatedData: InterviewUploadData,
+  collegeId: string
+): Promise<ContentChunk[]> {
+  // 1. Load & chunk
+  console.log("📖 Loading PDF...");
+  const documentContent = await doc_loader(tempFilePath);
+
+  console.log("✂️ Chunking...");
+  const chunks = await create_doc_chunk(documentContent);
+
+  // 2. Batch summaries
+  console.log("🧠 Generating summaries...");
+  const summaries = await generateSummariesInBatches(chunks, {
+    batchSize: 5,
+    delayBetweenBatches: 7000,
+    maxRetries: 2,
+  });
+
+  // 3. Embeddings
+  console.log("🧠 Generating embeddings...");
+  const summaryEmbeddings = await embedDocumentsWithHandling(
+    embeddings,
+    summaries
+  );
+
+  // 4. Chunk objects → insert
+  const chunksToInsert: ContentChunkCreateInput[] = chunks.map(
+    (chunk, index) => ({
+      content: chunk,
+      summary: summaries[index],
+      content_type: "interview_experience",
+      embedding: summaryEmbeddings[index],
+      chunk_index: index,
+      token_count: chunk.split(" ").length,
+      metadata: {
+        total_document_chunks_count: chunks.length,
+        interview_experience_id: experienceId,
+        document_media_id: mediaId,
+        document_title: documentMediaFileTitle,
+        student_name: validatedData.studentName,
+        company_id: validatedData.companyId,
+        college_id: collegeId,
+        batch: validatedData.batch,
+        has_video_preview: !!videoMediaId,
+      },
+    })
+  );
+
+  // 5. Index (repo)
+  const { data, error } = await insertInterviewExperienceContentChunks(
+    vectorSupabase,
+    chunksToInsert
+  );
+  const ragContentChunk = handleSupabaseResult<ContentChunk[] | null>(
+    { data, error },
+    "lenient",
+    "Interview_experienec_rag_chunk",
+    { experienceId: experienceId }
+  );
+
+  return ragContentChunk || [];
 }

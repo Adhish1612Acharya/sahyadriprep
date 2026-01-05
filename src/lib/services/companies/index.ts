@@ -1,1 +1,3 @@
-export * from "./company.service";
+export * from "./fetch";
+export * from "./update";
+export * from "./delete";

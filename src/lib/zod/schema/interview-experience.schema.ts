@@ -1,16 +1,15 @@
 import z from "zod/v3";
 
 export const createInterviewExperienceSchema = z.object({
-  student_name: z.string().min(2, "Student name must be at least 2 characters"),
-  college_id: z.string().uuid("Invalid college ID"),
-  company_id: z.string().uuid("Invalid company ID"),
+  studentName: z.string().min(2, "Student name must be at least 2 characters"),
+  companyId: z.string().uuid("Invalid company ID"),
   batch: z
     .string()
     .regex(
       /^\d{4}-\d{4}$/,
       "Batch must be in format YYYY-YYYY (e.g., 2023-2027)"
     ),
-  placed_year: z.number().int().min(2000).max(2100),
+  placedYear: z.number().int().min(2000).max(2100),
   source: z.enum(["admin_upload"]),
 });
 

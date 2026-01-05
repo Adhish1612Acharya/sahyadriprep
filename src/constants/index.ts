@@ -8,3 +8,4 @@ export * from "./file.constants";
 export * from "./placeholder.constants";
 export * from "./upload-directories.constants";
 export * from "./error-map.constants";
+export * from "./supabase-rpc.constants";

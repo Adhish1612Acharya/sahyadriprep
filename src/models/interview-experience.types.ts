@@ -1,18 +1,19 @@
 import { College } from "./college.types";
 import { Company } from "./company.types";
 
-export type ExperienceSource = 'admin_upload' | 'student_self_upload';
+export type ExperienceSource = "admin_upload" | "student_self_upload";
 
 export interface InterviewExperience {
   id: string;
-  student_id?: string;
-  student_name?: string;
+  student_id: string;
+  student_name: string;
   college_id: string;
   batch: string; // Format: "2023-2027"
-  placed_year?: number;
-  company_id?: string;
-  media_id?: string;
-  created_by?: string;
+  placed_year: number;
+  company_id: string;
+  document_media_id: string;
+  video_media_id: string;
+  created_by: string;
   source: ExperienceSource;
   created_at: string;
   updated_at: string;

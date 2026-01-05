@@ -1,3 +1,4 @@
+import { TABLES } from "@/constants";
 import { CollegeAdminProfile } from "@/models";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -6,7 +7,7 @@ export async function fetchCollegeAdminByUserId(
   userId: string
 ): Promise<{ data: CollegeAdminProfile | null; error: any }> {
   const { data, error } = await supabase
-    .from("college_admin_profiles")
+    .from(TABLES.collegeAdminProfiles)
     .select("*")
     .eq("id", userId)
     .single();

@@ -6,7 +6,7 @@ export async function fetchStudentsByCollegeId(
   collegeId: string
 ): Promise<{ data: StudentProfile[] | null; error: any }> {
   const { data, error } = await supabase
-    .from("student_profiles")
+    .from(Ta)
     .select("*")
     .eq("college_id", collegeId)
     .order("created_at", { ascending: true });
@@ -19,7 +19,7 @@ export async function fetchStudentById(
   studentId: string
 ): Promise<{ data: StudentProfile | null; error: any }> {
   const { data, error } = await supabase
-    .from("student_profiles")
+    .from(Ta)
     .select("*")
     .eq("id", studentId)
     .single();

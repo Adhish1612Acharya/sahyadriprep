@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchStudentProfilesByCollegeId } from "@/lib/repositories/profiles/fetch";
-import { getAdminCollegeId } from "@/lib/services/admin/admin.service";
+import { getAdminCollegeId } from "@/lib/services/admin";
 import { fetchStudentsByCollegeId } from "@/lib/repositories/students";
 import { handleSupabaseResult } from "@/helpers/supabase";
 import { AuthProfile, StudentProfile } from "@/models";

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { toCamelCase } from "@/helpers/transformers";
 import { requireAdmin } from "@/lib/services/auth/auth-guards.service";
-import { getStudentsForCurrentCollegeAdmin } from "@/lib/services/students/student.service";
+import { getStudentsForCurrentCollegeAdmin } from "@/lib/services/students";
 import { createClient } from "@/lib/supabase/server";
 import { withApiHandler } from "@/lib/api/server";
 
