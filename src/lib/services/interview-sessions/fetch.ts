@@ -150,7 +150,7 @@ export async function fetchInterviewSessionAISummaryContent(
   supabase: SupabaseClient,
   id: string
 ) {
-  const [overviewData, segmentsData, flashcardsData, tipsData] =
+  const [overviewData, segmentsData, flashCardsData, tipsData] =
     await Promise.all([
       fetchInterviewSessionOverviewService(supabase, id),
       fetchInterviewSessionSegmentsService(supabase, id),
@@ -161,7 +161,7 @@ export async function fetchInterviewSessionAISummaryContent(
   return {
     overviewData,
     segmentsData,
-    flashcardsData,
+    flashCardsData,
     tipsData,
   };
 }

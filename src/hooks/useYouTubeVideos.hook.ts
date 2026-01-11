@@ -3,8 +3,8 @@ import {
   CreateYouTubeVideoInput,
   ProcessVideoInput,
 } from "@/types/services/interview-youtube-video.types";
-import { youtubeService } from "@/services/interview-youtube-video.service";
 import { toast } from "sonner";
+import { interviewSessionApi } from "@/lib/api/interview-session";
 
 export const useInterviewYouTubeVideos = () => {
   const queryClient = useQueryClient();
@@ -15,14 +15,15 @@ export const useInterviewYouTubeVideos = () => {
 
   const videosQuery = useQuery({
     queryKey: ["youtube-videos"],
-    queryFn: () => youtubeService.getAllVideos(),
+    queryFn: () => interviewSessionApi.getAllVideos(),
     staleTime: 5 * 60 * 1000,
   });
 
   const useVideosByCompanyQuery = (companyId: string | null) =>
     useQuery({
       queryKey: ["youtube-videos", "company", companyId],
-      queryFn: () => youtubeService.getAllVideos({ company_id: companyId! }),
+      queryFn: () =>
+        interviewSessionApi.getAllVideos({ company_id: companyId! }),
       enabled: !!companyId,
       staleTime: 5 * 60 * 1000,
     });
@@ -30,7 +31,8 @@ export const useInterviewYouTubeVideos = () => {
   const useVideosByCollegeQuery = (collegeId: string | null) =>
     useQuery({
       queryKey: ["youtube-videos", "college", collegeId],
-      queryFn: () => youtubeService.getAllVideos({ college_id: collegeId! }),
+      queryFn: () =>
+        interviewSessionApi.getAllVideos({ college_id: collegeId! }),
       enabled: !!collegeId,
       staleTime: 5 * 60 * 1000,
     });
@@ -38,7 +40,7 @@ export const useInterviewYouTubeVideos = () => {
   const useVideoQuery = (id: string | null) =>
     useQuery({
       queryKey: ["youtube-video", id],
-      queryFn: () => youtubeService.getVideoById(id!),
+      queryFn: () => interviewSessionApi.getVideoById(id!),
       enabled: !!id,
       staleTime: 5 * 60 * 1000,
     });
@@ -50,7 +52,7 @@ export const useInterviewYouTubeVideos = () => {
   const useAIContentQuery = (id: string | null, enabled: boolean = true) =>
     useQuery({
       queryKey: ["youtube-video-ai", id],
-      queryFn: () => youtubeService.getAIContent(id!),
+      queryFn: () => interviewSessionApi.getAIContent(id!),
       enabled: !!id && enabled, // ✅ Only run if id exists AND enabled is true
       staleTime: 5 * 60 * 1000,
     });
@@ -61,7 +63,7 @@ export const useInterviewYouTubeVideos = () => {
 
   const createVideo = useMutation({
     mutationFn: (data: CreateYouTubeVideoInput) =>
-      youtubeService.createVideo(data),
+      interviewSessionApi.createVideo(data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["youtube-videos"] });
       toast("Video Added", {
@@ -76,7 +78,7 @@ export const useInterviewYouTubeVideos = () => {
   });
 
   const deleteVideo = useMutation({
-    mutationFn: (id: string) => youtubeService.deleteVideo(id),
+    mutationFn: (id: string) => interviewSessionApi.deleteVideo(id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["youtube-videos"] });
       queryClient.removeQueries({ queryKey: ["youtube-video", id] });
@@ -97,7 +99,7 @@ export const useInterviewYouTubeVideos = () => {
 
   const processVideo = useMutation({
     mutationFn: async (input: { id: string } & ProcessVideoInput) => {
-      return youtubeService.processVideo(input.id, {
+      return interviewSessionApi.processVideo(input.id, {
         video_id: input.video_id,
         title: input.title,
         description: input.description,

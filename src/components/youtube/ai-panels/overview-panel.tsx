@@ -7,10 +7,10 @@ import { Badge } from "@/components/ui/badge";
 interface AIOverviewPanelProps {
   data?: {
     summary: string;
-    key_points?: string[];
+    keyPoints?: string[];
     topics?: string[];
-    difficulty_level?: string;
-    recommended_for?: string[];
+    difficultyLevel?: string;
+    recommendedFor?: string[];
   };
 }
 
@@ -41,7 +41,7 @@ export function AIOverviewPanel({ data }: AIOverviewPanelProps) {
       <div>
         <h3 className="font-semibold mb-3">Key Points</h3>
         <ul className="space-y-2">
-          {data.key_points?.map((point: string, index: number) => (
+          {data.keyPoints?.map((point: string, index: number) => (
             <li key={index} className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
               <span className="text-muted-foreground">{point}</span>
@@ -70,17 +70,17 @@ export function AIOverviewPanel({ data }: AIOverviewPanelProps) {
       <div className="flex items-center justify-between text-sm">
         <div>
           <span className="text-muted-foreground">Difficulty: </span>
-          <Badge variant="outline">{data.difficulty_level}</Badge>
+          <Badge variant="outline">{data.difficultyLevel}</Badge>
         </div>
       </div>
 
-      {data.recommended_for && data.recommended_for.length > 0 && (
+      {data.recommendedFor && data.recommendedFor.length > 0 && (
         <>
           <Separator />
           <div>
             <h3 className="font-semibold mb-2">Recommended For</h3>
             <div className="flex flex-wrap gap-2">
-              {data.recommended_for.map((audience: string, index: number) => (
+              {data.recommendedFor.map((audience: string, index: number) => (
                 <Badge key={index} variant="outline">
                   {audience}
                 </Badge>

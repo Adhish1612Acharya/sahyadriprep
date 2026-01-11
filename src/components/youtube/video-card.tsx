@@ -16,9 +16,10 @@ import { formatDuration } from "@/helpers/youtube/youtube-video.helpers";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
+import { InterviewSessionWithCollegeAndCompanyDetails } from "@/lib/repositories/interview-sessions";
 
 interface VideoCardProps {
-  video: YouTubeVideo;
+  video: InterviewSessionWithCollegeAndCompanyDetails;
 }
 
 export function VideoCard({ video }: VideoCardProps) {
@@ -28,10 +29,10 @@ export function VideoCard({ video }: VideoCardProps) {
     router.push(`/interview-experiences/youtube/${video.id}`);
   };
 
-  // ✅ Handler to open YouTube link in new tab
+  // Handler to open YouTube link in new tab
   const handleYouTubeClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
-    window.open(`https://youtu.be/${video.video_id}`, "_blank");
+    window.open(`https://youtu.be/${video.videoId}`, "_blank");
   };
 
   return (
@@ -43,8 +44,8 @@ export function VideoCard({ video }: VideoCardProps) {
       <div className="relative aspect-video bg-muted">
         <Image
           src={
-            video.thumbnail_url ||
-            `https://img.youtube.com/vi/${video.video_id}/maxresdefault.jpg`
+            video.thumbnailUrl ||
+            `https://img.youtube.com/vi/${video.videoId}/maxresdefault.jpg`
           }
           alt={video.title}
           fill
@@ -61,8 +62,8 @@ export function VideoCard({ video }: VideoCardProps) {
           </Badge>
         )}
 
-        {/* ✅ AI Processing Badge - Top Left */}
-        {video.ai_process_done && (
+        {/* AI Processing Badge - Top Left */}
+        {video.aiProcessDone && (
           <Badge className="absolute top-2 left-2 bg-primary/90 text-primary-foreground hover:bg-primary">
             <Sparkles className="h-3 w-3 mr-1" />
             AI
@@ -93,15 +94,19 @@ export function VideoCard({ video }: VideoCardProps) {
           </p>
         )}
 
-        {/* ✅ PRIMARY ACTION - Watch Interview Button (Most Prominent) */}
-        <Button size="sm" className="w-full mb-3 cursor-pointer" onClick={handleClick}>
+        {/* PRIMARY ACTION - Watch Interview Button */}
+        <Button
+          size="sm"
+          className="w-full mb-3 cursor-pointer"
+          onClick={handleClick}
+        >
           <Play className="h-4 w-4 mr-2" />
           Watch Interview
         </Button>
 
-        {/* ✅ Badges Row - YouTube + Company (Below the main button) */}
+        {/* Badges Row - YouTube + Company */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          {/* YouTube Badge - Smaller, less prominent */}
+          {/* YouTube Badge */}
           <Badge
             variant="outline"
             className="bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900 cursor-pointer transition-all text-xs"
@@ -115,9 +120,9 @@ export function VideoCard({ video }: VideoCardProps) {
           {/* Company Badge */}
           {video.companies && (
             <Badge variant="secondary" className="text-xs cursor-default">
-              {video.companies.logo_url && (
+              {video.companies.logoUrl && (
                 <Image
-                  src={video.companies.logo_url}
+                  src={video.companies.logoUrl}
                   alt={video.companies.name}
                   width={16}
                   height={16}
@@ -134,7 +139,7 @@ export function VideoCard({ video }: VideoCardProps) {
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Calendar className="h-3 w-3" />
           <span>
-            {formatDistanceToNow(new Date(video.created_at), {
+            {formatDistanceToNow(new Date(video.createdAt), {
               addSuffix: true,
             })}
           </span>

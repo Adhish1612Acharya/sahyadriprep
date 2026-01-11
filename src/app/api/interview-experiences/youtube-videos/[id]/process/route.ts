@@ -49,7 +49,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       message: "Video processed and AI content saved successfully",
-      data: result,
+      aiSummary: result,
     });
   });
 }

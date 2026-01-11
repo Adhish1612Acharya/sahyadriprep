@@ -34,7 +34,10 @@ export async function GET(request: NextRequest) {
       filters
     );
 
-    return NextResponse.json({ success: true, data: toCamelCase(videos) });
+    return NextResponse.json({
+      success: true,
+      interviewSessions: toCamelCase(videos),
+    });
   });
 }
 
@@ -44,11 +47,11 @@ export async function POST(request: NextRequest) {
     const { videoUrl, companyId } = body;
 
     if (!videoUrl) {
-      throw new HttpError("videoUrl is required", 400);
+      throw new HttpError("videoUrl is required", 400, "NO_VIDEO_URL");
     }
 
     if (!companyId) {
-      throw new HttpError("companyId is required", 400);
+      throw new HttpError("companyId is required", 400, "NO_COMPANY_ID");
     }
 
     const supabase = await createClient();
@@ -75,7 +78,9 @@ export async function POST(request: NextRequest) {
         message: "Interview session created successfully",
         data: {
           interviewSession: toCamelCase(result.newInterviewSession),
-          ragChunksCreated: toCamelCase(result.interviewSessionRagContent.length),
+          ragChunksCreated: toCamelCase(
+            result.interviewSessionRagContent.length
+          ),
           message: `Processed ${result.interviewSessionRagContent.length} RAG chunks`,
         },
       },

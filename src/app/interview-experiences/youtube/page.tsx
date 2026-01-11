@@ -42,30 +42,25 @@ export default function YouTubeVideosPage() {
     useCompaniesQuery();
 
   // Fetch videos based on company filter
-  const { videosQuery, useVideosByCompanyQuery } = useInterviewYouTubeVideos();
-
-  // Use the appropriate query based on filter
-  const allVideosQuery = videosQuery;
-  const companyVideosQuery = useVideosByCompanyQuery(
-    filterCompanyId !== "all" ? filterCompanyId : null
-  );
+  const { videosQuery } = useInterviewYouTubeVideos();
 
   // Select the active query
-  const activeQuery =
-    filterCompanyId !== "all" ? companyVideosQuery : allVideosQuery;
+  const activeQuery = videosQuery;
 
   const { data: videos, isLoading: isLoadingVideos, error } = activeQuery;
 
   // Client-side search filtering
   const filteredVideos = videos?.filter((video) => {
-    if (!searchTerm) return true;
+    const matchesSearch =
+      !searchTerm ||
+      video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      video.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      video.companies?.name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const query = searchTerm.toLowerCase();
-    return (
-      video.title.toLowerCase().includes(query) ||
-      video.description?.toLowerCase().includes(query) ||
-      video.companies?.name?.toLowerCase().includes(query)
-    );
+    const matchesCompany =
+      filterCompanyId === "all" || video.companyId === filterCompanyId;
+
+    return matchesSearch && matchesCompany;
   });
 
   // Clear all filters

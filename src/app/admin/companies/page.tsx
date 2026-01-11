@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { useCompanies } from "@/hooks/useCompanies.hook";
 import { CompanyInput } from "@/lib/zod/schema/company.schema";
-import { companyService } from "@/services/company.service";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +49,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Image from "next/image";
+import { companyApi } from "@/lib/api/company";
 
 export default function ManageCompaniesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -146,7 +147,7 @@ export default function ManageCompaniesPage() {
   const getCompanySizeBadge = (
     size: "startup" | "small" | "medium" | "large" | "enterprise" | null
   ) => {
-    return companyService.getCompanySizeBadgeClass(size);
+    return companyApi.getCompanySizeBadgeClass(size);
   };
 
   if (error) {

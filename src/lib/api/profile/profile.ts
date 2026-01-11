@@ -13,7 +13,7 @@ import {
 } from "@/types/services/profile-service.types";
 import { httpGet, httpPatch, httpPost } from "@/lib/api/http";
 
-export const profileService = {
+export const profileApi = {
   getMyProfile: async (): Promise<ProfileResponse> => {
     const response = await httpGet<ProfileResponse>(API_ENDPOINTS.PROFILE.BASE);
     return response;

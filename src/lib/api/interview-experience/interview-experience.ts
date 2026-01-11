@@ -6,8 +6,13 @@ import {
 } from "@/types/services/interview-experience.types";
 import { InterviewExperienceFormValues } from "@/lib/zod/schema/interview-experience.schema";
 import { httpGet, httpPost, httpDelete } from "@/lib/api/http";
+import { ListInterviewsResult } from "@/lib/services/interview-experiences";
+import {
+  InterviewExpereinceWithMediaAndCompanyCollegeDetails,
+  InterviewExperienceWithCompanyCollegeDetails,
+} from "@/lib/repositories/interview-expereinces";
 
-export const interviewExperienceService = {
+export const interviewExperienceApi = {
   create: async (
     input: CreateInterviewExperienceInput
   ): Promise<InterviewExperienceResponse> => {
@@ -51,26 +56,29 @@ export const interviewExperienceService = {
     college_id?: string;
     batch?: string;
     placed_year?: number;
-  }): Promise<InterviewExperience[]> => {
+  }): Promise<InterviewExperienceWithCompanyCollegeDetails[]> => {
     const params = new URLSearchParams();
     if (filters?.company_id) params.append("company_id", filters.company_id);
     if (filters?.college_id) params.append("college_id", filters.college_id);
     if (filters?.batch) params.append("batch", filters.batch);
     if (filters?.placed_year)
       params.append("placed_year", filters.placed_year.toString());
+
     const response = await httpGet<{
       success: boolean;
-      count: number;
-      interviewExperiences: InterviewExperience[];
+      data: ListInterviewsResult;
     }>(`/interview-experiences?${params.toString()}`);
-    return response.interviewExperiences;
+    return response.data.interviewExperiences;
   },
 
-  getById: async (id: string): Promise<any> => {
-    const response = await httpGet<{ data: any }>(
-      INTERVIEW_EXPERIENCE_ENDPOINTS.BY_ID(id)
-    );
-    return response.data;
+  getById: async (
+    id: string
+  ): Promise<InterviewExpereinceWithMediaAndCompanyCollegeDetails> => {
+    const response = await httpGet<{
+      success: boolean;
+      interviewExperienceDetails: InterviewExpereinceWithMediaAndCompanyCollegeDetails;
+    }>(INTERVIEW_EXPERIENCE_ENDPOINTS.BY_ID(id));
+    return response.interviewExperienceDetails;
   },
 
   getByCollege: async (collegeId: string): Promise<InterviewExperience[]> => {
@@ -80,22 +88,27 @@ export const interviewExperienceService = {
     return response.data;
   },
 
-  getByCompany: async (companyId: string): Promise<InterviewExperience[]> => {
-    const response = await httpGet<{ data: InterviewExperience[] }>(
-      INTERVIEW_EXPERIENCE_ENDPOINTS.BY_COMPANY(companyId)
-    );
-    return response.data;
+  getByCompany: async (
+    companyId: string
+  ): Promise<InterviewExperienceWithCompanyCollegeDetails[]> => {
+    const response = await httpGet<{
+      success: boolean;
+      data: ListInterviewsResult;
+    }>(INTERVIEW_EXPERIENCE_ENDPOINTS.BY_COMPANY(companyId));
+    return response.data.interviewExperiences;
   },
 
-  getByBatch: async (batch: string): Promise<InterviewExperience[]> => {
-    const response = await httpGet<{ data: InterviewExperience[] }>(
-      INTERVIEW_EXPERIENCE_ENDPOINTS.BY_BATCH(batch)
-    );
-    return response.data;
+  getByBatch: async (
+    batch: string
+  ): Promise<InterviewExperienceWithCompanyCollegeDetails[]> => {
+    const response = await httpGet<{
+      success: boolean;
+      data: ListInterviewsResult;
+    }>(INTERVIEW_EXPERIENCE_ENDPOINTS.BY_BATCH(batch));
+    return response.data.interviewExperiences;
   },
 
   delete: async (id: string): Promise<void> => {
     const response = await httpDelete(INTERVIEW_EXPERIENCE_ENDPOINTS.BY_ID(id));
-  
   },
 };

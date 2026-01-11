@@ -1,11 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
-import { ragChatbotService } from "@/services/rag-chatbot.service";
-import {
-  ChatMessage,
-  ChatRequest,
-  ChatResponse,
-} from "@/types/rag-service.types";
+import { ChatMessage, ChatRequest } from "@/types/rag-service.types";
+import { ragChatbotApi } from "@/lib/api/rag-chatbot";
 // import { useToast } from "@/hooks/use-toast";
 
 /**
@@ -23,8 +19,7 @@ export function useRagChatbot() {
    * Send message mutation
    */
   const sendMessageMutation = useMutation({
-    mutationFn: (request: ChatRequest) =>
-      ragChatbotService.sendMessage(request),
+    mutationFn: (request: ChatRequest) => ragChatbotApi.sendMessage(request),
     onMutate: async (variables) => {
       // Optimistically add user message
       const userMessage: ChatMessage = {

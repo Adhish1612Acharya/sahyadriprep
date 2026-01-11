@@ -2,7 +2,7 @@ import { CHAT_ENDPOINTS } from "@/constants/api-endpoints.constants";
 import { ChatRequest, ChatResponse } from "@/types/rag-service.types";
 import { httpGet, httpPost } from "@/lib/api/http";
 
-export const ragChatbotService = {
+export const ragChatbotApi = {
   sendMessage: async (request: ChatRequest): Promise<ChatResponse> => {
     const response = await httpPost<ChatResponse, any>(
       CHAT_ENDPOINTS.SEND_MESSAGE,

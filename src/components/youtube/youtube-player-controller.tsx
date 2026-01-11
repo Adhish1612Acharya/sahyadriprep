@@ -336,8 +336,8 @@ export function YouTubePlayerController({
                       "Current Section"}
                   </span>
                   <span className="text-xs text-white/60 ml-auto">
-                    {formatTimestamp(segments[currentSegmentIndex].start_time)}{" "}
-                    - {formatTimestamp(segments[currentSegmentIndex].end_time)}
+                    {formatTimestamp(segments[currentSegmentIndex].startTime)} -{" "}
+                    {formatTimestamp(segments[currentSegmentIndex].endTime)}
                   </span>
                 </div>
                 <p className="text-sm font-medium line-clamp-2">
@@ -355,9 +355,9 @@ export function YouTubePlayerController({
             {segments.length > 0 && duration > 0 && (
               <div className="relative h-6">
                 {segments.map((segment, index) => {
-                  const startPercent = (segment.start_time / duration) * 100;
+                  const startPercent = (segment.startTime / duration) * 100;
                   const widthPercent =
-                    ((segment.end_time - segment.start_time) / duration) * 100;
+                    ((segment.endTime - segment.startTime) / duration) * 100;
                   const showLabel = widthPercent > 8;
 
                   return (
@@ -392,10 +392,9 @@ export function YouTubePlayerController({
               {segments.length > 0 && duration > 0 && (
                 <>
                   {segments.map((segment, index) => {
-                    const startPercent = (segment.start_time / duration) * 100;
+                    const startPercent = (segment.startTime / duration) * 100;
                     const widthPercent =
-                      ((segment.end_time - segment.start_time) / duration) *
-                      100;
+                      ((segment.endTime - segment.startTime) / duration) * 100;
 
                     return (
                       <div
@@ -431,7 +430,7 @@ export function YouTubePlayerController({
               {segments.length > 0 && duration > 0 && (
                 <>
                   {segments.slice(1).map((segment, index) => {
-                    const startPercent = (segment.start_time / duration) * 100;
+                    const startPercent = (segment.startTime / duration) * 100;
 
                     return (
                       <div
@@ -506,18 +505,6 @@ export function YouTubePlayerController({
             <div className="text-sm text-muted-foreground font-mono hidden sm:block">
               {formatTimestamp(localCurrentTime)} / {formatTimestamp(duration)}
             </div>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                window.open(`https://youtu.be/${videoId}`, "_blank")
-              }
-              className="h-8"
-            >
-              <Maximize className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Full Screen</span>
-            </Button>
           </div>
         </div>
 
@@ -534,7 +521,10 @@ export function YouTubePlayerController({
               {segments.map((segment, index) => (
                 <button
                   key={index}
-                  onClick={() => jumpToTime(segment.start_time)}
+                  onClick={() => {
+                    jumpToTime(segment.startTime);
+                    setCurrentSegmentIndex(index); // <-- Add this line
+                  }}
                   disabled={!isReady}
                   className={cn(
                     "flex items-center gap-2 p-3 rounded-lg text-left transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed",
@@ -555,7 +545,7 @@ export function YouTubePlayerController({
                     </p>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-muted-foreground font-mono">
-                        {formatTimestamp(segment.start_time)}
+                        {formatTimestamp(segment.startTime)}
                       </span>
                       {segment.category && (
                         <span className="text-[10px] text-muted-foreground uppercase">

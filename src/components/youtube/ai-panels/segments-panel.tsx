@@ -6,12 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface Segment {
-  segment_number: number;
+  segmentNumber: number;
   title: string;
   description: string;
-  start_time: number;
-  end_time: number;
-  key_concepts?: string[];
+  startTime: number;
+  endTime: number;
+  keyConcepts?: string[];
 }
 
 interface AISegmentsPanelProps {
@@ -32,6 +32,9 @@ export function AISegmentsPanel({ data, onJumpTo }: AISegmentsPanelProps) {
     );
   }
 
+  // Sort segments by startTime ascending
+  const sortedData = [...data].sort((a, b) => a.startTime - b.startTime);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -40,18 +43,18 @@ export function AISegmentsPanel({ data, onJumpTo }: AISegmentsPanelProps) {
 
   return (
     <div className="space-y-4">
-      {data.map((segment, index) => (
+      {sortedData.map((segment, index) => (
         <Card key={index} className="border-l-4 border-l-primary">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <Badge variant="outline">
-                    Segment {segment.segment_number}
+                    Segment {segment.segmentNumber}
                   </Badge>
                   <span className="text-sm text-muted-foreground">
-                    {formatTime(segment.start_time)} -{" "}
-                    {formatTime(segment.end_time)}
+                    {formatTime(segment.startTime)} -{" "}
+                    {formatTime(segment.endTime)}
                   </span>
                 </div>
                 <h4 className="font-semibold">{segment.title}</h4>
@@ -59,7 +62,7 @@ export function AISegmentsPanel({ data, onJumpTo }: AISegmentsPanelProps) {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onJumpTo(segment.start_time)}
+                onClick={() => onJumpTo(segment.startTime)}
               >
                 <PlayCircle className="h-4 w-4 mr-1" />
                 Jump to
@@ -70,9 +73,9 @@ export function AISegmentsPanel({ data, onJumpTo }: AISegmentsPanelProps) {
             <p className="text-sm text-muted-foreground">
               {segment.description}
             </p>
-            {segment.key_concepts && segment.key_concepts.length > 0 && (
+            {segment.keyConcepts && segment.keyConcepts.length > 0 && (
               <div className="flex flex-wrap gap-1">
-                {segment.key_concepts.map((concept, i) => (
+                {segment.keyConcepts.map((concept, i) => (
                   <Badge key={i} variant="secondary" className="text-xs">
                     {concept}
                   </Badge>

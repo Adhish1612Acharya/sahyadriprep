@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { profileService } from "@/services/profile.service";
 import {
   StudentProfileUpdate,
   CollegeAdminProfileUpdate,
   SuperAdminProfileUpdate,
 } from "@/lib/zod/schema/profile.schema";
 import { toast } from "sonner";
+import { profileApi } from "@/lib/api/profile";
 // import { useToast } from "@/hooks/use-toast";
 
 export const useProfile = () => {
@@ -19,7 +19,7 @@ export const useProfile = () => {
   const useProfileQuery = () =>
     useQuery({
       queryKey: ["profile", "me"],
-      queryFn: () => profileService.getMyProfile(),
+      queryFn: () => profileApi.getMyProfile(),
       staleTime: 5 * 60 * 1000, // 5 minutes
       retry: 1,
     });
@@ -30,7 +30,7 @@ export const useProfile = () => {
 
   const updateStudentProfile = useMutation({
     mutationFn: (data: StudentProfileUpdate) =>
-      profileService.updateStudentProfile(data),
+      profileApi.updateStudentProfile(data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
       toast("Profile Updated", {
@@ -47,7 +47,7 @@ export const useProfile = () => {
 
   const updateCollegeAdminProfile = useMutation({
     mutationFn: (data: CollegeAdminProfileUpdate) =>
-      profileService.updateCollegeAdminProfile(data),
+      profileApi.updateCollegeAdminProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
       toast("Profile Updated", {
@@ -63,7 +63,7 @@ export const useProfile = () => {
 
   const updateSuperAdminProfile = useMutation({
     mutationFn: (data: SuperAdminProfileUpdate) =>
-      profileService.updateSuperAdminProfile(data),
+      profileApi.updateSuperAdminProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
       toast("Profile Updated", {
@@ -78,7 +78,7 @@ export const useProfile = () => {
   });
 
   const uploadAvatar = useMutation({
-    mutationFn: (file: File) => profileService.uploadAvatar(file),
+    mutationFn: (file: File) => profileApi.uploadAvatar(file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
       toast("Avatar Uploaded", {
@@ -93,7 +93,7 @@ export const useProfile = () => {
   });
 
   const uploadResume = useMutation({
-    mutationFn: (file: File) => profileService.uploadResume(file),
+    mutationFn: (file: File) => profileApi.uploadResume(file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", "me"] });
       toast("Resume Uploaded", {

@@ -1,4 +1,3 @@
-import { CloudinaryAsset } from "@/integrations/cloudinary";
 import {
   InterviewExperienceWithCompanyCollegeDetails,
   InterviewFilters,

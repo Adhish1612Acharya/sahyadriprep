@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { success: true, ...toCamelCase(result) },
+      { success: true, data: toCamelCase(result) },
       { status: 200 }
     );
   });

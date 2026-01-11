@@ -68,6 +68,7 @@ export default function InterviewExperienceDetailPage() {
     error,
   } = useExperienceQuery(experienceId);
 
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -84,30 +85,28 @@ export default function InterviewExperienceDetailPage() {
 
   // ✅ Download PDF from Cloudinary
   const handleDownloadPDF = async () => {
-    if (!experience?.document_media?.url) return;
+    if (!experience?.documentMedia?.url) return;
 
     setIsDownloading(true);
     try {
-      // ✅ Use axios directly for external URLs (not axiosClient)
-      const response = await axios.get(experience.document_media.url, {
+      const response = await axios.get(experience.documentMedia.url, {
         responseType: "blob",
       });
 
-      const blob = response.data; // ✅ axios returns blob in .data
+      const blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${experience.companies?.name || "Interview"}_Experience_${
-        experience.student_name || experience.batch
-      }.pdf`;
+      a.download = `${
+        experience.companyDetails?.name || "Interview"
+      }_Experience_${experience.studentName || experience.batch}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
       console.error("Failed to download PDF:", error);
-      // Fallback: open in new tab
-      window.open(experience.document_media.url, "_blank");
+      window.open(experience.documentMedia.url, "_blank");
     } finally {
       setIsDownloading(false);
     }
@@ -224,7 +223,7 @@ export default function InterviewExperienceDetailPage() {
                 {/* ✅ Action Buttons */}
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Download PDF Button */}
-                  {experience.document_media?.url && (
+                  {experience.documentMedia?.url && (
                     <Button
                       variant="outline"
                       size="lg"
@@ -247,7 +246,7 @@ export default function InterviewExperienceDetailPage() {
                   )}
 
                   {/* ✅ View Video Button (only if video exists) */}
-                  {experience.video_media?.url && (
+                  {experience.videoMedia?.url && (
                     <Button
                       variant="default"
                       onClick={scrollToVideo}
@@ -262,14 +261,14 @@ export default function InterviewExperienceDetailPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {experience.document_media?.url && (
-                <DynamicPDFViewer url={experience.document_media.url} />
+              {experience.documentMedia?.url && (
+                <DynamicPDFViewer url={experience.documentMedia.url} />
               )}
             </CardContent>
           </Card>
 
           {/* ✅ Video Preview with ref */}
-          {experience.video_media?.url && (
+          {experience.videoMedia?.url && (
             <Card ref={videoSectionRef} className="scroll-mt-4">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -281,7 +280,7 @@ export default function InterviewExperienceDetailPage() {
                 <video
                   controls
                   className="w-full rounded-lg"
-                  src={experience.video_media.url}
+                  src={experience.videoMedia.url}
                 >
                   Your browser does not support the video tag.
                 </video>
@@ -298,13 +297,13 @@ export default function InterviewExperienceDetailPage() {
               <CardTitle>Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {experience.student_name && (
+              {experience.studentName && (
                 <div className="flex items-start gap-3">
                   <User className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium">Student Name</p>
                     <p className="text-sm text-muted-foreground">
-                      {experience.student_name}
+                      {experience.studentName}
                     </p>
                   </div>
                 </div>
@@ -317,22 +316,22 @@ export default function InterviewExperienceDetailPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">Company</p>
                   <div className="flex items-center gap-2 mt-1">
-                    {experience.companies?.logo_url && (
+                    {experience.companyDetails?.logoUrl && (
                       <Image
-                        src={experience.companies.logo_url}
-                        alt={experience.companies.name}
+                        src={experience.companyDetails.logoUrl}
+                        alt={experience.companyDetails.name}
                         width={24}
                         height={24}
                         className="flex-shrink-0"
                       />
                     )}
                     <p className="text-sm text-muted-foreground truncate">
-                      {experience.companies?.name}
+                      {experience.companyDetails?.name}
                     </p>
                   </div>
-                  {experience.companies?.industry && (
+                  {experience.companyDetails?.industry && (
                     <Badge variant="outline" className="mt-2">
-                      {experience.companies.industry}
+                      {experience.companyDetails.industry}
                     </Badge>
                   )}
                 </div>
@@ -345,7 +344,7 @@ export default function InterviewExperienceDetailPage() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium">College</p>
                   <p className="text-sm text-muted-foreground break-words">
-                    {experience.colleges?.name}
+                    {experience.collegeDetails?.name}
                   </p>
                 </div>
               </div>
@@ -362,7 +361,7 @@ export default function InterviewExperienceDetailPage() {
                 </div>
               </div>
 
-              {experience.placed_year && (
+              {experience.placedYear && (
                 <>
                   <Separator />
                   <div className="flex items-start gap-3">
@@ -370,7 +369,7 @@ export default function InterviewExperienceDetailPage() {
                     <div>
                       <p className="text-sm font-medium">Placed Year</p>
                       <p className="text-sm text-muted-foreground">
-                        {experience.placed_year}
+                        {experience.placedYear}
                       </p>
                     </div>
                   </div>
@@ -390,7 +389,7 @@ export default function InterviewExperienceDetailPage() {
                 <div>
                   <p className="text-sm font-medium">Uploaded</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(experience.created_at).toLocaleDateString(
+                    {new Date(experience.createdAt).toLocaleDateString(
                       "en-IN",
                       {
                         day: "numeric",
@@ -409,7 +408,7 @@ export default function InterviewExperienceDetailPage() {
                 <div>
                   <p className="text-sm font-medium">Last Updated</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(experience.updated_at).toLocaleDateString(
+                    {new Date(experience.updatedAt).toLocaleDateString(
                       "en-IN",
                       {
                         day: "numeric",
@@ -424,7 +423,7 @@ export default function InterviewExperienceDetailPage() {
           </Card>
 
           {/* ✅ Quick Actions Card (Desktop) */}
-          {experience.video_media?.url && (
+          {experience.videoMedia?.url && (
             <Card className="hidden lg:block">
               <CardHeader>
                 <CardTitle className="text-base">Quick Actions</CardTitle>
@@ -439,7 +438,7 @@ export default function InterviewExperienceDetailPage() {
                   <VideoIcon className="h-4 w-4 mr-2" />
                   Jump to Video
                 </Button>
-                {experience.document_media?.url && (
+                {experience.documentMedia?.url && (
                   <Button
                     variant="outline"
                     size="sm"

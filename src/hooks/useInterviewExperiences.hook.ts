@@ -1,8 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { interviewExperienceService } from "@/services/interview-experience.service";
-
 import { CreateInterviewExperienceInput } from "@/types/services/interview-experience.types";
 import { InterviewExperienceFormValues } from "@/lib/zod/schema/interview-experience.schema";
+import { interviewExperienceApi } from "@/lib/api/interview-experience";
 
 export const useInterviewExperiences = () => {
   const queryClient = useQueryClient();
@@ -17,8 +16,8 @@ export const useInterviewExperiences = () => {
   const useExperiencesQuery = () =>
     useQuery({
       queryKey: ["interview-experiences"],
-      queryFn: () => interviewExperienceService.getAll(),
-      staleTime: 5 * 60 * 1000, 
+      queryFn: () => interviewExperienceApi.getAll(),
+      staleTime: 5 * 60 * 1000,
     });
 
   /**
@@ -27,7 +26,7 @@ export const useInterviewExperiences = () => {
   const useExperienceQuery = (id: string | null) =>
     useQuery({
       queryKey: ["interview-experience", id],
-      queryFn: () => interviewExperienceService.getById(id!),
+      queryFn: () => interviewExperienceApi.getById(id!),
       enabled: !!id,
       staleTime: 5 * 60 * 1000,
     });
@@ -38,7 +37,7 @@ export const useInterviewExperiences = () => {
   const useExperiencesByCompanyQuery = (companyId: string | null) =>
     useQuery({
       queryKey: ["interview-experiences", "company", companyId],
-      queryFn: () => interviewExperienceService.getByCompany(companyId!),
+      queryFn: () => interviewExperienceApi.getByCompany(companyId!),
       enabled: !!companyId,
       staleTime: 5 * 60 * 1000,
     });
@@ -49,7 +48,7 @@ export const useInterviewExperiences = () => {
   const useExperiencesByCollegeQuery = (collegeId: string | null) =>
     useQuery({
       queryKey: ["interview-experiences", "college", collegeId],
-      queryFn: () => interviewExperienceService.getByCollege(collegeId!),
+      queryFn: () => interviewExperienceApi.getByCollege(collegeId!),
       enabled: !!collegeId,
       staleTime: 5 * 60 * 1000,
     });
@@ -60,7 +59,7 @@ export const useInterviewExperiences = () => {
   const useExperiencesByBatchQuery = (batch: string | null) =>
     useQuery({
       queryKey: ["interview-experiences", "batch", batch],
-      queryFn: () => interviewExperienceService.getByBatch(batch!),
+      queryFn: () => interviewExperienceApi.getByBatch(batch!),
       enabled: !!batch,
       staleTime: 5 * 60 * 1000,
     });
@@ -74,7 +73,7 @@ export const useInterviewExperiences = () => {
    */
   const createExperience = useMutation({
     mutationFn: (input: CreateInterviewExperienceInput) =>
-      interviewExperienceService.create(input),
+      interviewExperienceApi.create(input),
     onSuccess: () => {
       // Invalidate all experience queries to refetch
       queryClient.invalidateQueries({
@@ -90,7 +89,7 @@ export const useInterviewExperiences = () => {
    * Delete interview experience
    */
   const deleteExperience = useMutation({
-    mutationFn: (id: string) => interviewExperienceService.delete(id),
+    mutationFn: (id: string) => interviewExperienceApi.delete(id),
     onSuccess: (_, deletedId) => {
       // Remove from cache
       queryClient.invalidateQueries({
@@ -107,7 +106,7 @@ export const useInterviewExperiences = () => {
 
   const sendExperience = useMutation({
     mutationFn: (input: InterviewExperienceFormValues) =>
-      interviewExperienceService.sendExperience(input),
+      interviewExperienceApi.sendExperience(input),
     onSuccess: () => {
       // Optionally show a toast or refetch
       // toast.success("Interview experience sent!");

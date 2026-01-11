@@ -88,7 +88,6 @@ export default function VideoDetailPage() {
 
   const { data: video, isLoading } = useVideoQuery(videoId);
 
-
   const [activeTab, setActiveTab] = useState("overview");
   const [aiData, setAiData] = useState<ProcessVideoResponse | null>(null);
   const [showAIContent, setShowAIContent] = useState(false);
@@ -96,6 +95,10 @@ export default function VideoDetailPage() {
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
   const [jumpToTimestamp, setJumpToTimestamp] = useState<number | null>(null);
   const [playerReady, setPlayerReady] = useState(false);
+
+  console.log("Video Data:", video);
+
+  console.log("Ai Data:", aiData);
 
   // ✅ Ref for auto-scroll to AI section
   const aiSectionRef = useRef<HTMLDivElement>(null);
@@ -151,7 +154,7 @@ export default function VideoDetailPage() {
     setShowAIContent(true);
     setActiveTab("segments"); // ✅ Always show segments first
 
-    if (video.ai_process_done) {
+    if (video.aiProcessDone) {
       try {
         setEnableAIQuery(true);
         const result = await refetchAI();
@@ -160,7 +163,7 @@ export default function VideoDetailPage() {
           const hydrated = {
             overview: result.data.overview?.data ?? null,
             segments: result.data.segments?.data ?? [],
-            flashcards: result.data.flashcards?.data ?? [],
+            flashCards: result.data.flashCards?.data ?? [],
             tips: result.data.tips?.data ?? [],
           } as unknown as ProcessVideoResponse;
           setAiData(hydrated);
@@ -172,7 +175,7 @@ export default function VideoDetailPage() {
       processVideo.mutate(
         {
           id: video.id,
-          video_id: video.video_id,
+          videoId: video.videoId,
           title: video.title,
           description: video.description || undefined,
         },
@@ -194,7 +197,7 @@ export default function VideoDetailPage() {
     processVideo.mutate(
       {
         id: video.id,
-        video_id: video.video_id,
+        videoId: video.videoId,
         title: video.title,
         description: video.description || undefined,
       },
@@ -266,7 +269,7 @@ export default function VideoDetailPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* ✅ Channel Attribution */}
+      {/* Channel Attribution */}
       <Alert className="mb-6 border-red-500/50 bg-red-500/5">
         <Youtube className="h-4 w-4 text-red-500" />
         <AlertDescription className="ml-2">
@@ -287,9 +290,7 @@ export default function VideoDetailPage() {
               variant="outline"
               size="sm"
               className="flex-shrink-0 border-red-500 text-red-500 hover:bg-red-500/10 cursor-pointer mt-2 sm:mt-0"
-              onClick={() =>
-                window.open(`https://youtu.be/${video.video_id}`, "_blank")
-              }
+              onClick={() => window.open(video.videoUrl, "_blank")}
             >
               <Youtube className="h-4 w-4 mr-2" />
               Watch on YouTube
@@ -334,7 +335,7 @@ export default function VideoDetailPage() {
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
                 <span>
-                  {formatDistanceToNow(new Date(video.created_at), {
+                  {formatDistanceToNow(new Date(video.createdAt), {
                     addSuffix: true,
                   })}
                 </span>
@@ -385,6 +386,57 @@ export default function VideoDetailPage() {
         </div>
       </div>
 
+      {/* Video Info Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Video Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {video.colleges && (
+            <div>
+              <p className="text-sm font-medium mb-1">College</p>
+              <p className="text-sm text-muted-foreground">
+                {video.colleges.name}
+              </p>
+            </div>
+          )}
+
+          <Separator />
+
+          <div>
+            <p className="text-sm font-medium mb-1">Video ID</p>
+            <p className="text-xs text-muted-foreground font-mono break-all">
+              {video.videoId}
+            </p>
+          </div>
+
+          <Separator />
+
+          <div>
+            <p className="text-sm font-medium mb-1">Added</p>
+            <p className="text-sm text-muted-foreground">
+              {new Date(video.createdAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+          </div>
+
+          <Separator />
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => window.open(video.videoUrl, "_blank")}
+          >
+            <Youtube className="h-4 w-4 mr-2" />
+            Watch on YouTube
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Processing Status Alerts */}
       {processVideo.isPending && (
         <Alert className="mb-6 border-primary/50 bg-primary/5">
@@ -424,7 +476,7 @@ export default function VideoDetailPage() {
             </p>
             <p className="text-sm text-muted-foreground mt-1">
               Generated {aiData.segments.length} segments,{" "}
-              {aiData.flashcards.length} flashcards, and {aiData.tips.length}{" "}
+              {aiData.flashCards.length} flashcards, and {aiData.tips.length}{" "}
               tips.
             </p>
           </AlertDescription>
@@ -456,7 +508,7 @@ export default function VideoDetailPage() {
                     </p>
                     <ul className="space-y-1 text-xs">
                       <li>• {aiData.segments.length} segments</li>
-                      <li>• {aiData.flashcards.length} flashcards</li>
+                      <li>• {aiData.flashCards.length} flashcards</li>
                       <li>• {aiData.tips.length} tips</li>
                     </ul>
                   </div>
@@ -503,7 +555,7 @@ export default function VideoDetailPage() {
 
           {/* Video Player */}
           <YouTubePlayerController
-            videoId={video.video_id}
+            videoId={video.videoId}
             title={video.title}
             segments={
               aiData?.segments
@@ -597,41 +649,21 @@ export default function VideoDetailPage() {
                       <TabsContent value="overview" className="mt-4">
                         <AIOverviewPanel data={aiData?.overview} />
                       </TabsContent>
-
                       <TabsContent value="segments" className="mt-4">
                         <AISegmentsPanel
                           data={aiData?.segments}
                           onJumpTo={handleJumpTo}
                         />
                       </TabsContent>
-
                       <TabsContent value="flashcards" className="mt-4">
                         <AIFlashcardsPanel
-                          data={
-                            aiData?.flashcards
-                              ? aiData.flashcards.map((f) => ({
-                                  ...f,
-                                  timestamp: f.timestamp ?? 0,
-                                }))
-                              : undefined
-                          }
+                          data={aiData?.flashCards}
                           onJumpTo={handleJumpTo}
                         />
                       </TabsContent>
-
                       <TabsContent value="tips" className="mt-4">
                         <AITipsPanel
-                          data={
-                            aiData?.tips
-                              ? (aiData.tips.map((t) => ({
-                                  ...t,
-                                  importance:
-                                    t.importance === "helpful"
-                                      ? "moderate"
-                                      : t.importance,
-                                })) as any)
-                              : undefined
-                          }
+                          data={aiData?.tips}
                           onJumpTo={handleJumpTo}
                         />
                       </TabsContent>
@@ -665,7 +697,7 @@ export default function VideoDetailPage() {
               <div>
                 <p className="text-sm font-medium mb-1">Video ID</p>
                 <p className="text-xs text-muted-foreground font-mono break-all">
-                  {video.video_id}
+                  {video.videoId}
                 </p>
               </div>
 
@@ -674,7 +706,7 @@ export default function VideoDetailPage() {
               <div>
                 <p className="text-sm font-medium mb-1">Added</p>
                 <p className="text-sm text-muted-foreground">
-                  {new Date(video.created_at).toLocaleDateString("en-US", {
+                  {new Date(video.createdAt).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
@@ -688,7 +720,7 @@ export default function VideoDetailPage() {
                 variant="outline"
                 size="sm"
                 className="w-full"
-                onClick={() => window.open(video.video_url, "_blank")}
+                onClick={() => window.open(video.videoUrl, "_blank")}
               >
                 <Youtube className="h-4 w-4 mr-2" />
                 Watch on YouTube
@@ -710,7 +742,7 @@ export default function VideoDetailPage() {
                 summaries from this interview video.
               </p>
 
-              {showAIContent && aiData ? (
+              {isAdmin && aiData ? (
                 <div className="space-y-3">
                   <div className="text-sm text-muted-foreground bg-background/50 p-3 rounded-lg">
                     <p className="font-medium text-foreground mb-2">
@@ -718,7 +750,7 @@ export default function VideoDetailPage() {
                     </p>
                     <ul className="space-y-1 text-xs">
                       <li>• {aiData.segments.length} segments</li>
-                      <li>• {aiData.flashcards.length} flashcards</li>
+                      <li>• {aiData.flashCards.length} flashcards</li>
                       <li>• {aiData.tips.length} tips</li>
                     </ul>
                   </div>

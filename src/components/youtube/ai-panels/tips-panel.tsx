@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface Tip {
-  tip_text: string;
+  tipText: string;
   category: string;
   importance: "critical" | "important" | "moderate";
   timestamp: number;
@@ -75,7 +75,7 @@ export function AITipsPanel({ data, onJumpTo }: AITipsPanelProps) {
                     </Button>
                   )}
                 </div>
-                <p className="font-medium">{tip.tip_text}</p>
+                <p className="font-medium">{tip.tipText}</p>
                 {tip.context && (
                   <p className="text-sm text-muted-foreground">{tip.context}</p>
                 )}

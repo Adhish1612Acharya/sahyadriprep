@@ -30,7 +30,10 @@ export async function GET(
       collegeId
     );
 
-    return NextResponse.json({ success: true, data: toCamelCase(experience) });
+    return NextResponse.json({
+      success: true,
+      interviewExperienceDetails: toCamelCase(experience),
+    });
   });
 }
 
@@ -47,7 +50,7 @@ export async function DELETE(
 
     const { user, profile } = authResult;
     const collegeId = profile.college_id;
- 
+
     const result = await deleteInterviewExperienceOrchestrator(
       supabase,
       vectorSupabase,

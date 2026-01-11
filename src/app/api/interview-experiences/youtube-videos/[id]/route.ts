@@ -19,7 +19,7 @@ export async function GET(
     const { id } = await params;
 
     if (!id) {
-      throw new HttpError("Interview Session Id is required", 400);
+      throw new HttpError("Interview Session Id is required", 400, "NO_ID");
     }
 
     const supabase = await createClient();
@@ -39,11 +39,10 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: toCamelCase(interviewSession),
+      interviewSession: toCamelCase(interviewSession),
     });
   });
 }
-
 
 export async function DELETE(
   request: NextRequest,

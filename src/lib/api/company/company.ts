@@ -6,9 +6,12 @@ import {
 } from "@/types/services/company.types";
 import { CompanyInput, CompanyUpdate } from "@/lib/zod/schema/company.schema";
 import { httpGet, httpPost, httpPatch, httpDelete } from "@/lib/api/http";
+import { CompanyWithColleges } from "@/lib/repositories/companies";
 
-export const companyService = {
-  getAllCompanies: async (filters?: CompanyFilters): Promise<Company[]> => {
+export const companyApi = {
+  getAllCompanies: async (
+    filters?: CompanyFilters
+  ): Promise<CompanyWithColleges[]> => {
     const params = new URLSearchParams();
     if (filters?.search) params.append("search", filters.search);
     if (filters?.industry) params.append("industry", filters.industry);
@@ -19,8 +22,11 @@ export const companyService = {
         ? `${COMPANY_ENDPOINTS.BASE}?${params.toString()}`
         : COMPANY_ENDPOINTS.BASE;
 
-    const response = await httpGet<Company[]>(url);
-    return response;
+    const response = await httpGet<{
+      success: boolean;
+      companies: CompanyWithColleges[];
+    }>(url);
+    return response.companies;
   },
 
   getCompanyById: async (id: string): Promise<Company> => {
@@ -51,26 +57,26 @@ export const companyService = {
   // Utility methods
 
   searchCompanies: async (query: string): Promise<Company[]> => {
-    const response = await companyService.getAllCompanies({ search: query });
+    const response = await companyApi.getAllCompanies({ search: query });
     return response;
   },
 
   getCompaniesByIndustry: async (industry: string): Promise<Company[]> => {
-    const response = await companyService.getAllCompanies({ industry });
+    const response = await companyApi.getAllCompanies({ industry });
     return response;
   },
 
   getCompaniesBySize: async (
     size: "startup" | "small" | "medium" | "large" | "enterprise"
   ): Promise<Company[]> => {
-    const response = await companyService.getAllCompanies();
+    const response = await companyApi.getAllCompanies();
     return response.filter((company) => company.company_size === size);
   },
 
   getCompaniesGroupedByIndustry: async (): Promise<
     Record<string, Company[]>
   > => {
-    const response = await companyService.getAllCompanies();
+    const response = await companyApi.getAllCompanies();
     return response.reduce((acc, company) => {
       const industry = company.industry || "Other";
       if (!acc[industry]) acc[industry] = [];
@@ -80,7 +86,7 @@ export const companyService = {
   },
 
   getTopRatedCompanies: async (limit: number = 10): Promise<Company[]> => {
-    const response = await companyService.getAllCompanies();
+    const response = await companyApi.getAllCompanies();
     return response
       .filter((company) => company.glassdoor_rating !== null)
       .sort((a, b) => (b.glassdoor_rating || 0) - (a.glassdoor_rating || 0))
@@ -88,7 +94,7 @@ export const companyService = {
   },
 
   getCompanyStats: async (): Promise<CompanyStats> => {
-    const response = await companyService.getAllCompanies();
+    const response = await companyApi.getAllCompanies();
 
     const byIndustry = response.reduce((acc, company) => {
       const industry = company.industry || "Other";
@@ -121,7 +127,7 @@ export const companyService = {
   },
 
   getRecentCompanies: async (days: number = 30): Promise<Company[]> => {
-    const response = await companyService.getAllCompanies();
+    const response = await companyApi.getAllCompanies();
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 

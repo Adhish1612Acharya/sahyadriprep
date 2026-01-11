@@ -3,6 +3,7 @@ import {
   fetchInterviewExperienceByIdForCollege,
   fetchInterviewExperienceOwnCreatedByIdForCollege,
   fetchInterviewExperiences,
+  InterviewExpereinceWithMediaAndCompanyCollegeDetails,
   InterviewExperienceWithCompanyCollegeDetails,
   InterviewFilters,
 } from "@/lib/repositories/interview-expereinces";
@@ -48,14 +49,14 @@ export async function getInterviewExperienceDetailsForCollege(
   supabase: SupabaseClient,
   interviewExperienceId: string,
   collegeId: string
-): Promise<InterviewExperienceWithCompanyCollegeDetails> {
+): Promise<InterviewExpereinceWithMediaAndCompanyCollegeDetails> {
   const { data, error } = await fetchInterviewExperienceByIdForCollege(
     supabase,
     interviewExperienceId,
     collegeId
   );
 
-  return handleSupabaseResult<InterviewExperienceWithCompanyCollegeDetails>(
+  return handleSupabaseResult<InterviewExpereinceWithMediaAndCompanyCollegeDetails>(
     { data, error },
     "strict",
     "InterviewExperience",

@@ -11,7 +11,7 @@ interface Flashcard {
   answer: string;
   difficulty: "easy" | "medium" | "hard";
   category: string;
-  timestamp: number ;
+  timestamp: number;
 }
 
 interface AIFlashcardsPanelProps {

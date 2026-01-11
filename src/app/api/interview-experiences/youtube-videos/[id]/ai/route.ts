@@ -14,18 +14,18 @@ export async function GET(
     const { id } = await params;
 
     if (!id) {
-      throw new HttpError("Interview Session Id is required", 400);
+      throw new HttpError("Interview Session Id is required", 400, "NO_ID");
     }
 
     const supabase = await createClient();
     await requireAuth(supabase);
 
-    const { overviewData, segmentsData, flashcardsData, tipsData } =
+    const { overviewData, segmentsData, flashCardsData, tipsData } =
       await fetchInterviewSessionAISummaryContent(supabase, id);
 
     return NextResponse.json({
       success: true,
-      ai: {
+      aiSummary: {
         overview: {
           presentInDB: !!overviewData,
           data: toCamelCase(overviewData) ?? null,
@@ -35,11 +35,11 @@ export async function GET(
           count: Array.isArray(segmentsData) ? segmentsData.length : 0,
           data: toCamelCase(segmentsData) ?? [],
         },
-        flashcards: {
+        flashCards: {
           presentInDB:
-            Array.isArray(flashcardsData) && flashcardsData.length > 0,
-          count: Array.isArray(flashcardsData) ? flashcardsData.length : 0,
-          data: toCamelCase(flashcardsData) ?? [],
+            Array.isArray(flashCardsData) && flashCardsData.length > 0,
+          count: Array.isArray(flashCardsData) ? flashCardsData.length : 0,
+          data: toCamelCase(flashCardsData) ?? [],
         },
         tips: {
           presentInDB: Array.isArray(tipsData) && tipsData.length > 0,

@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { companyService } from "@/services/company.service";
 import { CompanyInput, CompanyUpdate } from "@/lib/zod/schema/company.schema";
 import { CompanyFilters } from "@/types/services/company.types";
 import { toast } from "sonner";
+import { companyApi } from "@/lib/api/company";
 
 export const useCompanies = (filters?: CompanyFilters) => {
   const queryClient = useQueryClient();
@@ -15,14 +15,14 @@ export const useCompanies = (filters?: CompanyFilters) => {
   const useCompaniesQuery = () =>
     useQuery({
       queryKey: ["companies", filters],
-      queryFn: () => companyService.getAllCompanies(filters),
+      queryFn: () => companyApi.getAllCompanies(filters),
       staleTime: 5 * 60 * 1000, // 5 minutes
     });
 
   const useCompanyQuery = (id: string | null) =>
     useQuery({
       queryKey: ["company", id],
-      queryFn: () => companyService.getCompanyById(id!),
+      queryFn: () => companyApi.getCompanyById(id!),
       enabled: !!id,
       staleTime: 5 * 60 * 1000,
     });
@@ -30,7 +30,7 @@ export const useCompanies = (filters?: CompanyFilters) => {
   const useCompaniesByIndustryQuery = (industry: string | null) =>
     useQuery({
       queryKey: ["companies", "industry", industry],
-      queryFn: () => companyService.getCompaniesByIndustry(industry!),
+      queryFn: () => companyApi.getCompaniesByIndustry(industry!),
       enabled: !!industry,
       staleTime: 5 * 60 * 1000,
     });
@@ -38,21 +38,21 @@ export const useCompanies = (filters?: CompanyFilters) => {
   const useCompanyStatsQuery = () =>
     useQuery({
       queryKey: ["companies", "stats"],
-      queryFn: () => companyService.getCompanyStats(),
+      queryFn: () => companyApi.getCompanyStats(),
       staleTime: 10 * 60 * 1000, // 10 minutes
     });
 
   const useTopRatedCompaniesQuery = (limit: number = 10) =>
     useQuery({
       queryKey: ["companies", "top-rated", limit],
-      queryFn: () => companyService.getTopRatedCompanies(limit),
+      queryFn: () => companyApi.getTopRatedCompanies(limit),
       staleTime: 5 * 60 * 1000,
     });
 
   const useRecentCompaniesQuery = (days: number = 30) =>
     useQuery({
       queryKey: ["companies", "recent", days],
-      queryFn: () => companyService.getRecentCompanies(days),
+      queryFn: () => companyApi.getRecentCompanies(days),
       staleTime: 5 * 60 * 1000,
     });
 
@@ -61,7 +61,7 @@ export const useCompanies = (filters?: CompanyFilters) => {
   // ============================================
 
   const createCompany = useMutation({
-    mutationFn: (data: CompanyInput) => companyService.createCompany(data),
+    mutationFn: (data: CompanyInput) => companyApi.createCompany(data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success(`Company "${data.name}" added successfully`);
@@ -76,7 +76,7 @@ export const useCompanies = (filters?: CompanyFilters) => {
 
   const updateCompany = useMutation({
     mutationFn: ({ id, data }: { id: string; data: CompanyUpdate }) =>
-      companyService.updateCompany(id, data),
+      companyApi.updateCompany(id, data),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       queryClient.invalidateQueries({ queryKey: ["company", variables.id] });
@@ -90,7 +90,7 @@ export const useCompanies = (filters?: CompanyFilters) => {
   });
 
   const deleteCompany = useMutation({
-    mutationFn: (id: string) => companyService.deleteCompany(id),
+    mutationFn: (id: string) => companyApi.deleteCompany(id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       queryClient.removeQueries({ queryKey: ["company", id] });

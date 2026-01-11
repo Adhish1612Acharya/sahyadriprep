@@ -44,43 +44,46 @@ export default function InterviewExperiencesPage() {
   const { data: companies = [], isLoading: isLoadingCompanies } =
     useCompaniesQuery();
 
-
   // Fetch experiences based on filters
   const {
     useExperiencesQuery,
-    useExperiencesByCompanyQuery,
-    useExperiencesByBatchQuery,
+    // useExperiencesByCompanyQuery,
+    // useExperiencesByBatchQuery,
   } = useInterviewExperiences();
 
   // Determine which query to use
   const allQuery = useExperiencesQuery();
-  const companyQuery = useExperiencesByCompanyQuery(
-    selectedCompanyId !== "all" ? selectedCompanyId : null
-  );
-  const batchQuery = useExperiencesByBatchQuery(batchFilter || null);
+  // const companyQuery = useExperiencesByCompanyQuery(
+  //   selectedCompanyId !== "all" ? selectedCompanyId : null
+  // );
+  // const batchQuery = useExperiencesByBatchQuery(batchFilter || null);
 
   // Select the active query based on active filters
-  const activeQuery =
-    selectedCompanyId !== "all"
-      ? companyQuery
-      : batchFilter
-      ? batchQuery
-      : allQuery;
-
+  const activeQuery = allQuery;
   const { data: experiences, isLoading, isError, error } = activeQuery;
-
-  console.log("Experiences:", experiences);
 
   // Filter by search query (client-side)
   const filteredExperiences = experiences?.filter((exp: any) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      exp.student_name?.toLowerCase().includes(query) ||
-      exp.companies?.name?.toLowerCase().includes(query) ||
-      exp.colleges?.name?.toLowerCase().includes(query) ||
-      exp.batch?.toLowerCase().includes(query)
-    );
+    const matchesSearch =
+      !searchQuery ||
+      exp.studentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exp.companyDetails?.name
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      exp.collegeDetails?.name
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      exp.batch?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesCompany =
+      selectedCompanyId === "all" || exp.companyId === selectedCompanyId;
+
+    const matchesBatch =
+      !batchFilter || exp.batch?.toLowerCase().includes(batchFilter.toLowerCase());
+
+      console.log({ matchesSearch, matchesCompany, matchesBatch });
+
+    return matchesSearch && matchesCompany && matchesBatch;
   });
 
   // Clear all filters
@@ -340,42 +343,42 @@ export default function InterviewExperiencesPage() {
                   {/* Title & Subtitle */}
                   <div>
                     <h3 className="text-xl font-bold mb-1 truncate">
-                      {exp.student_name || "Anonymous"}
+                      {exp.studentName || "Anonymous"}
                     </h3>
                     <p className="text-sm text-muted-foreground truncate">
-                      {exp.company_details?.name} • {exp.batch}
+                      {exp.companyDetails?.name} • {exp.batch}
                     </p>
                   </div>
 
                   {/* Meta Info */}
                   <div className="flex flex-wrap gap-3 text-xs mt-2">
-                    {exp.company_details?.name && (
+                    {exp.companyDetails?.name && (
                       <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded">
                         <Building2 className="h-3 w-3 text-muted-foreground" />
-                        {exp.company_details?.name}
+                        {exp.companyDetails?.name}
                       </span>
                     )}
-                    {exp.college_details?.name && (
+                    {exp.collegeDetails?.name && (
                       <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded">
                         <School className="h-3 w-3 text-muted-foreground" />
-                        {exp.college_details.name}
+                        {exp.collegeDetails.name}
                       </span>
                     )}
                     <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded">
                       <Calendar className="h-3 w-3 text-muted-foreground" />
                       Batch: {exp.batch}
                     </span>
-                    {exp.placed_year && (
+                    {exp.placedYear && (
                       <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded">
                         <Calendar className="h-3 w-3 text-muted-foreground" />
-                        Placed: {exp.placed_year}
+                        Placed: {exp.placedYear}
                       </span>
                     )}
                   </div>
 
                   {/* Badges */}
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {exp.document_media_id && (
+                    {exp.documentMediaId && (
                       <Badge
                         variant="outline"
                         className="flex items-center gap-1"
@@ -384,7 +387,7 @@ export default function InterviewExperiencesPage() {
                         Document
                       </Badge>
                     )}
-                    {exp.video_media_id && (
+                    {exp.videoMediaId && (
                       <Badge
                         variant="outline"
                         className="flex items-center gap-1"
@@ -397,11 +400,11 @@ export default function InterviewExperiencesPage() {
                 </div>
 
                 {/* Company Logo */}
-                {exp.company_details?.logo_url && (
+                {exp.companyDetails?.logoUrl && (
                   <div className="mt-4 flex justify-end">
                     <Image
-                      src={exp.company_details.logo_url}
-                      alt={exp.company_details.name}
+                      src={exp.companyDetails.logoUrl}
+                      alt={exp.companyDetails.name}
                       width={48}
                       height={48}
                       className="object-contain rounded-lg border"

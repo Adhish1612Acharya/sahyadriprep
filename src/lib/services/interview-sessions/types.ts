@@ -12,18 +12,17 @@ export interface InterviewSessionAISummarizationResult {
   segments: {
     count: number;
     data: Segment[];
-  }
-    flashCards: {
-      count: number;
-      data: Flashcard[];
-    };
-    tips: {
-      count: number;
-      data: Tip[];
-    };
-    metaData: {
-      processedAt: string;
-      processingTimeMs: number;
-    };
   };
-
+  flashCards: {
+    count: number;
+    data: Flashcard[];
+  };
+  tips: {
+    count: number;
+    data: Tip[];
+  };
+  metaData: {
+    processedAt: string;
+    processingTimeMs: number;
+  };
+}

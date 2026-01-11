@@ -4,10 +4,10 @@ import {
   SignupRequest,
 } from "@/types/services/auth.types";
 import { useRouter } from "next/navigation";
-import {authApi} from "@/services/auth.service";
 import { createClient } from "@/lib/supabase/client";
+import { authApi } from "@/lib/api/auth";
 
-export const uauthApi = () => {
+export const useAuthService = () => {
   const router = useRouter();
 
   // ============================================
@@ -16,7 +16,7 @@ export const uauthApi = () => {
 
   const verifyCollegeEmail = useMutation({
     mutationFn: (data: VerifyCollegeRequest) =>
-  authApi.verifyCollegeEmail(data),
+      authApi.verifyCollegeEmail(data),
     onSuccess: (data) => {
       console.log("✅ College email verified:");
     },
@@ -40,7 +40,7 @@ export const uauthApi = () => {
    */
   const signupWithEmail = useMutation({
     mutationFn: (data: SignupRequest & { redirectUrl?: string }) =>
-  authApi.signupWithEmail(data),
+      authApi.signupWithEmail(data),
     onSuccess: (data, variables) => {
       // Redirect to login with redirect param if present
       // if (variables.redirectUrl) {
