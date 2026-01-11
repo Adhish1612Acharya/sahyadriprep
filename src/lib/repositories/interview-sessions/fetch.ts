@@ -5,7 +5,7 @@ import {
   InterviewSessionWithCollegeAndCompanyDetails,
 } from "@/lib/repositories/interview-sessions";
 
-export async function interviewSessionsCountForCompanyInCollege(
+export async function fetchInterviewSessionsCountForCompanyInCollege(
   supabase: SupabaseClient,
   companyId: string,
   collegeId: string
@@ -47,4 +47,52 @@ export async function fetchInterviewSessionsForCollege(
 
   const { data, error } = await query;
   return { data: data || [], error };
+}
+
+export async function fetchInterviewSessionForCollegeFromYouTubeVideoId(
+  supabase: SupabaseClient,
+  videoId: string,
+  collegeId: string
+): Promise<{
+  data: InterviewSessionWithCollegeAndCompanyDetails | null;
+  error: any;
+}> {
+  const { data, error } = await supabase
+    .from(TABLES.interviewSessions)
+    .select(
+      `
+      *,
+      companies:company_id(id, name, logo_url),
+      colleges:college_id(id, name)
+    `
+    )
+    .eq("college_id", collegeId)
+    .eq("video_id", videoId)
+    .single();
+
+  return { data, error };
+}
+
+export async function fetchInterviewSessionDetailsForCollege(
+  supabase: SupabaseClient,
+  id: string,
+  collegeId: string
+): Promise<{
+  data: InterviewSessionWithCollegeAndCompanyDetails | null;
+  error: any;
+}> {
+  const { data, error } = await supabase
+    .from(TABLES.interviewSessions)
+    .select(
+      `
+      *,
+      companies:company_id(id, name, logo_url),
+      colleges:college_id(id, name)
+    `
+    )
+    .eq("college_id", collegeId)
+    .eq("id", id)
+    .single();
+
+  return { data, error };
 }

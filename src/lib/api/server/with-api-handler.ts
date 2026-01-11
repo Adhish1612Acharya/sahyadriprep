@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { normalizeError } from "../http";
+import { normalizeServerError } from "@/lib/api/http";
 
 export async function withApiHandler(handler: () => Promise<NextResponse>) {
   try {
     return await handler();
   } catch (error: any) {
-    const normalized = normalizeError(error);
+    const normalized = normalizeServerError(error);
 
     return NextResponse.json(
       {

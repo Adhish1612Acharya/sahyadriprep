@@ -2,7 +2,7 @@ import { handleSupabaseResult } from "@/helpers/supabase";
 import { HttpError } from "@/lib/api/http";
 import { deleteCompanyForCollege } from "@/lib/repositories/companies";
 import { interviewExperiencesCountForCompanyInCollege } from "@/lib/repositories/interview-expereinces";
-import { interviewSessionsCountForCompanyInCollege } from "@/lib/repositories/interview-sessions/fetch";
+import { fetchInterviewSessionsCountForCompanyInCollege } from "@/lib/repositories/interview-sessions/fetch";
 import { Company } from "@/models";
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -52,7 +52,7 @@ export async function deleteCompanyForCollegeRequest(
   const {
     data: interviewSessionsCountData,
     error: interviewSessionsCountError,
-  } = await interviewSessionsCountForCompanyInCollege(supabase, id, collegeId);
+  } = await fetchInterviewSessionsCountForCompanyInCollege(supabase, id, collegeId);
 
   const interviewSessionsCount = handleSupabaseResult<number | null>(
     {

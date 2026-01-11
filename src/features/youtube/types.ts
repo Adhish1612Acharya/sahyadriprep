@@ -54,3 +54,17 @@ export interface TranscriptData {
   duration: number;
   language: string;
 }
+
+export interface YouTubeMetadataResult {
+  success: boolean;
+  data: {
+    video_id: string;
+    title: string;
+    description: string;
+    thumbnail_url: string;
+    duration: number;
+    channel_id: string;
+    published_at: string;
+  } | null;
+  error?: string;
+}

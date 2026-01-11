@@ -18,7 +18,7 @@ export const useInterviewExperiences = () => {
     useQuery({
       queryKey: ["interview-experiences"],
       queryFn: () => interviewExperienceService.getAll(),
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000, 
     });
 
   /**

@@ -19,10 +19,10 @@ export const TABLES = {
 
   // YouTube Videos
   interviewSessions: "youtube_videos" as const,
-  youtubeVideoOverviews: "youtube_video_overviews" as const,
-  youtubeVideoSegments: "youtube_video_segments" as const,
-  youtubeVideoFlashcards: "youtube_video_flashcards" as const,
-  youtubeVideoTips: "youtube_video_tips" as const,
+  interviewSessionOverviews: "youtube_video_overviews" as const,
+  interviewSessionSegments: "youtube_video_segments" as const,
+  interviewSessionFlashcards: "youtube_video_flashcards" as const,
+  interviewSessionTips: "youtube_video_tips" as const,
 
   // Media
   media: "media" as const,
@@ -30,14 +30,6 @@ export const TABLES = {
   // Playlists
   playlists: "playlists" as const,
   playlistsResourcesMap: "playlists_resources_map" as const,
-
-  // Important Questions & Topics
-  importantQuestions: "important__questions" as const,
-  importantTopics: "important__topics" as const,
-  importantQuestionTextAnswers: "important__question__text__answers" as const,
-  importantQuestionVideoAnswers: "important__question__video__answers" as const,
-  importantTopicTextAnswers: "important__topic__text__answers" as const,
-  importantTopicVideoAnswers: "important__topic__video__answers" as const,
 } as const;
 
 export const vectorStoreTables = {

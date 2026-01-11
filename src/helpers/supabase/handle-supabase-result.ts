@@ -3,9 +3,9 @@ import { HttpError } from "@/lib/api/http";
 export function handleSupabaseResult<T>(
   result: { data: T | null; error: any | null },
   mode: "strict" | "lenient" = "strict",
-  resourceName: string = "Resource",
+  resourceName: string,
   extraData?: any
-): T  {
+): T {
   const { data, error } = result;
 
   // Not found (PGRST116)

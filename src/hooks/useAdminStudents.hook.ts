@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { studentApi } from "@/lib/api/student/student.api";
+import { studentApi } from "@/lib/api/student/student";
 
 export const useAdminStudents = (filters?: any) => {
   const adminStudentsQuery = useQuery({

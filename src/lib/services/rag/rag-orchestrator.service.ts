@@ -16,13 +16,13 @@ import {
 } from "@/features/rag/ingest";
 import { generateSummariesInBatches } from "@/features/rag/batch";
 import { embeddings } from "@/integrations/hf";
-import {
-  ContentChunkCreateInput,
-  insertInterviewExperienceContentChunks,
-} from "@/lib/repositories/vector-store";
+import { ContentChunkCreateInput } from "@/lib/repositories/vector-store";
 import { InterviewUploadData } from "../interview-experiences";
-import { handleSupabaseResult } from "@/helpers/supabase";
 import { ContentChunk } from "@/models";
+import { insertInterviewExperienceContentChunksService } from "../vector-store";
+import { chunkTranscriptByTokens, formatTimestamp } from "@/helpers/youtube";
+import { createChunkSummarySafe } from "@/features/rag";
+import { TranscriptSegment } from "@/features/youtube";
 
 export async function processRAGQuery(
   supabase: SupabaseClient,
@@ -192,15 +192,177 @@ export async function processInterviewExperiencePdfToChunks(
   );
 
   // 5. Index (repo)
-  const { data, error } = await insertInterviewExperienceContentChunks(
+  const ragContentChunk = await insertInterviewExperienceContentChunksService(
     vectorSupabase,
     chunksToInsert
   );
-  const ragContentChunk = handleSupabaseResult<ContentChunk[] | null>(
-    { data, error },
-    "lenient",
-    "Interview_experienec_rag_chunk",
-    { experienceId: experienceId }
+
+  return ragContentChunk || [];
+}
+
+export async function processInterviewSessionToChunks(
+  vectorSupabase: SupabaseClient,
+  InterviewSessionData: {
+    title: string;
+    description: string;
+    transcriptSegments: TranscriptSegment[];
+    videoId: string;
+    videoUrl: string;
+    companyId: string;
+    collegeId: string;
+    sessionId: string;
+    createdBy: string;
+  }
+): Promise<ContentChunk[]> {
+  // 1. Smart chunking by token count (200-300 words per chunk)
+  const transcriptChunks = chunkTranscriptByTokens(
+    InterviewSessionData.transcriptSegments,
+    200,
+    300
+  );
+
+  // 2. Summaries for title and description
+  const titleSummary =
+    InterviewSessionData.title.length > 200
+      ? await createChunkSummarySafe(InterviewSessionData.title)
+      : InterviewSessionData.title;
+
+  let descriptionSummary =
+    InterviewSessionData.description || "No description available";
+  if (
+    InterviewSessionData.description &&
+    InterviewSessionData.description.length > 500
+  ) {
+    descriptionSummary = await createChunkSummarySafe(
+      InterviewSessionData.description
+    );
+  }
+
+  // 3. Summaries for transcript chunks
+  const transcriptTexts = transcriptChunks.map((chunk) => chunk.text);
+  const transcriptSummaries = await generateSummariesInBatches(
+    transcriptTexts,
+    {
+      batchSize: 5,
+      delayBetweenBatches: 7000,
+      delayBetweenRequests: 500,
+      maxRetries: 2,
+    }
+  );
+
+  // 4. Embeddings for all content
+  const allSummaries = [
+    titleSummary,
+    descriptionSummary,
+    ...transcriptSummaries,
+  ];
+  const allEmbeddings = await embedDocumentsWithHandling(
+    embeddings,
+    allSummaries
+  );
+
+  // 5. Prepare chunks for insertion
+  const chunksToInsert: ContentChunkCreateInput[] = [];
+
+  // Title chunk
+  chunksToInsert.push({
+    content: InterviewSessionData.title,
+    summary: titleSummary,
+    content_type: "youtube_video_title",
+    embedding: allEmbeddings[0],
+    chunk_index: 0,
+    token_count: InterviewSessionData.title.split(" ").length,
+    metadata: {
+      youtube_video_id: InterviewSessionData.sessionId, //Both ids are same for now
+      video_id: InterviewSessionData.videoId,
+      video_url: InterviewSessionData.videoUrl,
+      video_title: InterviewSessionData.title,
+      company_id: InterviewSessionData.companyId,
+      college_id: InterviewSessionData.collegeId,
+      content_section: "title",
+      total_video_chunks: transcriptChunks.length + 2,
+      summary_length: titleSummary.length,
+      content_length: InterviewSessionData.title.length,
+    },
+  });
+
+  // Description chunk
+  chunksToInsert.push({
+    content: InterviewSessionData.description || "No description available",
+    summary: descriptionSummary,
+    content_type: "youtube_video_description",
+    embedding: allEmbeddings[1],
+    chunk_index: 1,
+    token_count: (InterviewSessionData.description || "").split(" ").length,
+    metadata: {
+      youtube_video_id: InterviewSessionData.sessionId, //Both ids are same for now
+      video_id: InterviewSessionData.videoId,
+      video_url: InterviewSessionData.videoUrl,
+      video_title: InterviewSessionData.title,
+      company_id: InterviewSessionData.companyId,
+      college_id: InterviewSessionData.collegeId,
+      content_section: "description",
+      total_video_chunks: transcriptChunks.length + 2,
+      summary_length: descriptionSummary.length,
+      content_length: (InterviewSessionData.description || "").length,
+    },
+  });
+
+  // Transcript chunks
+  transcriptChunks.forEach((chunk, index) => {
+    const timestampUrl = `${InterviewSessionData.videoUrl}&t=${Math.floor(
+      chunk.start_time
+    )}s`;
+
+    chunksToInsert.push({
+      content: chunk.text,
+      summary: transcriptSummaries[index],
+      content_type: "youtube_video_transcript",
+      embedding: allEmbeddings[index + 2],
+      chunk_index: index + 2,
+      token_count: chunk.word_count,
+      metadata: {
+        // Video identifiers
+        youtube_video_id: InterviewSessionData.sessionId,
+        video_id: InterviewSessionData.videoId,
+        video_url: InterviewSessionData.videoUrl,
+        video_title: InterviewSessionData.title,
+        company_id: InterviewSessionData.companyId,
+        college_id: InterviewSessionData.collegeId,
+
+        // Precise timestamp references
+        start_time: chunk.start_time,
+        end_time: chunk.end_time,
+        start_timestamp: formatTimestamp(chunk.start_time),
+        end_timestamp: formatTimestamp(chunk.end_time),
+        duration_seconds: chunk.end_time - chunk.start_time,
+
+        // Clickable YouTube link with timestamp
+        timestamp_url: timestampUrl,
+
+        // Segment references
+        segment_start: chunk.segment_start,
+        segment_end: chunk.segment_end,
+        segment_count: chunk.segment_count,
+
+        // Content section info
+        content_section: "transcript",
+        chunk_number: index + 1,
+        total_transcript_chunks: transcriptChunks.length,
+        total_video_chunks: transcriptChunks.length + 2,
+
+        // Content metrics
+        word_count: chunk.word_count,
+        summary_length: transcriptSummaries[index].length,
+        content_length: chunk.text.length,
+      },
+    });
+  });
+
+  // 6. Store all chunks in vector database using the service
+  const ragContentChunk = await insertInterviewExperienceContentChunksService(
+    vectorSupabase,
+    chunksToInsert
   );
 
   return ragContentChunk || [];

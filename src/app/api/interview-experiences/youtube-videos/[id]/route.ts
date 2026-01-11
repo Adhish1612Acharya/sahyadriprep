@@ -4,171 +4,76 @@ import {
   requireAdmin,
   requireAuth,
 } from "@/lib/services/auth/auth-guards.service";
-import { isUserSuperAdmin } from "@/lib/services/auth/auth-session.service";
+import { withApiHandler } from "@/lib/api/server";
+import { getInterviewSessionDetailsForCollege } from "@/lib/services/interview-sessions";
+import { fetchUserCollegeIdFromProfile } from "@/lib/services/profiles";
+import { toCamelCase } from "@/helpers/transformers";
+import { HttpError } from "@/lib/api/http";
+import { deleteOwnCreatedInterviewSessionForCollegeService } from "@/lib/services/interview-sessions";
 
-/**
- * GET /api/youtube-videos/:id
- * Get a single YouTube video by ID
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
+  return withApiHandler(async () => {
     const { id } = await params;
 
     if (!id) {
-      return NextResponse.json(
-        { success: false, error: "Video ID is required" },
-        { status: 400 }
-      );
+      throw new HttpError("Interview Session Id is required", 400);
     }
 
     const supabase = await createClient();
 
     const authResult = await requireAuth(supabase);
 
-    if (authResult.error) {
-      return authResult.error;
-    }
+    const collegeId = await fetchUserCollegeIdFromProfile(
+      supabase,
+      authResult.id
+    );
 
-    const { data, error } = await supabase
-      .from("youtube_videos")
-      .select(
-        `
-        *,
-        companies:company_id(id, name, logo_url),
-        colleges:college_id(id, name)
-      `
-      )
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    if (!data) {
-      return NextResponse.json(
-        { success: false, error: "Video not found" },
-        { status: 404 }
-      );
-    }
+    const interviewSession = await getInterviewSessionDetailsForCollege(
+      supabase,
+      id,
+      collegeId
+    );
 
     return NextResponse.json({
       success: true,
-      data,
+      data: toCamelCase(interviewSession),
     });
-  } catch (error: any) {
-    console.error("❌ Error fetching video:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error.message || "Failed to fetch video",
-      },
-      { status: 500 }
-    );
-  }
+  });
 }
 
-/**
- * DELETE /api/youtube-videos/:id
- * Delete a YouTube video (only owner or super admin can delete)
- */
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
+  return withApiHandler(async () => {
     const { id } = await params;
 
     if (!id) {
-      return NextResponse.json(
-        { success: false, error: "Video ID is required" },
-        { status: 400 }
-      );
+      throw new HttpError("Interview Session Id is required", 400);
     }
 
     const supabase = await createClient();
 
-    // ✅ Step 1: Check authentication and admin role
     const authResult = await requireAdmin(supabase);
 
-    if (authResult.error) {
-      return authResult.error;
-    }
+    const { user, profile } = authResult;
 
-    const { user, role } = authResult;
-    console.log(`✅ Authenticated as ${role}: ${user.email}`);
-
-    // ✅ Step 2: Fetch the video to check ownership
-    const { data: video, error: fetchError } = await supabase
-      .from("youtube_videos")
-      .select("id, created_by, title")
-      .eq("id", id)
-      .single();
-
-    if (fetchError) {
-      throw new Error(`Failed to fetch video: ${fetchError.message}`);
-    }
-
-    if (!video) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Video not found",
-        },
-        { status: 404 }
+    const deletedInterviewSession =
+      await deleteOwnCreatedInterviewSessionForCollegeService(
+        supabase,
+        id,
+        profile.college_id,
+        user.id
       );
-    }
-
-    // ✅ Step 3: Check ownership (only owner or super admin can delete)
-    const isOwner = video.created_by === user.id;
-    const isSuperAdminUser = await isUserSuperAdmin(supabase, user.id);
-
-    if (!isOwner && !isSuperAdminUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Forbidden",
-          message:
-            "You can only delete videos that you created. Super admins can delete any video.",
-        },
-        { status: 403 }
-      );
-    }
-
-    console.log(
-      `🗑️ User ${user.email} (${role}) is deleting video: ${video.title}`
-    );
-
-    // ✅ Step 4: Delete the video
-    const { error: deleteError } = await supabase
-      .from("youtube_videos")
-      .delete()
-      .eq("id", id);
-
-    if (deleteError) {
-      throw new Error(`Failed to delete video: ${deleteError.message}`);
-    }
-
-    console.log(`✅ Video deleted successfully: ${id}`);
 
     return NextResponse.json({
       success: true,
       message: "Video deleted successfully",
-      deleted_by: user.email,
-      deleted_by_role: role,
-      was_owner: isOwner,
+      data: toCamelCase(deletedInterviewSession),
     });
-  } catch (error: any) {
-    console.error("❌ Error deleting video:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error.message || "Failed to delete video",
-      },
-      { status: 500 }
-    );
-  }
+  });
 }

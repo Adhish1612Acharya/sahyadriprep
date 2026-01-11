@@ -1,6 +1,6 @@
 import { axiosClient } from "@/lib/axiosClient";
-import { HttpError } from "./http-error";
 import { RequestConfig } from "./types";
+import { normalizeHttpClientError } from "@/lib/api/http";
 
 export async function httpRequest<TResponse = any, TBody = any>(
   config: RequestConfig<TBody>
@@ -18,18 +18,7 @@ export async function httpRequest<TResponse = any, TBody = any>(
 
     return response.data;
   } catch (err: any) {
-    // Normalize axios error
-    const status = err?.response?.status ?? 0;
-    const data = err?.response?.data ?? null;
-    const message =
-      data?.error ??
-      data?.message ??
-      err?.message ??
-      "Something went wrong while communicating with the server";
-
-    console.error("❌ HTTP error:", { url, method, status, data, raw: err });
-
-    throw new HttpError(message, status, data);
+    throw normalizeHttpClientError(err);
   }
 }
 

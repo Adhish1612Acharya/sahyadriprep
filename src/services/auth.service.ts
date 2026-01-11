@@ -1,5 +1,5 @@
 import { AUTH_ENDPOINTS } from "@/constants/api-endpoints.constants";
-import { axiosClient } from "@/lib/axiosClient";
+import { httpPost } from "@/lib/api/http";
 import {
   SignupRequest,
   SignupResponse,
@@ -7,7 +7,7 @@ import {
   VerifyCollegeResponse,
 } from "@/types/services/auth.types";
 
-const authService = {
+export const authApi = {
   /**
    * Verify if user's email is allowed for the selected college
    * Used after OAuth sign-in
@@ -15,15 +15,12 @@ const authService = {
   verifyCollegeEmail: async (
     data: VerifyCollegeRequest
   ): Promise<VerifyCollegeResponse> => {
-    try {
-      const response = await axiosClient.post<VerifyCollegeResponse>(
-        AUTH_ENDPOINTS.VERIFY_COLLEGE,
-        data
-      );
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to verify college email");
-    }
+    const response = await httpPost<VerifyCollegeResponse, VerifyCollegeRequest>(
+      AUTH_ENDPOINTS.VERIFY_COLLEGE,
+      data
+    );
+
+    return response;
   },
 
   /**
@@ -31,17 +28,11 @@ const authService = {
    * Validates college email domain before creating account
    */
   signupWithEmail: async (data: SignupRequest): Promise<SignupResponse> => {
-    try {
-      const response = await axiosClient.post<SignupResponse>(
-        AUTH_ENDPOINTS.SIGNUP(data.redirectUrl),
-        data
-      );
+    const response = await httpPost<SignupResponse, SignupRequest>(
+      AUTH_ENDPOINTS.SIGNUP(data.redirectUrl),
+      data
+    );
 
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to sign up");
-    }
+    return response;
   },
 };
-
-export default authService;

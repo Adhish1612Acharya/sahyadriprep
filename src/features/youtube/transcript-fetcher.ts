@@ -1,70 +1,91 @@
 import { ENV } from "@/config/env";
 import { parseYouTubeDuration } from "@/helpers/youtube/youtube-video.helpers";
 import { axiosClient } from "@/lib/axiosClient";
-import { TranscriptData } from "./types";
+import { TranscriptData, YouTubeMetadataResult } from "./types";
 
-/**
- * Fetch video metadata from YouTube Data API v3
- */
-export const fetchYouTubeMetadata = async (videoId: string) => {
-  const API_KEY = ENV.YOUTUBE_API_KEY;
+export const fetchYouTubeMetadata = async (
+  videoId: string
+): Promise<YouTubeMetadataResult> => {
+  try {
+    const API_KEY = ENV.YOUTUBE_API_KEY;
 
-  if (!API_KEY) {
-    throw new Error("YouTube API key is not configured");
+    if (!API_KEY) {
+      return {
+        success: false,
+        data: null,
+        error: "YouTube API key is not configured",
+      };
+    }
+
+    const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet,contentDetails&key=${API_KEY}`;
+
+    console.log("🎬 Fetching YouTube metadata for:", videoId);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      const error = await response.json();
+      return {
+        success: false,
+        data: null,
+        error: `YouTube API error: ${
+          error.error?.message || "Failed to fetch video"
+        }`,
+      };
+    }
+
+    const data = await response.json();
+
+    if (!data.items || data.items.length === 0) {
+      return {
+        success: false,
+        data: null,
+        error: "Video not found or is private",
+      };
+    }
+
+    const video = data.items[0];
+    const snippet = video.snippet;
+    const contentDetails = video.contentDetails;
+
+    const durationInSeconds = parseYouTubeDuration(contentDetails.duration);
+
+    console.log("✅ Metadata fetched:", {
+      title: snippet.title,
+      duration: durationInSeconds,
+    });
+
+    return {
+      success: true,
+      data: {
+        video_id: videoId,
+        title: snippet.title,
+        description: snippet.description,
+        thumbnail_url:
+          snippet.thumbnails.maxres?.url ||
+          snippet.thumbnails.high?.url ||
+          snippet.thumbnails.default?.url,
+        duration: durationInSeconds,
+        channel_id: snippet.channelId,
+        published_at: snippet.publishedAt,
+      },
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      data: null,
+      error: error.message || "Failed to fetch YouTube metadata",
+    };
   }
-
-  const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=snippet,contentDetails&key=${API_KEY}`;
-
-  console.log("🎬 Fetching YouTube metadata for:", videoId);
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(
-      `YouTube API error: ${error.error?.message || "Failed to fetch video"}`
-    );
-  }
-
-  const data = await response.json();
-
-  if (!data.items || data.items.length === 0) {
-    throw new Error("Video not found or is private");
-  }
-
-  const video = data.items[0];
-  const snippet = video.snippet;
-  const contentDetails = video.contentDetails;
-
-  const durationInSeconds = parseYouTubeDuration(contentDetails.duration);
-
-  console.log("✅ Metadata fetched:", {
-    title: snippet.title,
-    duration: durationInSeconds,
-  });
-
-  return {
-    video_id: videoId,
-    title: snippet.title,
-    description: snippet.description,
-    thumbnail_url:
-      snippet.thumbnails.maxres?.url ||
-      snippet.thumbnails.high?.url ||
-      snippet.thumbnails.default?.url,
-    duration: durationInSeconds,
-    channel_id: snippet.channelId,
-    published_at: snippet.publishedAt,
-  };
 };
 
-/**
- * Fetch YouTube transcript from external API
- * @param videoId - YouTube video ID
- * @returns TranscriptData with text, segments, duration, and language
- */
 export const fetchYouTubeTranscript = async (
   videoId: string
-): Promise<TranscriptData | null> => {
+): Promise<{
+  success: boolean;
+  error?: string;
+  data: TranscriptData | null;
+}> => {
   try {
     console.log("🔍 Retrieving transcript for video ID:", videoId);
 
@@ -80,8 +101,11 @@ export const fetchYouTubeTranscript = async (
     console.log("📄 Transcript API response received", response);
     // ✅ Validate response structure
     if (!response.data || !response.data.success || !response.data.data) {
-      console.error("❌ Invalid response structure:", response.data);
-      throw new Error("Invalid response from transcript API");
+      return {
+        success: false,
+        error: "Invalid transcript data received",
+        data: null,
+      };
     }
 
     const { text, segments, duration, language } = response.data.data;
@@ -89,7 +113,11 @@ export const fetchYouTubeTranscript = async (
     // ✅ Validate transcript data
     if (!text || !segments || segments.length === 0) {
       console.error("❌ Empty transcript received");
-      return null;
+      return {
+        success: false,
+        error: "Transcript is empty",
+        data: null,
+      };
     }
 
     console.log("✅ Transcript fetched successfully:", {
@@ -99,7 +127,10 @@ export const fetchYouTubeTranscript = async (
       language: language || "en",
     });
 
-    return response.data.data as TranscriptData;
+    return {
+      success: true,
+      data: response.data.data,
+    };
   } catch (error: any) {
     console.error("❌ Error fetching transcript:", error);
 
@@ -114,26 +145,30 @@ export const fetchYouTubeTranscript = async (
 
       // Handle specific error cases
       if (error.response.status === 404) {
-        console.error("❌ Transcript not available for this video");
+        console.error("Transcript not available for this video");
       } else if (error.response.status === 403) {
-        console.error("❌ Transcripts are disabled for this video");
+        console.error("Transcripts are disabled for this video");
       } else if (error.response.status >= 500) {
-        console.error("❌ Transcript API server error");
+        console.error("Transcript API server error");
       }
     } else if (error.request) {
       // Request was made but no response received
-      console.error("❌ No response from transcript API:", {
+      console.error(" No response from transcript API:", {
         message: error.message,
         timeout: error.code === "ECONNABORTED",
       });
     } else {
       // Something else happened
-      console.error("❌ Unexpected error:", {
+      console.error("Unexpected error:", {
         message: error.message,
         stack: error.stack?.split("\n").slice(0, 3).join("\n"),
       });
     }
 
-    return null;
+    return {
+      success: false,
+      error: error.message || "Failed to fetch transcript",
+      data: null,
+    };
   }
 };

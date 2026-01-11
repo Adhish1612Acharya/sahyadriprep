@@ -1,4 +1,4 @@
-import { getAdminCollegeStudentsType } from "@/lib/api/student/student.api.types";
+import { getAdminCollegeStudentsType } from "@/lib/api/student/types";
 
 export function StudentCard({
   student,

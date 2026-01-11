@@ -1,7 +1,6 @@
-// src/lib/api/http/normalize-error.ts
 import { HttpError } from "./http-error";
 
-export function normalizeError(err: any): HttpError {
+export function normalizeServerError(err: any): HttpError {
   // Already HttpError
   if (err instanceof HttpError) return err;
 
@@ -62,5 +61,31 @@ export function normalizeError(err: any): HttpError {
     500,
     "INTERNAL",
     { originalCode: supaCode ?? appCode }
+  );
+}
+
+export function normalizeHttpClientError(err: any): HttpError {
+
+  if (err instanceof HttpError) return err;
+
+  // Axios error with backend error format
+  if (err?.response?.data && typeof err.response.data === "object") {
+    const { message, code, data, success } = err.response.data;
+    if (success === false && message && code) {
+      return new HttpError(
+        message,
+        err.response.status ?? 500,
+        code,
+        data ?? undefined 
+      );
+    }
+  }
+
+  // Fallback: unknown error
+  return new HttpError(
+    err?.message ?? "Unknown error",
+    err?.response?.status ?? 500,
+    "INTERNAL",
+    err?.response?.data ?? undefined
   );
 }

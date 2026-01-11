@@ -44,6 +44,7 @@ export default function InterviewExperiencesPage() {
   const { data: companies = [], isLoading: isLoadingCompanies } =
     useCompaniesQuery();
 
+
   // Fetch experiences based on filters
   const {
     useExperiencesQuery,
@@ -67,6 +68,8 @@ export default function InterviewExperiencesPage() {
       : allQuery;
 
   const { data: experiences, isLoading, isError, error } = activeQuery;
+
+  console.log("Experiences:", experiences);
 
   // Filter by search query (client-side)
   const filteredExperiences = experiences?.filter((exp: any) => {
