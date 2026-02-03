@@ -8,7 +8,6 @@ import {
   deleteInterviewExperienceOrchestrator,
   getInterviewExperienceDetailsForCollege,
 } from "@/lib/services/interview-experiences";
-import { toCamelCase } from "@/helpers/transformers";
 
 export async function GET(
   request: NextRequest,
@@ -32,7 +31,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      interviewExperienceDetails: toCamelCase(experience),
+      interviewExperienceDetails: experience,
     });
   });
 }
@@ -63,7 +62,7 @@ export async function DELETE(
       {
         success: true,
         message: "Interview experience deleted successfully",
-        data: toCamelCase(result),
+        data: result,
       },
       { status: 200 }
     );

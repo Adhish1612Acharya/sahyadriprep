@@ -12,59 +12,62 @@ import {
   ProfileUpdateResponse,
 } from "@/types/services/profile-service.types";
 import { httpGet, httpPatch, httpPost } from "@/lib/api/http";
+import { Camelize } from "@/types";
 
 export const profileApi = {
-  getMyProfile: async (): Promise<ProfileResponse> => {
-    const response = await httpGet<ProfileResponse>(API_ENDPOINTS.PROFILE.BASE);
+  getMyProfile: async (): Promise<Camelize<ProfileResponse>> => {
+    const response = await httpGet<Camelize<ProfileResponse>>(
+      API_ENDPOINTS.PROFILE.BASE,
+    );
     return response;
   },
 
   updateStudentProfile: async (
-    data: StudentProfileUpdate
-  ): Promise<ProfileUpdateResponse> => {
+    data: StudentProfileUpdate,
+  ): Promise<Camelize<ProfileUpdateResponse>> => {
     const response = await httpPatch<
-      ProfileUpdateResponse,
+      Camelize<ProfileUpdateResponse>,
       StudentProfileUpdate
     >(API_ENDPOINTS.PROFILE.BASE, data);
     return response;
   },
 
   updateCollegeAdminProfile: async (
-    data: CollegeAdminProfileUpdate
-  ): Promise<ProfileUpdateResponse> => {
+    data: CollegeAdminProfileUpdate,
+  ): Promise<Camelize<ProfileUpdateResponse>> => {
     const response = await httpPatch<
-      ProfileUpdateResponse,
+      Camelize<ProfileUpdateResponse>,
       CollegeAdminProfileUpdate
     >(API_ENDPOINTS.PROFILE.BASE, data);
     return response;
   },
 
   updateSuperAdminProfile: async (
-    data: SuperAdminProfileUpdate
-  ): Promise<ProfileUpdateResponse> => {
+    data: SuperAdminProfileUpdate,
+  ): Promise<Camelize<ProfileUpdateResponse>> => {
     const response = await httpPatch<
-      ProfileUpdateResponse,
+      Camelize<ProfileUpdateResponse>,
       SuperAdminProfileUpdate
     >(API_ENDPOINTS.PROFILE.BASE, data);
     return response;
   },
 
-  uploadAvatar: async (file: File): Promise<{ avatar_url: string }> => {
+  uploadAvatar: async (file: File): Promise<{ avatarUrl: string }> => {
     const formData = new FormData();
     formData.append("avatar", file);
-    const response = await httpPost<{ avatar_url: string }, FormData>(
+    const response = await httpPost<{ avatarUrl: string }, FormData>(
       PROFILE_ENDPOINTS.AVATAR,
-      formData
+      formData,
     );
     return response;
   },
 
-  uploadResume: async (file: File): Promise<{ resume_url: string }> => {
+  uploadResume: async (file: File): Promise<{ resumeUrl: string }> => {
     const formData = new FormData();
     formData.append("resume", file);
-    const response = await httpPost<{ resume_url: string }, FormData>(
+    const response = await httpPost<{ resumeUrl: string }, FormData>(
       PROFILE_ENDPOINTS.RESUME,
-      formData
+      formData,
     );
     return response;
   },

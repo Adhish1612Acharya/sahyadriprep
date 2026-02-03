@@ -88,7 +88,7 @@ export default function CompaniesPage() {
 
     // Size filter
     const matchesSize =
-      sizeFilter === "all" || company.company_size === sizeFilter;
+      sizeFilter === "all" || company.companySize === sizeFilter;
 
     return matchesSearch && matchesIndustry && matchesSize;
   });
@@ -356,9 +356,9 @@ export default function CompaniesPage() {
                 <div className="flex items-start gap-4">
                   {/* Company Logo */}
                   <div className="flex-shrink-0">
-                    {company.logo_url ? (
+                    {company.logoUrl ? (
                       <Image
-                        src={company.logo_url}
+                        src={company.logoUrl}
                         alt={company.name}
                         width={48}
                         height={48}
@@ -394,24 +394,24 @@ export default function CompaniesPage() {
                 )}
 
                 {/* Company Size */}
-                {company.company_size && (
+                {company.companySize && (
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <Badge
                       variant="secondary"
-                      className={getCompanySizeBadgeClass(company.company_size)}
+                      className={getCompanySizeBadgeClass(company.companySize)}
                     >
-                      {getCompanySizeLabel(company.company_size)}
+                      {getCompanySizeLabel(company.companySize)}
                     </Badge>
                   </div>
                 )}
 
                 {/* Glassdoor Rating */}
-                {company.glassdoor_rating && (
+                {company.glassdoorRating && (
                   <div className="flex items-center gap-2 text-sm">
                     <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                     <span className="font-medium">
-                      {company.glassdoor_rating}
+                      {company.glassdoorRating}
                     </span>
                     <span className="text-muted-foreground">/ 5.0</span>
                   </div>

@@ -45,11 +45,11 @@ const formSchema = z.object({
     .refine((files) => files.length > 0, "PDF document is required")
     .refine(
       (files) => files[0]?.type === "application/pdf",
-      "Only PDF files are allowed"
+      "Only PDF files are allowed",
     )
     .refine(
       (files) => files[0]?.size <= 10 * 1024 * 1024,
-      "PDF must be less than 10MB"
+      "PDF must be less than 10MB",
     ),
   video_preview: z
     .any()
@@ -57,14 +57,14 @@ const formSchema = z.object({
     .refine(
       (files) =>
         !files || files.length === 0 || files[0]?.size <= 100 * 1024 * 1024,
-      "Video must be less than 100MB"
+      "Video must be less than 100MB",
     )
     .refine(
       (files) =>
         !files ||
         files.length === 0 ||
         ["video/mp4", "video/webm", "video/quicktime"].includes(files[0]?.type),
-      "Only MP4, WebM, or MOV videos are allowed"
+      "Only MP4, WebM, or MOV videos are allowed",
     ),
   studentName: z
     .string()
@@ -76,14 +76,14 @@ const formSchema = z.object({
     .string()
     .regex(
       /^\d{4}-\d{4}$/,
-      "Batch must be in format YYYY-YYYY (e.g., 2023-2027)"
+      "Batch must be in format YYYY-YYYY (e.g., 2023-2027)",
     ),
   placedYear: z
     .string()
     .optional()
     .refine(
       (val) => !val || (parseInt(val) >= 2000 && parseInt(val) <= 2100),
-      "Year must be between 2000 and 2100"
+      "Year must be between 2000 and 2100",
     ),
 });
 
@@ -137,7 +137,7 @@ export default function UploadInterviewExperiencePage() {
 
             // Redirect after 2 seconds
             setTimeout(() => {
-              router.push(`/interview-experiences/${data.data.experience_id}`);
+              router.push(`/interview-experiences/${data.data.experienceId}`);
             }, 2000);
           },
           onError: (error) => {
@@ -147,7 +147,7 @@ export default function UploadInterviewExperiencePage() {
                 "An unexpected error occurred. Please try again.",
             });
           },
-        }
+        },
       );
     } catch (error) {
       console.error("❌ Upload failed:", error);
@@ -358,9 +358,9 @@ export default function UploadInterviewExperiencePage() {
                           companies.map((company) => (
                             <SelectItem key={company.id} value={company.id}>
                               <div className="flex items-center gap-2">
-                                {company.logo_url ? (
+                                {company.logoUrl ? (
                                   <Image
-                                    src={company.logo_url}
+                                    src={company.logoUrl}
                                     alt={company.name}
                                     className="h-5 w-5 rounded object-contain"
                                   />

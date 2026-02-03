@@ -1,9 +1,10 @@
 import { getAdminCollegeStudentsType } from "@/lib/api/student/types";
+import { Camelize } from "@/types";
 
 export function StudentCard({
   student,
 }: {
-  student: getAdminCollegeStudentsType;
+  student: Camelize<getAdminCollegeStudentsType>;
 }) {
   const { authProfile, studentProfile } = student;
   const profileCompleted = authProfile.profileCompleted;
@@ -53,13 +54,26 @@ export function StudentCard({
       </div>
 
       <div className="text-xs text-gray-400 mt-2">
-        Registered: {new Date(authProfile.createdAt).toLocaleDateString()}
+        Registered:{" "}
+        {typeof authProfile.createdAt === "string" ||
+        typeof authProfile.createdAt === "number" ||
+        authProfile.createdAt instanceof Date ? (
+          new Date(authProfile.createdAt).toLocaleDateString()
+        ) : (
+          <span className="italic text-gray-400">N/A</span>
+        )}
       </div>
 
       {profileCompleted && studentProfile?.createdAt && (
         <div className="text-xs text-green-700 mt-1">
           Profile completed on:{" "}
-          {new Date(studentProfile.createdAt).toLocaleDateString()}
+          {typeof studentProfile.createdAt === "string" ||
+          typeof studentProfile.createdAt === "number" ||
+          studentProfile.createdAt instanceof Date ? (
+            new Date(studentProfile.createdAt).toLocaleDateString()
+          ) : (
+            <span className="italic text-gray-400">N/A</span>
+          )}
         </div>
       )}
     </div>

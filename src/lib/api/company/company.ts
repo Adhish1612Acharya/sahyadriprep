@@ -7,11 +7,12 @@ import {
 import { CompanyInput, CompanyUpdate } from "@/lib/zod/schema/company.schema";
 import { httpGet, httpPost, httpPatch, httpDelete } from "@/lib/api/http";
 import { CompanyWithColleges } from "@/lib/repositories/companies";
+import { Camelize } from "@/types";
 
 export const companyApi = {
   getAllCompanies: async (
-    filters?: CompanyFilters
-  ): Promise<CompanyWithColleges[]> => {
+    filters?: CompanyFilters,
+  ): Promise<Camelize<CompanyWithColleges>[]> => {
     const params = new URLSearchParams();
     if (filters?.search) params.append("search", filters.search);
     if (filters?.industry) params.append("industry", filters.industry);
@@ -24,27 +25,32 @@ export const companyApi = {
 
     const response = await httpGet<{
       success: boolean;
-      companies: CompanyWithColleges[];
+      companies: Camelize<CompanyWithColleges>[];
     }>(url);
     return response.companies;
   },
 
-  getCompanyById: async (id: string): Promise<Company> => {
-    const response = await httpGet<Company>(COMPANY_ENDPOINTS.BY_ID(id));
+  getCompanyById: async (id: string): Promise<Camelize<Company>> => {
+    const response = await httpGet<Camelize<Company>>(
+      COMPANY_ENDPOINTS.BY_ID(id),
+    );
     return response;
   },
 
-  createCompany: async (input: CompanyInput): Promise<Company> => {
+  createCompany: async (input: CompanyInput): Promise<Camelize<Company>> => {
     const response = await httpPost<
-      { message: string; data: Company },
+      { message: string; data: Camelize<Company> },
       CompanyInput
     >(COMPANY_ENDPOINTS.BASE, input);
     return response.data;
   },
 
-  updateCompany: async (id: string, input: CompanyUpdate): Promise<Company> => {
+  updateCompany: async (
+    id: string,
+    input: CompanyUpdate,
+  ): Promise<Camelize<Company>> => {
     const response = await httpPatch<
-      { message: string; data: Company },
+      { message: string; data: Camelize<Company> },
       CompanyUpdate
     >(COMPANY_ENDPOINTS.BY_ID(id), input);
     return response.data;
@@ -56,64 +62,79 @@ export const companyApi = {
 
   // Utility methods
 
-  searchCompanies: async (query: string): Promise<Company[]> => {
+  searchCompanies: async (
+    query: string,
+  ): Promise<Camelize<CompanyWithColleges>[]> => {
     const response = await companyApi.getAllCompanies({ search: query });
     return response;
   },
 
-  getCompaniesByIndustry: async (industry: string): Promise<Company[]> => {
+  getCompaniesByIndustry: async (
+    industry: string,
+  ): Promise<Camelize<CompanyWithColleges>[]> => {
     const response = await companyApi.getAllCompanies({ industry });
     return response;
   },
 
   getCompaniesBySize: async (
-    size: "startup" | "small" | "medium" | "large" | "enterprise"
-  ): Promise<Company[]> => {
+    size: "startup" | "small" | "medium" | "large" | "enterprise",
+  ): Promise<Camelize<CompanyWithColleges>[]> => {
     const response = await companyApi.getAllCompanies();
-    return response.filter((company) => company.company_size === size);
+    return response.filter((company) => company.companySize === size);
   },
 
   getCompaniesGroupedByIndustry: async (): Promise<
-    Record<string, Company[]>
+    Record<string, Camelize<CompanyWithColleges>[]>
   > => {
     const response = await companyApi.getAllCompanies();
-    return response.reduce((acc, company) => {
-      const industry = company.industry || "Other";
-      if (!acc[industry]) acc[industry] = [];
-      acc[industry].push(company);
-      return acc;
-    }, {} as Record<string, Company[]>);
+    return response.reduce(
+      (acc, company) => {
+        const industry = company.industry || "Other";
+        if (!acc[industry]) acc[industry] = [];
+        acc[industry].push(company);
+        return acc;
+      },
+      {} as Record<string, Camelize<CompanyWithColleges>[]>,
+    );
   },
 
-  getTopRatedCompanies: async (limit: number = 10): Promise<Company[]> => {
+  getTopRatedCompanies: async (
+    limit: number = 10,
+  ): Promise<Camelize<CompanyWithColleges>[]> => {
     const response = await companyApi.getAllCompanies();
     return response
-      .filter((company) => company.glassdoor_rating !== null)
-      .sort((a, b) => (b.glassdoor_rating || 0) - (a.glassdoor_rating || 0))
+      .filter((company) => company.glassdoorRating !== null)
+      .sort((a, b) => (b.glassdoorRating || 0) - (a.glassdoorRating || 0))
       .slice(0, limit);
   },
 
   getCompanyStats: async (): Promise<CompanyStats> => {
     const response = await companyApi.getAllCompanies();
 
-    const byIndustry = response.reduce((acc, company) => {
-      const industry = company.industry || "Other";
-      acc[industry] = (acc[industry] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const byIndustry = response.reduce(
+      (acc, company) => {
+        const industry = company.industry || "Other";
+        acc[industry] = (acc[industry] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
-    const bySize = response.reduce((acc, company) => {
-      const size = company.company_size || "unknown";
-      acc[size] = (acc[size] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const bySize = response.reduce(
+      (acc, company) => {
+        const size = company.companySize || "unknown";
+        acc[size] = (acc[size] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     const totalRatings = response.reduce(
-      (sum, company) => sum + (company.glassdoor_rating || 0),
-      0
+      (sum, company) => sum + (company.glassdoorRating || 0),
+      0,
     );
     const companiesWithRating = response.filter(
-      (c) => c.glassdoor_rating !== null
+      (c) => c.glassdoorRating !== null,
     ).length;
     const averageRating =
       companiesWithRating > 0 ? totalRatings / companiesWithRating : 0;
@@ -126,13 +147,15 @@ export const companyApi = {
     };
   },
 
-  getRecentCompanies: async (days: number = 30): Promise<Company[]> => {
+  getRecentCompanies: async (
+    days: number = 30,
+  ): Promise<Camelize<CompanyWithColleges>[]> => {
     const response = await companyApi.getAllCompanies();
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
     return response.filter((company) => {
-      const createdAt = new Date(company.created_at);
+      const createdAt = new Date(company.createdAt);
       return createdAt >= cutoffDate;
     });
   },
@@ -142,7 +165,7 @@ export const companyApi = {
     return `https://logo.clearbit.com/${cleanDomain}`;
   },
 
-  getCompanySizeLabel: (size: Company["company_size"]): string => {
+  getCompanySizeLabel: (size: Camelize<Company>["companySize"]): string => {
     const sizeLabels: Record<string, string> = {
       startup: "Startup (1-50 employees)",
       small: "Small (51-200 employees)",
@@ -153,7 +176,7 @@ export const companyApi = {
     return sizeLabels[size || ""] || "Unknown";
   },
 
-  getCompanySizeBadgeClass: (size: Company["company_size"]): string => {
+  getCompanySizeBadgeClass: (size: Camelize<Company>["companySize"]): string => {
     const sizeColors: Record<string, string> = {
       startup: "bg-purple-100 text-purple-800",
       small: "bg-blue-100 text-blue-800",

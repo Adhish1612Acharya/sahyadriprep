@@ -145,7 +145,7 @@ export default function ManageCompaniesPage() {
   };
 
   const getCompanySizeBadge = (
-    size: "startup" | "small" | "medium" | "large" | "enterprise" | null
+    size: "startup" | "small" | "medium" | "large" | "enterprise" | null,
   ) => {
     return companyApi.getCompanySizeBadgeClass(size);
   };
@@ -383,9 +383,9 @@ export default function ManageCompaniesPage() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    {company.logo_url ? (
+                    {company.logoUrl ? (
                       <Image
-                        src={company.logo_url}
+                        src={company.logoUrl}
                         alt={company.name}
                         className="w-12 h-12 rounded-lg object-contain border"
                       />
@@ -413,25 +413,25 @@ export default function ManageCompaniesPage() {
                 )}
 
                 {/* Company Size */}
-                {company.company_size && (
+                {company.companySize && (
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <Badge
                       variant="secondary"
-                      className={getCompanySizeBadge(company.company_size)}
+                      className={getCompanySizeBadge(company.companySize)}
                     >
-                      {company.company_size.charAt(0).toUpperCase() +
-                        company.company_size.slice(1)}
+                      {company.companySize.charAt(0).toUpperCase() +
+                        company.companySize.slice(1)}
                     </Badge>
                   </div>
                 )}
 
                 {/* Rating */}
-                {company.glassdoor_rating && (
+                {company.glassdoorRating && (
                   <div className="flex items-center gap-2 text-sm">
                     <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                     <span className="font-medium">
-                      {company.glassdoor_rating}
+                      {company.glassdoorRating}
                     </span>
                     <span className="text-muted-foreground">/ 5.0</span>
                   </div>

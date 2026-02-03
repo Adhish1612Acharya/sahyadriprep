@@ -1,12 +1,6 @@
-export interface InterviewExperienceWithCompanyCollegeDetails {
-  id: string;
-  title?: string;
-  content?: string;
-  batch: string;
-  placed_year: number;
-  company_id: string;
-  college_id: string;
-  created_at: string;
+import { InterviewExperience } from "@/models";
+
+export interface InterviewExperienceWithCompanyCollegeDetails extends InterviewExperience {
   company_details: {
     id: string;
     name: string;
@@ -44,14 +38,14 @@ export interface InterviewFilters {
 }
 
 export interface InterviewExperienceCreateInput {
-  student_id?: string | null; 
+  student_id?: string | null;
   student_name?: string | null;
-  college_id: string; 
-  company_id: string; 
-  batch: string; 
+  college_id: string;
+  company_id: string;
+  batch: string;
   placed_year?: number | null;
-  document_media_id: string; 
-  video_media_id?: string | null; 
+  document_media_id: string;
+  video_media_id?: string | null;
   source: string;
-  created_by: string; 
+  created_by: string;
 }

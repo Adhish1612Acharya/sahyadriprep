@@ -1,4 +1,3 @@
-import { toCamelCase } from "@/helpers/transformers";
 import { withApiHandler } from "@/lib/api/server";
 import { requireAdmin, requireAuth } from "@/lib/services/auth";
 import {
@@ -37,7 +36,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: toCamelCase(company),
+      data: company,
     });
   });
 }
@@ -70,7 +69,7 @@ export async function PATCH(
       {
         success: true,
         message: "Company updated successfully",
-        data: toCamelCase(result.data),
+        data: result.data,
         updatedBy: result.updated_by,
         updatedByRole: result.updated_by_role,
       },
@@ -125,7 +124,7 @@ export async function DELETE(
       {
         success: true,
         message: "Company deleted successfully",
-        data: toCamelCase(result.data),
+        data: result.data,
       },
       { status: 200 }
     );

@@ -4,7 +4,6 @@ import { requireAuth } from "@/lib/services/auth/auth-guards.service";
 import { withApiHandler } from "@/lib/api/server";
 import { fetchInterviewSessionAISummaryContent } from "@/lib/services/interview-sessions";
 import { HttpError } from "@/lib/api/http";
-import { toCamelCase } from "@/helpers/transformers";
 
 export async function GET(
   request: NextRequest,
@@ -28,23 +27,23 @@ export async function GET(
       aiSummary: {
         overview: {
           presentInDB: !!overviewData,
-          data: toCamelCase(overviewData) ?? null,
+          data: overviewData ?? null,
         },
         segments: {
           presentInDB: Array.isArray(segmentsData) && segmentsData.length > 0,
           count: Array.isArray(segmentsData) ? segmentsData.length : 0,
-          data: toCamelCase(segmentsData) ?? [],
+          data: segmentsData ?? [],
         },
         flashCards: {
           presentInDB:
             Array.isArray(flashCardsData) && flashCardsData.length > 0,
           count: Array.isArray(flashCardsData) ? flashCardsData.length : 0,
-          data: toCamelCase(flashCardsData) ?? [],
+          data: flashCardsData ?? [],
         },
         tips: {
           presentInDB: Array.isArray(tipsData) && tipsData.length > 0,
           count: Array.isArray(tipsData) ? tipsData.length : 0,
-          data: toCamelCase(tipsData) ?? [],
+          data: tipsData ?? [],
         },
       },
     });

@@ -1,13 +1,9 @@
 "use client";
 
-import { notFound } from "next/navigation";
 import { useParams, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { PDFViewer } from "@/components/pdf-viewer";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -27,7 +23,6 @@ import {
   AlertCircle,
   User,
   Download,
-  ExternalLink,
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/auth-context";
@@ -35,9 +30,8 @@ import dynamic from "next/dynamic";
 import { useInterviewExperiences } from "@/hooks/useInterviewExperiences.hook";
 import Image from "next/image";
 import axios from "axios";
-import { axiosClient } from "@/lib/axiosClient";
 
-// ✅ Import PDFViewer dynamically with no SSR
+
 const DynamicPDFViewer = dynamic(
   () => import("@/components/pdf-viewer").then((mod) => mod.PDFViewer),
   {

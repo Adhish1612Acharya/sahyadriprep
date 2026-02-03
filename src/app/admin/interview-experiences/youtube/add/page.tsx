@@ -39,6 +39,7 @@ import {
   Info,
   Building2,
 } from "lucide-react";
+import Image from "next/image";
 import { useInterviewYouTubeVideos } from "@/hooks/useYouTubeVideos.hook";
 import { useCompanies } from "@/hooks/useCompanies.hook";
 import { toast } from "sonner";
@@ -218,10 +219,12 @@ export default function UploadYouTubeVideoPage() {
                           companies.map((company) => (
                             <SelectItem key={company.id} value={company.id}>
                               <div className="flex items-center gap-2">
-                                {company.logo_url ? (
-                                  <img
-                                    src={company.logo_url}
+                                {company.logoUrl ? (
+                                  <Image
+                                    src={company.logoUrl}
                                     alt={company.name}
+                                    width={20}
+                                    height={20}
                                     className="h-5 w-5 rounded object-contain"
                                   />
                                 ) : (

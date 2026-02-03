@@ -10,7 +10,6 @@ import {
   createInterviewExperienceOrchestrator,
   listInterviewExperiencesForUser,
 } from "@/lib/services/interview-experiences";
-import { toCamelCase } from "@/helpers/transformers";
 
 export async function GET(request: NextRequest) {
   return withApiHandler(async () => {
@@ -34,7 +33,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { success: true, data: toCamelCase(result) },
+      { success: true, data: result },
       { status: 200 }
     );
   });

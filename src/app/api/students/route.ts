@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { toCamelCase } from "@/helpers/transformers";
 import { requireAdmin } from "@/lib/services/auth/auth-guards.service";
 import { getStudentsForCurrentCollegeAdmin } from "@/lib/services/students";
 import { createClient } from "@/lib/supabase/server";
@@ -16,7 +15,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: toCamelCase(students),
+        data:  students,
       },
       { status: 200 }
     );

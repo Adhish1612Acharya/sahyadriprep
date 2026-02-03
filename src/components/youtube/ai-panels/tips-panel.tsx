@@ -4,17 +4,19 @@ import { Lightbulb, PlayCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { VideoTip } from "@/types/services/interview-youtube-video.types";
+import { Camelize } from "@/types";
 
-interface Tip {
-  tipText: string;
-  category: string;
-  importance: "critical" | "important" | "moderate";
-  timestamp: number;
-  context?: string;
-}
+// interface Tip {
+//   tipText: string;
+//   category: string;
+//   importance: "critical" | "important" | "moderate";
+//   timestamp: number;
+//   context?: string;
+// }
 
 interface AITipsPanelProps {
-  data?: Tip[];
+  data?: Camelize<VideoTip>[];
   onJumpTo: (seconds: number) => void;
 }
 
@@ -51,8 +53,8 @@ export function AITipsPanel({ data, onJumpTo }: AITipsPanelProps) {
                   tip.importance === "critical"
                     ? "text-red-500"
                     : tip.importance === "important"
-                    ? "text-yellow-500"
-                    : "text-blue-500"
+                      ? "text-yellow-500"
+                      : "text-blue-500"
                 }`}
               />
               <div className="flex-1 space-y-2">
@@ -63,17 +65,20 @@ export function AITipsPanel({ data, onJumpTo }: AITipsPanelProps) {
                       {tip.importance}
                     </Badge>
                   </div>
-                  {tip.timestamp !== null && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onJumpTo(tip.timestamp)}
-                    >
-                      <PlayCircle className="h-3 w-3 mr-1" />
-                      {Math.floor(tip.timestamp / 60)}:
-                      {(tip.timestamp % 60).toString().padStart(2, "0")}
-                    </Button>
-                  )}
+                  {typeof tip.timestamp === "number" &&
+                    tip.timestamp !== null && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onJumpTo(tip.timestamp as number)}
+                      >
+                        <PlayCircle className="h-3 w-3 mr-1" />
+                        {Math.floor((tip.timestamp as number) / 60)}:
+                        {((tip.timestamp as number) % 60)
+                          .toString()
+                          .padStart(2, "0")}
+                      </Button>
+                    )}
                 </div>
                 <p className="font-medium">{tip.tipText}</p>
                 {tip.context && (

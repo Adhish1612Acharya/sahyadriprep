@@ -4,7 +4,7 @@ export function handleSupabaseResult<T>(
   result: { data: T | null; error: any | null },
   mode: "strict" | "lenient" = "strict",
   resourceName: string,
-  extraData?: any
+  extraData?: any,
 ): T {
   const { data, error } = result;
 
@@ -15,7 +15,7 @@ export function handleSupabaseResult<T>(
         `${resourceName} not found`,
         404,
         ` ${resourceName.toUpperCase()}_NOT_FOUND`,
-        extraData
+        extraData,
       );
     }
     return null as T; // lenient
@@ -27,18 +27,18 @@ export function handleSupabaseResult<T>(
       `Failed to fetch ${resourceName.toLowerCase()}: ${error.message}`,
       500,
       "DB_ERROR",
-      { dbCode: error.code }
+      { dbCode: error.code },
     );
   }
 
   // No data
-  if (!data) {
+  if (data === null || data === undefined) {
     if (mode === "strict") {
       throw new HttpError(
         `${resourceName} not found`,
         404,
         ` ${resourceName.toUpperCase()}_NOT_FOUND`,
-        extraData
+        extraData,
       );
     }
     return null as T;

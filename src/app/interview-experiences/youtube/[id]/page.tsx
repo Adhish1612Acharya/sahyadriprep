@@ -50,6 +50,7 @@ import {
 import { YouTubePlayerController } from "@/components/youtube/youtube-player-controller";
 import { useAuth } from "@/contexts/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Camelize } from "@/types";
 
 // ✅ Helper function to linkify text
 function linkifyText(text: string) {
@@ -89,7 +90,9 @@ export default function VideoDetailPage() {
   const { data: video, isLoading } = useVideoQuery(videoId);
 
   const [activeTab, setActiveTab] = useState("overview");
-  const [aiData, setAiData] = useState<ProcessVideoResponse | null>(null);
+  const [aiData, setAiData] = useState<Camelize<ProcessVideoResponse> | null>(
+    null,
+  );
   const [showAIContent, setShowAIContent] = useState(false);
   const [enableAIQuery, setEnableAIQuery] = useState(false);
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
@@ -175,7 +178,7 @@ export default function VideoDetailPage() {
       processVideo.mutate(
         {
           id: video.id,
-          videoId: video.videoId,
+          video_id: video.videoId,
           title: video.title,
           description: video.description || undefined,
         },
@@ -184,7 +187,7 @@ export default function VideoDetailPage() {
             setAiData(data);
             setShowAIContent(true);
           },
-        }
+        },
       );
     }
   };
@@ -197,7 +200,7 @@ export default function VideoDetailPage() {
     processVideo.mutate(
       {
         id: video.id,
-        videoId: video.videoId,
+        video_id: video.videoId,
         title: video.title,
         description: video.description || undefined,
       },
@@ -206,7 +209,7 @@ export default function VideoDetailPage() {
           setAiData(data);
           setShowAIContent(true);
         },
-      }
+      },
     );
   };
 
@@ -750,7 +753,7 @@ export default function VideoDetailPage() {
                     </p>
                     <ul className="space-y-1 text-xs">
                       <li>• {aiData.segments.length} segments</li>
-                      <li>• {aiData.flashCards.length} flashcards</li>
+                      <li>• {aiData.flashcards.length} flashcards</li>
                       <li>• {aiData.tips.length} tips</li>
                     </ul>
                   </div>
@@ -782,7 +785,7 @@ export default function VideoDetailPage() {
                   {processVideo.isPending || isAIContentLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {video.ai_process_done ? "Loading..." : "Processing..."}
+                      {video.aiProcessDone ? "Loading..." : "Processing..."}
                     </>
                   ) : (
                     <>

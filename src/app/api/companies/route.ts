@@ -12,7 +12,6 @@ import {
 } from "@/lib/services/companies";
 import { withApiHandler } from "@/lib/api/server";
 import { validateRequestBody } from "@/lib/zod";
-import { toCamelCase } from "@/helpers/transformers";
 
 export async function GET(request: NextRequest) {
   return withApiHandler(async () => {
@@ -32,12 +31,12 @@ export async function GET(request: NextRequest) {
       supabase,
       userAuthProfile.college_id,
       userAuthProfile.role === "super_admin",
-      filters
+      filters,
     );
 
     return NextResponse.json({
       success: true,
-      companies: toCamelCase(companies),
+      companies: companies,
     });
   });
 }
@@ -54,16 +53,16 @@ export async function POST(request: NextRequest) {
       supabase,
       body,
       authResult.user.id,
-      authResult.profile.college_id
+      authResult.profile.college_id,
     );
 
     return NextResponse.json(
       {
         success: true,
         message: "Company created successfully",
-        data: toCamelCase(company),
+        data: company,
       },
-      { status: 201 }
+      { status: 201 },
     );
   });
 }

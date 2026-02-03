@@ -10,7 +10,6 @@ import { getInterviewSessionsForCollege } from "@/lib/services/interview-session
 import { fetchUserCollegeIdFromProfile } from "@/lib/services/profiles";
 import { createInterviewSessionForCollegeOrchestrator } from "@/lib/services/interview-sessions";
 import { HttpError } from "@/lib/api/http";
-import { toCamelCase } from "@/helpers/transformers";
 
 export async function GET(request: NextRequest) {
   return withApiHandler(async () => {
@@ -36,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      interviewSessions: toCamelCase(videos),
+      interviewSessions: videos,
     });
   });
 }
@@ -77,10 +76,8 @@ export async function POST(request: NextRequest) {
         success: true,
         message: "Interview session created successfully",
         data: {
-          interviewSession: toCamelCase(result.newInterviewSession),
-          ragChunksCreated: toCamelCase(
-            result.interviewSessionRagContent.length
-          ),
+          interviewSession: result.newInterviewSession,
+          ragChunksCreated: result.interviewSessionRagContent.length,
           message: `Processed ${result.interviewSessionRagContent.length} RAG chunks`,
         },
       },

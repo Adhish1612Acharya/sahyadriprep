@@ -4,13 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserRole } from "@/lib/services/auth/auth-session.service";
 import { syncProfileToMetadata } from "@/lib/services/auth/auth-metadata.service";
 import { validateRequestBody } from "@/lib/zod/validateRequest";
-import {
-  fetchCompleteUserProfile,
-  updateUserProfile,
-} from "@/lib/services/profiles";
+import { fetchCompleteUserProfile } from "@/lib/services/profiles";
 import { withApiHandler } from "@/lib/api/server";
-import { toCamelCase } from "@/helpers/transformers";
 import { getProfileUpdateSchema } from "@/helpers/validation";
+import { updateUserProfile } from "@/lib/services/profiles";
 
 export async function GET() {
   return withApiHandler(async () => {
@@ -20,7 +17,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      profile: toCamelCase(profile),
+      profile: profile,
     });
   });
 }
@@ -35,7 +32,7 @@ export async function PATCH(request: NextRequest) {
     // Dynamic schema by role (service handles this)
     const body = await validateRequestBody(
       request,
-      getProfileUpdateSchema(userRole)
+      getProfileUpdateSchema(userRole),
     );
 
     const profile = await updateUserProfile(supabase, user.id, body);
@@ -43,7 +40,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      profile: toCamelCase(profile),
+      profile: profile,
     });
   });
 }

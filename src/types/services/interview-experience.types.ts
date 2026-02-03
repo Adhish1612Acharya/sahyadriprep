@@ -12,14 +12,14 @@ export interface InterviewExperienceResponse {
   success: boolean;
   message: string;
   data: {
-    experience_id: string;
-    media_id: string;
-    video_media_id: string | null;
-    college_id: string;
-    company_id: string;
-    chunks_stored: number;
-    cloudinary_url: string;
-    video_url: string | null;
+    experienceId: string;
+    mediaId: string;
+    videoMediaId: string | null;
+    collegeId: string;
+    companyId: string;
+    chunksStored: number;
+    cloudinaryUrl: string;
+    videoUrl: string | null;
   };
 }
 
