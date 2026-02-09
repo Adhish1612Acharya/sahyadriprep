@@ -9,7 +9,6 @@ import {
 import { ENV } from "@/config/env";
 import { httpGet, httpPost, httpDelete } from "@/lib/api/http";
 import { InterviewSessionWithCollegeAndCompanyDetails } from "@/lib/repositories/interview-sessions";
-import { InterviewSessionAISummarizationResult } from "@/lib/services/interview-sessions";
 import { InterviewSessionAISummary } from "@/lib/api/interview-session";
 import { Camelize } from "@/types";
 import { InterviewSession } from "@/models";
@@ -89,11 +88,10 @@ export const interviewSessionApi = {
   processVideo: async (
     id: string,
     input: ProcessVideoInput,
-  ): Promise<Camelize<InterviewSessionAISummarizationResult>> => {
+  ): Promise<Camelize<InterviewSessionAISummary>> => {
     const response = await httpPost<{
       success: boolean;
-      message: string;
-      aiSummary: Camelize<InterviewSessionAISummarizationResult>;
+      aiSummary: Camelize<InterviewSessionAISummary>;
     }>(YOUTUBE_ENDPOINTS.PROCESS(id), {
       videoId: input.video_id,
       title: input.title,

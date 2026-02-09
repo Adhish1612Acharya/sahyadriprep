@@ -26,8 +26,8 @@ export async function GET(request: Request) {
     console.error("❌ OAuth error:", error, error_description);
     return NextResponse.redirect(
       `${requestUrl.origin}/auth/login?error=${encodeURIComponent(
-        error_description || error
-      )}`
+        error_description || error,
+      )}`,
     );
   }
 
@@ -45,8 +45,8 @@ export async function GET(request: Request) {
         `${
           requestUrl.origin
         }/auth/login?error=auth_callback_failed&details=${encodeURIComponent(
-          exchangeError.message
-        )}`
+          exchangeError.message,
+        )}`,
       );
     }
 
@@ -57,7 +57,7 @@ export async function GET(request: Request) {
       // ✅ SPECIAL CASE: Password Reset Flow
       if (type === "recovery") {
         return NextResponse.redirect(
-          new URL("/auth/reset-password", requestUrl.origin)
+          new URL("/auth/reset-password", requestUrl.origin),
         );
       }
 
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
         console.log(`✅ Email confirmed for: ${email}`);
 
         const syncResult = await syncProfileToMetadata(supabase, user.id);
-        if (!syncResult.success) {
+        if (!syncResult) {
           console.warn("⚠️ Failed to sync profile after email confirmation");
         }
 
@@ -89,14 +89,14 @@ export async function GET(request: Request) {
       const isAllowed = await isEmailAllowedForCollege(
         supabase,
         email,
-        collegeId
+        collegeId,
       );
 
       if (!isAllowed) {
         console.error(
           `❌ Email not allowed: ${email} for college: ${
             collegeId || "sahyadri"
-          }`
+          }`,
         );
 
         // ✅ Check if this is an existing admin user
@@ -107,7 +107,7 @@ export async function GET(request: Request) {
 
           if (isAdmin) {
             console.log(
-              `⚠️ Admin user attempted OAuth login: ${email} (${existingProfile.role})`
+              `⚠️ Admin user attempted OAuth login: ${email} (${existingProfile.role})`,
             );
 
             // ✅ Don't delete admin users, just sign them out
@@ -116,8 +116,8 @@ export async function GET(request: Request) {
             return NextResponse.redirect(
               new URL(
                 "/auth/login?error=oauth_not_supported&message=Admin accounts cannot use Google login. Please use email and password.",
-                requestUrl.origin
-              )
+                requestUrl.origin,
+              ),
             );
           }
         }
@@ -137,8 +137,8 @@ export async function GET(request: Request) {
         return NextResponse.redirect(
           new URL(
             "/auth/login?error=invalid_email&message=Please use your college email",
-            requestUrl.origin
-          )
+            requestUrl.origin,
+          ),
         );
       }
 
@@ -167,8 +167,8 @@ export async function GET(request: Request) {
           return NextResponse.redirect(
             new URL(
               "/auth/login?error=profile_creation_failed",
-              requestUrl.origin
-            )
+              requestUrl.origin,
+            ),
           );
         }
 
@@ -181,17 +181,14 @@ export async function GET(request: Request) {
           profile_completed: false,
         });
 
-        if (!syncResult.success) {
-          console.warn(
-            "⚠️ Failed to sync profile to metadata:",
-            syncResult.error
-          );
+        if (!syncResult) {
+          console.warn("⚠️ Failed to sync profile to metadata:");
         } else {
           console.log(`✅ Profile metadata synced for user: ${user.id}`);
         }
 
         return NextResponse.redirect(
-          new URL("/auth/complete-profile", requestUrl.origin)
+          new URL("/auth/complete-profile", requestUrl.origin),
         );
       }
 
@@ -207,11 +204,8 @@ export async function GET(request: Request) {
 
         const syncResult = await syncProfileToMetadata(supabase, user.id);
 
-        if (!syncResult.success) {
-          console.warn(
-            "⚠️ Failed to sync profile to metadata:",
-            syncResult.error
-          );
+        if (!syncResult) {
+          console.warn("⚠️ Failed to sync profile to metadata:");
         } else {
           console.log(`✅ Profile metadata synced for user: ${user.id}`);
         }
@@ -220,7 +214,7 @@ export async function GET(request: Request) {
       // ✅ Step 7: Check if profile is completed
       if (!profile.profile_completed) {
         return NextResponse.redirect(
-          new URL("/auth/complete-profile", requestUrl.origin)
+          new URL("/auth/complete-profile", requestUrl.origin),
         );
       }
 
@@ -235,7 +229,7 @@ export async function GET(request: Request) {
         redirectMap[profile.role as keyof typeof redirectMap] || next;
 
       console.log(
-        `✅ User logged in: ${email} (${profile.role}) → ${redirectTo}`
+        `✅ User logged in: ${email} (${profile.role}) → ${redirectTo}`,
       );
 
       return NextResponse.redirect(new URL(redirectTo, requestUrl.origin));
@@ -254,7 +248,7 @@ export async function GET(request: Request) {
       if (error) {
         console.error("❌ Recovery verification failed:", error);
         return NextResponse.redirect(
-          `${requestUrl.origin}/auth/login?error=recovery_failed`
+          `${requestUrl.origin}/auth/login?error=recovery_failed`,
         );
       }
 
@@ -264,7 +258,7 @@ export async function GET(request: Request) {
     } catch (e: any) {
       console.error("❌ Unexpected error during recovery:", e);
       return NextResponse.redirect(
-        `${requestUrl.origin}/auth/login?error=recovery_failed`
+        `${requestUrl.origin}/auth/login?error=recovery_failed`,
       );
     }
   }
@@ -281,7 +275,7 @@ export async function GET(request: Request) {
       if (error) {
         console.error("❌ Email verification failed:", error);
         return NextResponse.redirect(
-          `${requestUrl.origin}/auth/login?error=verification_failed`
+          `${requestUrl.origin}/auth/login?error=verification_failed`,
         );
       }
 
@@ -291,7 +285,7 @@ export async function GET(request: Request) {
     } catch (e: any) {
       console.error("❌ Unexpected error during verification:", e);
       return NextResponse.redirect(
-        `${requestUrl.origin}/auth/login?error=verification_failed`
+        `${requestUrl.origin}/auth/login?error=verification_failed`,
       );
     }
   }

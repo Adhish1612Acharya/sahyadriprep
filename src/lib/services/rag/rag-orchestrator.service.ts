@@ -27,17 +27,18 @@ import { TranscriptSegment } from "@/features/youtube";
 export async function processRAGQuery(
   supabase: SupabaseClient,
   message: string,
-  searchLimit?: number
+  searchLimit?: number,
 ): Promise<RAGResponse> {
   console.log("🧠 RAG orchestration started:", {
     message: message.slice(0, 50),
   });
   const startTime = Date.now();
 
+
   // Step 1-2: Preprocess (company filter + query summary)
   const { companyIds, querySummary } = await preprocessRAGQuery(
     supabase,
-    message
+    message,
   );
 
   // Step 3: Parallel vector search
@@ -45,7 +46,7 @@ export async function processRAGQuery(
     supabase,
     querySummary,
     searchLimit,
-    companyIds
+    companyIds,
   );
 
   // Early return: No relevant results
@@ -111,7 +112,7 @@ export async function processRAGQuery(
         groupedSources.youtubeVideos?.map(formatRAGSourceAsYouTubeVideo) ?? [],
       youtubeTimestamps:
         groupedSources.youtubeTimestamps?.map(
-          formatRAGSourceAsYouTubeTimestamp
+          formatRAGSourceAsYouTubeTimestamp,
         ) ?? [],
     },
     metadata: {
@@ -144,7 +145,7 @@ export async function processInterviewExperiencePdfToChunks(
   videoMediaId: string | null,
   documentMediaFileTitle: string,
   validatedData: InterviewUploadData,
-  collegeId: string
+  collegeId: string,
 ): Promise<ContentChunk[]> {
   // 1. Load & chunk
   console.log("📖 Loading PDF...");
@@ -165,7 +166,7 @@ export async function processInterviewExperiencePdfToChunks(
   console.log("🧠 Generating embeddings...");
   const summaryEmbeddings = await embedDocumentsWithHandling(
     embeddings,
-    summaries
+    summaries,
   );
 
   // 4. Chunk objects → insert
@@ -188,13 +189,13 @@ export async function processInterviewExperiencePdfToChunks(
         batch: validatedData.batch,
         has_video_preview: !!videoMediaId,
       },
-    })
+    }),
   );
 
   // 5. Index (repo)
   const ragContentChunk = await insertInterviewExperienceContentChunksService(
     vectorSupabase,
-    chunksToInsert
+    chunksToInsert,
   );
 
   return ragContentChunk || [];
@@ -212,13 +213,13 @@ export async function processInterviewSessionToChunks(
     collegeId: string;
     sessionId: string;
     createdBy: string;
-  }
+  },
 ): Promise<ContentChunk[]> {
   // 1. Smart chunking by token count (200-300 words per chunk)
   const transcriptChunks = chunkTranscriptByTokens(
     InterviewSessionData.transcriptSegments,
     200,
-    300
+    300,
   );
 
   // 2. Summaries for title and description
@@ -234,7 +235,7 @@ export async function processInterviewSessionToChunks(
     InterviewSessionData.description.length > 500
   ) {
     descriptionSummary = await createChunkSummarySafe(
-      InterviewSessionData.description
+      InterviewSessionData.description,
     );
   }
 
@@ -247,7 +248,7 @@ export async function processInterviewSessionToChunks(
       delayBetweenBatches: 7000,
       delayBetweenRequests: 500,
       maxRetries: 2,
-    }
+    },
   );
 
   // 4. Embeddings for all content
@@ -258,7 +259,7 @@ export async function processInterviewSessionToChunks(
   ];
   const allEmbeddings = await embedDocumentsWithHandling(
     embeddings,
-    allSummaries
+    allSummaries,
   );
 
   // 5. Prepare chunks for insertion
@@ -311,7 +312,7 @@ export async function processInterviewSessionToChunks(
   // Transcript chunks
   transcriptChunks.forEach((chunk, index) => {
     const timestampUrl = `${InterviewSessionData.videoUrl}&t=${Math.floor(
-      chunk.start_time
+      chunk.start_time,
     )}s`;
 
     chunksToInsert.push({
@@ -362,7 +363,7 @@ export async function processInterviewSessionToChunks(
   // 6. Store all chunks in vector database using the service
   const ragContentChunk = await insertInterviewExperienceContentChunksService(
     vectorSupabase,
-    chunksToInsert
+    chunksToInsert,
   );
 
   return ragContentChunk || [];

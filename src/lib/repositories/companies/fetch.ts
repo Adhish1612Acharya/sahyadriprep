@@ -10,7 +10,7 @@ import { TABLES } from "@/constants";
  */
 export async function fetchCompaniesByNames(
   supabase: SupabaseClient,
-  companyNames: string[]
+  companyNames: string[],
 ): Promise<{ data: Company[] | null; error: any }> {
   const orQuery = companyNames.map((name) => `name.ilike.%${name}%`).join(",");
 
@@ -19,12 +19,14 @@ export async function fetchCompaniesByNames(
     .select("*")
     .or(orQuery);
 
+    console.log("Error fetching companies by names:", error);
+
   return { data, error };
 }
 
 export async function fetchCompanyWithCollegeById(
   supabase: SupabaseClient,
-  id: string
+  id: string,
 ): Promise<{ data: CompanyWithColleges | null; error: any }> {
   const { data, error } = await supabase
     .from(TABLES.companies)
@@ -35,7 +37,7 @@ export async function fetchCompanyWithCollegeById(
         id,
         name
       )
-    `
+    `,
     )
     .eq("id", id)
     .single();
@@ -46,7 +48,7 @@ export async function fetchCompanyWithCollegeById(
 export async function fetchCompanyWithCollegeForCollegeById(
   supabase: SupabaseClient,
   id: string,
-  collegeId: string
+  collegeId: string,
 ): Promise<{ data: CompanyWithColleges | null; error: any }> {
   const { data, error } = await supabase
     .from(TABLES.companies)
@@ -57,7 +59,7 @@ export async function fetchCompanyWithCollegeForCollegeById(
         id,
         name
       )
-    `
+    `,
     )
     .eq("id", id)
     .eq("college_id", collegeId)
@@ -69,7 +71,7 @@ export async function fetchCompanyWithCollegeForCollegeById(
 export async function fetchCompanyLightByIdForCollege(
   supabase: SupabaseClient,
   id: string,
-  collegeId: string
+  collegeId: string,
 ): Promise<{ data: CompanyLight | null; error: any }> {
   const { data, error } = await supabase
     .from(TABLES.companies)
@@ -84,7 +86,7 @@ export async function fetchCompanyLightByIdForCollege(
 export async function fetchCompaniesForCollege(
   supabase: SupabaseClient,
   collegeId: string,
-  filters?: CompanyListFilters
+  filters?: CompanyListFilters,
 ): Promise<{ data: CompanyWithColleges[] | null; error: any | null }> {
   let query = supabase
     .from(TABLES.companies)
@@ -92,7 +94,7 @@ export async function fetchCompaniesForCollege(
       `
       *,
       colleges(id, name)
-    `
+    `,
     )
     .eq("college_id", collegeId)
     .order("name", { ascending: true });

@@ -40,7 +40,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import type { ProcessVideoResponse } from "@/types/services/interview-youtube-video.types";
 import {
   AIOverviewPanel,
   AISegmentsPanel,
@@ -51,6 +50,7 @@ import { YouTubePlayerController } from "@/components/youtube/youtube-player-con
 import { useAuth } from "@/contexts/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Camelize } from "@/types";
+import { InterviewSessionAISummary } from "@/lib/api/interview-session";
 
 // ✅ Helper function to linkify text
 function linkifyText(text: string) {
@@ -90,9 +90,8 @@ export default function VideoDetailPage() {
   const { data: video, isLoading } = useVideoQuery(videoId);
 
   const [activeTab, setActiveTab] = useState("overview");
-  const [aiData, setAiData] = useState<Camelize<ProcessVideoResponse> | null>(
-    null,
-  );
+  const [aiData, setAiData] =
+    useState<Camelize<InterviewSessionAISummary> | null>(null);
   const [showAIContent, setShowAIContent] = useState(false);
   const [enableAIQuery, setEnableAIQuery] = useState(false);
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
@@ -163,13 +162,7 @@ export default function VideoDetailPage() {
         const result = await refetchAI();
 
         if (result.data) {
-          const hydrated = {
-            overview: result.data.overview?.data ?? null,
-            segments: result.data.segments?.data ?? [],
-            flashCards: result.data.flashCards?.data ?? [],
-            tips: result.data.tips?.data ?? [],
-          } as unknown as ProcessVideoResponse;
-          setAiData(hydrated);
+          setAiData(result.data);
         }
       } catch (e) {
         console.error("Failed to fetch AI content:", e);
@@ -478,8 +471,8 @@ export default function VideoDetailPage() {
               ✨ AI processing completed successfully!
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Generated {aiData.segments.length} segments,{" "}
-              {aiData.flashCards.length} flashcards, and {aiData.tips.length}{" "}
+              Generated {aiData.segments.count} segments,{" "}
+              {aiData.flashCards.count} flashcards, and {aiData.tips.count}{" "}
               tips.
             </p>
           </AlertDescription>
@@ -510,9 +503,9 @@ export default function VideoDetailPage() {
                       ✅ Already Processed
                     </p>
                     <ul className="space-y-1 text-xs">
-                      <li>• {aiData.segments.length} segments</li>
-                      <li>• {aiData.flashCards.length} flashcards</li>
-                      <li>• {aiData.tips.length} tips</li>
+                      <li>• {aiData.segments.count} segments</li>
+                      <li>• {aiData.flashCards.count} flashcards</li>
+                      <li>• {aiData.tips.count} tips</li>
                     </ul>
                   </div>
                   <Button
@@ -543,7 +536,7 @@ export default function VideoDetailPage() {
                   {processVideo.isPending || isAIContentLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {video.ai_process_done ? "Loading..." : "Processing..."}
+                      {video.aiProcessDone ? "Loading..." : "Processing..."}
                     </>
                   ) : (
                     <>
@@ -562,7 +555,7 @@ export default function VideoDetailPage() {
             title={video.title}
             segments={
               aiData?.segments
-                ? aiData.segments.map((s: any) => ({
+                ? aiData.segments.data.map((s: any) => ({
                     ...s,
                     summary: s.summary ?? "",
                   }))
@@ -650,23 +643,23 @@ export default function VideoDetailPage() {
                       </TabsList>
 
                       <TabsContent value="overview" className="mt-4">
-                        <AIOverviewPanel data={aiData?.overview} />
+                        <AIOverviewPanel data={aiData?.overview.data} />
                       </TabsContent>
                       <TabsContent value="segments" className="mt-4">
                         <AISegmentsPanel
-                          data={aiData?.segments}
+                          data={aiData?.segments.data}
                           onJumpTo={handleJumpTo}
                         />
                       </TabsContent>
                       <TabsContent value="flashcards" className="mt-4">
                         <AIFlashcardsPanel
-                          data={aiData?.flashCards}
+                          data={aiData.flashCards.data}
                           onJumpTo={handleJumpTo}
                         />
                       </TabsContent>
                       <TabsContent value="tips" className="mt-4">
                         <AITipsPanel
-                          data={aiData?.tips}
+                          data={aiData?.tips.data}
                           onJumpTo={handleJumpTo}
                         />
                       </TabsContent>
@@ -752,9 +745,9 @@ export default function VideoDetailPage() {
                       ✅ Already Processed
                     </p>
                     <ul className="space-y-1 text-xs">
-                      <li>• {aiData.segments.length} segments</li>
-                      <li>• {aiData.flashcards.length} flashcards</li>
-                      <li>• {aiData.tips.length} tips</li>
+                      <li>• {aiData.segments.count} segments</li>
+                      <li>• {aiData.flashCards.count} flashcards</li>
+                      <li>• {aiData.tips.count} tips</li>
                     </ul>
                   </div>
                   <Button
@@ -780,7 +773,9 @@ export default function VideoDetailPage() {
                 <Button
                   className="w-full"
                   onClick={handleGetAIInsights}
-                  disabled={processVideo.isPending || isAIContentLoading}
+                  disabled={
+                    processVideo.isPending || isAIContentLoading || !!aiData
+                  }
                 >
                   {processVideo.isPending || isAIContentLoading ? (
                     <>
@@ -790,7 +785,7 @@ export default function VideoDetailPage() {
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4 mr-2" />
-                      Get AI Insights
+                      {aiData ? "AI Insights Available" : "Get AI Insights"}
                     </>
                   )}
                 </Button>

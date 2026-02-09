@@ -7,6 +7,7 @@ import {
   deleteAuthUserById,
 } from "@/lib/services/auth/auth-user-lifecycle.service";
 import { createClient } from "@/lib/supabase/server";
+import { AuthProfile } from "@/models";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -29,17 +30,14 @@ export async function signInWithEmail(formData: {
     return { error: error.message };
   }
 
-  let syncResult;
+  let syncResult: AuthProfile | null = null;
 
   // ✅ Sync profile to metadata cache after successful login
   if (data.user) {
     syncResult = await syncProfileToMetadata(supabase, data.user.id);
 
-    if (!syncResult.success) {
-      console.warn(
-        "⚠️ Failed to sync profile to metadata on login:",
-        syncResult.error
-      );
+    if (!syncResult) {
+      console.warn("⚠️ Failed to sync profile to metadata on login:");
       // Don't fail the login, metadata will sync on next request
     }
   }
@@ -51,12 +49,10 @@ export async function signInWithEmail(formData: {
     super_admin: "/admin/dashboard",
   };
 
-  const profile = syncResult?.profile;
-
-  console.log("User profile after login:", profile);
+  const profile = syncResult || null;
 
   const redirectTo =
-    redirectMap[profile.role as keyof typeof redirectMap] || "/";
+    redirectMap[profile?.role as keyof typeof redirectMap] || "/";
   //redirect(redirectTo); // ✅ Server-side redirect
 
   // Return the path instead of redirecting
@@ -76,7 +72,7 @@ export async function signInWithGoogle(options?: {
       redirectTo: `${
         ENV.NEXT_PUBLIC_SITE_URL
       }/auth/callback?redirect=${encodeURIComponent(
-        options?.redirectUrl || "/"
+        options?.redirectUrl || "/",
       )}`,
       // Pass role and college_id as query params (will be in user_metadata after auth)
       queryParams: {
@@ -122,7 +118,7 @@ export async function completeStudentProfile(
     current_semester?: number;
     current_cgpa?: number;
   },
-  redirect_url: string
+  redirect_url: string,
 ) {
   const supabase = await createClient();
 
@@ -166,11 +162,8 @@ export async function completeStudentProfile(
 
   const syncResult = await syncProfileToMetadata(supabase, user.id);
 
-  if (!syncResult.success) {
-    console.warn(
-      "⚠️ Failed to sync profile to metadata on login:",
-      syncResult.error
-    );
+  if (!syncResult) {
+    console.warn("⚠️ Failed to sync profile to metadata on login:");
     // Don't fail the login, metadata will sync on next request
   }
 
@@ -190,7 +183,7 @@ export async function completeAdminProfile(
     department?: string;
     employee_id?: string;
   },
-  redirect_url: string
+  redirect_url: string,
 ) {
   const supabase = await createClient();
 
@@ -232,11 +225,8 @@ export async function completeAdminProfile(
 
   const syncResult = await syncProfileToMetadata(supabase, user.id);
 
-  if (!syncResult.success) {
-    console.warn(
-      "⚠️ Failed to sync profile to metadata on login:",
-      syncResult.error
-    );
+  if (!syncResult) {
+    console.warn("⚠️ Failed to sync profile to metadata on login:");
     // Don't fail the login, metadata will sync on next request
   }
 
@@ -348,7 +338,7 @@ export async function updatePassword(newPassword: string) {
  */
 export async function resetPasswordWithToken(
   newPassword: string,
-  confirmPassword: string
+  confirmPassword: string,
 ) {
   try {
     if (newPassword !== confirmPassword) {
@@ -440,7 +430,7 @@ export async function confirmEmail(tokenHash: string, type: string) {
       if (!profileResult.success) {
         console.warn(
           "⚠️ Failed to create user profile after email confirmation",
-          profileResult.error
+          profileResult.error,
         );
         await deleteAuthUserById(data.user.id);
         return {
@@ -451,14 +441,14 @@ export async function confirmEmail(tokenHash: string, type: string) {
 
     // Sync profile metadata after email confirmation
     const syncResult = await syncProfileToMetadata(supabase, data.user.id);
-    if (!syncResult.success) {
+    if (!syncResult) {
       console.warn(
-        "⚠️ Failed to sync profile metadata after email confirmation"
+        "⚠️ Failed to sync profile metadata after email confirmation",
       );
     }
 
     revalidatePath("/", "layout");
-    return { success: true, user: data.user };
+    return { success: true, user: data.user, data: data };
   } catch (error: any) {
     console.error("❌ Unexpected error in confirmEmail:", error);
     return { error: error.message || "Failed to confirm email" };
@@ -584,9 +574,9 @@ export async function verifyConfirmationToken(tokenHash: string, type: string) {
 
     // Sync profile metadata after verification
     const syncResult = await syncProfileToMetadata(supabase, data.user.id);
-    if (!syncResult.success) {
+    if (!syncResult) {
       console.warn(
-        "⚠️ Failed to sync profile metadata after token verification"
+        "⚠️ Failed to sync profile metadata after token verification",
       );
     }
 

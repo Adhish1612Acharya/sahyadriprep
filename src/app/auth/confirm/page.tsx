@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
 function ConfirmPageContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading"
+    "loading",
   );
   const [message, setMessage] = useState<string>("");
   const [isVerifying, setIsVerifying] = useState(true);
@@ -33,12 +33,14 @@ function ConfirmPageContent() {
         const tokenHash = searchParams.get("token_hash");
         const type = searchParams.get("type");
         const next =
-          searchParams.get("redirect") || searchParams.get("next") || "/auth/complete-profile";
+          searchParams.get("redirect") ||
+          searchParams.get("next") ||
+          "/auth/complete-profile";
 
         if (!tokenHash) {
           setStatus("error");
           setMessage(
-            "Missing confirmation token. Please use the link from your email."
+            "Missing confirmation token. Please use the link from your email.",
           );
           setIsVerifying(false);
           return;
@@ -57,8 +59,6 @@ function ConfirmPageContent() {
           return;
         }
 
-      
-
         // Confirm email using server action
         const result = await confirmEmail(tokenHash, type);
 
@@ -69,12 +69,10 @@ function ConfirmPageContent() {
           return;
         }
 
-      
         setStatus("success");
         setMessage("Email confirmed successfully! Redirecting...");
         setIsVerifying(false);
 
-        // Redirect after 2 seconds
         setTimeout(() => {
           window.location.href = next;
         }, 2000);
@@ -82,7 +80,7 @@ function ConfirmPageContent() {
         console.error("❌ Confirmation error:", error);
         setStatus("error");
         setMessage(
-          error.message || "Failed to confirm email. Please try again."
+          error.message || "Failed to confirm email. Please try again.",
         );
         setIsVerifying(false);
       }
@@ -123,7 +121,7 @@ function ConfirmPageContent() {
               <div className="flex flex-col items-center space-y-2 py-4">
                 <CheckCircle className="h-16 w-16 text-green-600" />
                 <p className="text-sm text-center text-muted-foreground">
-                  Your email has been verified successfully
+                  Your email has been verified successfully Data :{" "}
                 </p>
               </div>
             </div>

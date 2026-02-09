@@ -2,7 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/services/auth/auth-guards.service";
 import { withApiHandler } from "@/lib/api/server";
-import { processInterviewSessionAISummarizationOrchestrator } from "@/lib/services/interview-sessions";
+import {
+  fetchInterviewSessionAISummaryContent,
+  processInterviewSessionAISummarizationOrchestrator,
+} from "@/lib/services/interview-sessions";
 import { fetchUserCollegeIdFromProfile } from "@/lib/services/profiles";
 import { HttpError } from "@/lib/api/http";
 
@@ -12,7 +15,7 @@ import { HttpError } from "@/lib/api/http";
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   return withApiHandler(async () => {
     const { id } = await params;
@@ -37,19 +40,42 @@ export async function POST(
 
     const userCollegeId = await fetchUserCollegeIdFromProfile(
       supabase,
-      user.id
+      user.id,
     );
 
-    const result = await processInterviewSessionAISummarizationOrchestrator(
+    await processInterviewSessionAISummarizationOrchestrator(
       supabase,
       userCollegeId,
-      { id, videoId, title, description }
+      { id, videoId, title, description },
     );
+
+    const { overviewData, segmentsData, flashCardsData, tipsData } =
+      await fetchInterviewSessionAISummaryContent(supabase, id);
 
     return NextResponse.json({
       success: true,
-      message: "Video processed and AI content saved successfully",
-      aiSummary: result,
+      aiSummary: {
+        overview: {
+          presentInDB: !!overviewData,
+          data: overviewData ?? null,
+        },
+        segments: {
+          presentInDB: Array.isArray(segmentsData) && segmentsData.length > 0,
+          count: Array.isArray(segmentsData) ? segmentsData.length : 0,
+          data: segmentsData ?? [],
+        },
+        flashCards: {
+          presentInDB:
+            Array.isArray(flashCardsData) && flashCardsData.length > 0,
+          count: Array.isArray(flashCardsData) ? flashCardsData.length : 0,
+          data: flashCardsData ?? [],
+        },
+        tips: {
+          presentInDB: Array.isArray(tipsData) && tipsData.length > 0,
+          count: Array.isArray(tipsData) ? tipsData.length : 0,
+          data: tipsData ?? [],
+        },
+      },
     });
   });
 }

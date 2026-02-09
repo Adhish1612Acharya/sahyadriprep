@@ -17,7 +17,7 @@ export async function createAuthUser(
     college_id?: string | null;
     email_confirm?: boolean;
     redirectUrl?: string;
-  }
+  },
 ) {
   const {
     email,
@@ -47,7 +47,7 @@ export async function createAuthUser(
   try {
     const confirmUrl = redirectUrl
       ? `${ENV.NEXT_PUBLIC_SITE_URL}/auth/confirm?redirect=${encodeURIComponent(
-          redirectUrl
+          redirectUrl,
         )}`
       : `${ENV.NEXT_PUBLIC_SITE_URL}/auth/confirm`;
 
@@ -83,18 +83,18 @@ export async function createUserProfile(
     email: string;
     role: UserRole;
     profile_completed?: boolean;
-  }
+  },
 ) {
   const { userId, email, role, profile_completed = false } = params;
 
   try {
-    await insertUserProfile(supabase, {
+    const data = await insertUserProfile(supabase, {
       userId,
       email,
       role,
       profile_completed,
     });
-    return { success: true };
+    return { success: true, data: data };
   } catch (e: any) {
     return { success: false, error: e };
   }
@@ -118,7 +118,7 @@ export async function createUserWithProfile(
     college_id?: string | null;
     email_confirm?: boolean;
     redirectUrl?: string;
-  }
+  },
 ) {
   const authResult = await createAuthUser(supabase, params);
 

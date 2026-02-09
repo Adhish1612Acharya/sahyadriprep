@@ -1,6 +1,6 @@
 "use client";
 
-import { useProfile } from "@/hooks/useProfile.hook";
+import { useProfile, useProfileQuery } from "@/hooks/useProfile.hook";
 import { StudentProfileForm } from "@/components/forms/student-profile-form";
 import { CollegeAdminProfileForm } from "@/components/forms/college-admin-profile-form";
 import {
@@ -15,12 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Profile,
-  StudentProfile,
-  CollegeAdminProfile,
-  UserRole,
-} from "@/types/services/profile-service.types";
+import { UserRole } from "@/types/services/profile-service.types";
 import {
   AlertCircle,
   User,
@@ -28,6 +23,8 @@ import {
   GraduationCap,
   Briefcase,
 } from "lucide-react";
+import { CompleteProfileResult } from "@/lib/services/profiles";
+import { Camelize } from "@/types";
 
 // ============================================
 // UTILITY FUNCTIONS (Moved from service)
@@ -36,28 +33,30 @@ import {
 /**
  * Calculate profile completion percentage
  */
-function getProfileCompletionPercentage(profile: Profile): number {
+function getProfileCompletionPercentage(
+  profile: Camelize<CompleteProfileResult>,
+): number {
   if (!profile) return 0;
 
   const role = profile.role;
 
   if (role === "student") {
-    const studentProfile = profile as StudentProfile;
+    const studentProfile = profile.profile;
     const fields = [
-      studentProfile.full_name,
+      studentProfile.fullName,
       studentProfile.email,
       studentProfile.phone,
-      studentProfile.avatar_url,
-      studentProfile.college_id,
+      studentProfile.avatarUrl,
+      studentProfile.collegeId,
       studentProfile.usn,
       studentProfile.batch,
       studentProfile.branch,
-      studentProfile.current_semester,
-      studentProfile.current_cgpa,
-      studentProfile.technical_skills?.length,
-      studentProfile.linkedin_url,
-      studentProfile.github_url,
-      studentProfile.resume_url,
+      studentProfile.currentSemester,
+      studentProfile.currentCgpa,
+      studentProfile.technicalSkills?.length,
+      studentProfile.linkedinUrl,
+      studentProfile.githubUrl,
+      studentProfile.resumeUrl,
     ];
 
     const filledFields = fields.filter(Boolean).length;
@@ -65,16 +64,16 @@ function getProfileCompletionPercentage(profile: Profile): number {
   }
 
   if (role === "college_admin") {
-    const adminProfile = profile as CollegeAdminProfile;
+    const adminProfile = profile.profile;
     const fields = [
-      adminProfile.full_name,
+      adminProfile.fullName,
       adminProfile.email,
       adminProfile.phone,
-      adminProfile.avatar_url,
-      adminProfile.college_id,
+      adminProfile.avatarUrl,
+      adminProfile.collegeId,
       adminProfile.designation,
       adminProfile.department,
-      adminProfile.employee_id,
+      adminProfile.employeeId,
     ];
 
     const filledFields = fields.filter(Boolean).length;
@@ -115,8 +114,7 @@ function getUserInitials(name: string): string {
 // ============================================
 
 export default function ProfilePage() {
-  const { useProfileQuery, updateStudentProfile, updateCollegeAdminProfile } =
-    useProfile();
+  const { updateStudentProfile, updateCollegeAdminProfile } = useProfile();
 
   const { data, isLoading, error } = useProfileQuery();
 
@@ -162,7 +160,7 @@ export default function ProfilePage() {
   if (!data) return null;
 
   const { role, profile } = data;
-  const completionPercentage = getProfileCompletionPercentage(profile);
+  const completionPercentage = getProfileCompletionPercentage(data);
 
   // ============================================
   // RENDER
@@ -217,19 +215,17 @@ export default function ProfilePage() {
             <Avatar className="h-20 w-20 md:h-24 md:w-24">
               <AvatarImage
                 src={
-                  role === "student"
-                    ? (profile as StudentProfile).avatar_url || undefined
-                    : role === "college_admin"
-                    ? (profile as CollegeAdminProfile).avatar_url || undefined
-                    : undefined
+                  (role === "student" || role === "college_admin"
+                    ? profile.avatarUrl
+                    : null) || undefined
                 }
               />
               <AvatarFallback className="text-xl md:text-2xl">
-                {role === "student"
-                  ? getUserInitials((profile as StudentProfile).full_name)
-                  : role === "college_admin"
-                  ? getUserInitials((profile as CollegeAdminProfile).full_name)
-                  : "A"}
+                {getUserInitials(
+                  role === "student" || role === "college_admin"
+                    ? profile.fullName
+                    : "",
+                ) || "A"}
               </AvatarFallback>
             </Avatar>
 
@@ -242,9 +238,9 @@ export default function ProfilePage() {
                   <div className="min-w-0">
                     <p className="text-sm text-muted-foreground">Full Name</p>
                     <p className="font-medium truncate">
-                      {role === "student"
-                        ? (profile as StudentProfile).full_name
-                        : (profile as CollegeAdminProfile).full_name}
+                      {role === "student" || role === "college_admin"
+                        ? profile.fullName
+                        : ""}
                     </p>
                   </div>
                 </div>
@@ -254,30 +250,25 @@ export default function ProfilePage() {
                   <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium truncate">
-                      {role === "student"
-                        ? (profile as StudentProfile).email
-                        : (profile as CollegeAdminProfile).email}
-                    </p>
+                    <p className="font-medium truncate">{profile.email}</p>
                   </div>
                 </div>
 
                 {/* Student USN */}
-                {role === "student" && (profile as StudentProfile).usn && (
+                {role === "student" && profile.usn && (
                   <div className="flex items-center gap-2">
                     <GraduationCap className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm text-muted-foreground">USN</p>
-                      <p className="font-medium truncate">
-                        {(profile as StudentProfile).usn}
-                      </p>
+                      <p className="font-medium truncate">{profile.usn}</p>
                     </div>
                   </div>
                 )}
 
                 {/* Admin Designation */}
                 {role === "college_admin" &&
-                  (profile as CollegeAdminProfile).designation && (
+                  "designation" in profile &&
+                  profile.designation && (
                     <div className="flex items-center gap-2">
                       <Briefcase className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <div className="min-w-0">
@@ -285,7 +276,7 @@ export default function ProfilePage() {
                           Designation
                         </p>
                         <p className="font-medium truncate">
-                          {(profile as CollegeAdminProfile).designation}
+                          {profile.designation}
                         </p>
                       </div>
                     </div>
@@ -299,7 +290,7 @@ export default function ProfilePage() {
       {/* Role-Based Forms */}
       {role === "student" && (
         <StudentProfileForm
-          profile={profile as StudentProfile}
+          profile={profile as any}
           onSubmit={(data) => updateStudentProfile.mutate(data)}
           isSubmitting={updateStudentProfile.isPending}
         />
@@ -307,7 +298,7 @@ export default function ProfilePage() {
 
       {role === "college_admin" && (
         <CollegeAdminProfileForm
-          profile={profile as CollegeAdminProfile}
+          profile={profile as any}
           onSubmit={(data) => updateCollegeAdminProfile.mutate(data)}
           isSubmitting={updateCollegeAdminProfile.isPending}
         />

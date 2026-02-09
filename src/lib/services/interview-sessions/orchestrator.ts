@@ -264,12 +264,12 @@ export async function processInterviewSessionAISummarizationOrchestrator(
   // Return all relevant data for response
   return {
     videoId: id,
-    transcript: {
-      text: transcript.data.text,
-      segmentsCount: transcript.data.segments.length,
-      duration: transcript.data.duration,
-      language: transcript.data.language,
-    },
+    // transcript: {
+    //   text: transcript.data.text,
+    //   segmentsCount: transcript.data.segments.length,
+    //   duration: transcript.data.duration,
+    //   language: transcript.data.language,
+    // },
     overview,
     segments: {
       count: Array.isArray(segments) ? segments.length : 0,

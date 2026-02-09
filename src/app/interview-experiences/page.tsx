@@ -79,9 +79,8 @@ export default function InterviewExperiencesPage() {
       selectedCompanyId === "all" || exp.companyId === selectedCompanyId;
 
     const matchesBatch =
-      !batchFilter || exp.batch?.toLowerCase().includes(batchFilter.toLowerCase());
-
-      console.log({ matchesSearch, matchesCompany, matchesBatch });
+      !batchFilter ||
+      exp.batch?.toLowerCase().includes(batchFilter.toLowerCase());
 
     return matchesSearch && matchesCompany && matchesBatch;
   });
@@ -181,9 +180,9 @@ export default function InterviewExperiencesPage() {
                   {companies.map((company) => (
                     <SelectItem key={company.id} value={company.id}>
                       <div className="flex items-center gap-2">
-                        {company.logo_url ? (
+                        {company.logoUrl ? (
                           <Image
-                            src={company.logo_url}
+                            src={company.logoUrl}
                             alt={company.name}
                             width={16}
                             height={16}

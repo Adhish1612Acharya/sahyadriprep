@@ -7,19 +7,17 @@ import {
   CollegeAdminProfileUpdate,
   SuperAdminProfileUpdate,
 } from "@/lib/zod/schema/profile.schema";
-import {
-  ProfileResponse,
-  ProfileUpdateResponse,
-} from "@/types/services/profile-service.types";
+import { ProfileUpdateResponse } from "@/types/services/profile-service.types";
 import { httpGet, httpPatch, httpPost } from "@/lib/api/http";
 import { Camelize } from "@/types";
+import { CompleteProfileResult } from "@/lib/services/profiles";
 
 export const profileApi = {
-  getMyProfile: async (): Promise<Camelize<ProfileResponse>> => {
-    const response = await httpGet<Camelize<ProfileResponse>>(
-      API_ENDPOINTS.PROFILE.BASE,
-    );
-    return response;
+  getMyProfile: async (): Promise<Camelize<CompleteProfileResult>> => {
+    const response = await httpGet<
+      Camelize<{ success: boolean; profile: CompleteProfileResult }>
+    >(API_ENDPOINTS.PROFILE.BASE);
+    return response.profile;
   },
 
   updateStudentProfile: async (

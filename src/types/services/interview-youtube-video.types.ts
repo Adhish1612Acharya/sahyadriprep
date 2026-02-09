@@ -137,7 +137,7 @@ export interface Flashcard {
     | "preparation"
     | "tips"
     | "company_culture";
-  timestamp: number | null;
+  timestamp: number;
 }
 
 /**
@@ -163,6 +163,6 @@ export interface ProcessVideoResponse {
   transcript: TranscriptData;
   overview: OverviewData;
   segments: VideoSegment[];
-  flashcards: Flashcard[];
+  flashCards: Flashcard[];
   tips: VideoTip[];
 }

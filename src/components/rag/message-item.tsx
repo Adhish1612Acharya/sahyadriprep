@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
 import { SourcesDisplayComponent } from "./sources-display";
 import type { ChatMessage } from "@/types/rag-service.types";
 import ReactMarkdown from "react-markdown";
+import { Camelize } from "@/types";
 
 interface MessageItemProps {
-  message: ChatMessage;
+  message: Camelize<ChatMessage>;
 }
 
 export const MessageItem = memo(({ message }: MessageItemProps) => {
@@ -34,7 +35,7 @@ export const MessageItem = memo(({ message }: MessageItemProps) => {
     <div
       className={cn(
         "flex gap-3 mb-4",
-        isUser ? "justify-end" : "justify-start"
+        isUser ? "justify-end" : "justify-start",
       )}
     >
       {!isUser && (

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import { ChatMessage, ChatRequest } from "@/types/rag-service.types";
 import { ragChatbotApi } from "@/lib/api/rag-chatbot";
+import { Camelize } from "@/types";
 // import { useToast } from "@/hooks/use-toast";
 
 /**
@@ -12,7 +13,7 @@ export function useRagChatbot() {
   //   const { toast } = useToast();
 
   // Conversation state
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<Camelize<ChatMessage>[]>([]);
   const [isTyping, setIsTyping] = useState(false);
 
   /**
@@ -22,7 +23,7 @@ export function useRagChatbot() {
     mutationFn: (request: ChatRequest) => ragChatbotApi.sendMessage(request),
     onMutate: async (variables) => {
       // Optimistically add user message
-      const userMessage: ChatMessage = {
+      const userMessage: Camelize<ChatMessage> = {
         role: "user",
         content: variables.message,
         timestamp: new Date(),
@@ -33,7 +34,7 @@ export function useRagChatbot() {
     },
     onSuccess: (data, variables) => {
       // ✅ Add assistant response with sources
-      const assistantMessage: ChatMessage = {
+      const assistantMessage: Camelize<ChatMessage> = {
         role: "assistant",
         content: data.message,
         sources: data.sources, // ✅ Include sources from response
@@ -49,7 +50,7 @@ export function useRagChatbot() {
       setIsTyping(false);
 
       // Add error message
-      const errorMessage: ChatMessage = {
+      const errorMessage: Camelize<ChatMessage> = {
         role: "assistant",
         content: `Sorry, I encountered an error: ${
           error.message || "Failed to send message"
@@ -73,7 +74,7 @@ export function useRagChatbot() {
   const sendMessage = useCallback(
     (
       message: string,
-      options?: { search_limit?: number; similarity_threshold?: number }
+      options?: { search_limit?: number; similarity_threshold?: number },
     ) => {
       if (!message.trim()) {
         // toast({
@@ -98,7 +99,7 @@ export function useRagChatbot() {
       messages,
       sendMessageMutation,
       // toast
-    ]
+    ],
   );
 
   /**

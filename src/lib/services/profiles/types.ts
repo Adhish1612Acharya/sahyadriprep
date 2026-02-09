@@ -1,7 +1,16 @@
 import { AuthProfile, CollegeAdminProfile, StudentProfile } from "@/models";
 
-export type CompleteProfileResult = {
-  profile: StudentProfile | CollegeAdminProfile | AuthProfile;
-  role: "student" | "college_admin" | "super_admin";
-};
-
+// Discriminated union for stricter typing
+export type CompleteProfileResult =
+  | {
+      profile: StudentProfile;
+      role: "student";
+    }
+  | {
+      profile: CollegeAdminProfile;
+      role: "college_admin";
+    }
+  | {
+      profile: AuthProfile;
+      role: "super_admin";
+    };

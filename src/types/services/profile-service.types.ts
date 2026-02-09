@@ -58,7 +58,7 @@ export type Profile = StudentProfile | CollegeAdminProfile;
 export interface ProfileResponse {
   success: boolean;
   role: UserRole;
-  profile: Profile;
+  profile:Profile;
 }
 
 export interface ProfileUpdateResponse {

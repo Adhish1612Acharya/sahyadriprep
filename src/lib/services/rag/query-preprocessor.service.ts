@@ -5,7 +5,7 @@ import { QueryPreprocessResult } from "./types";
 
 export async function preprocessRAGQuery(
   supabase: SupabaseClient,
-  message: string
+  message: string,
 ): Promise<QueryPreprocessResult> {
   // Step 1: Company filter using AI query understanding
   const companyIds = await processCompanyFilter(supabase, message);

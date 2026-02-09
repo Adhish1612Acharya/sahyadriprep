@@ -9,14 +9,20 @@ export async function insertUserProfile(
     email: string;
     role: UserRole;
     profile_completed: boolean;
-  }
-): Promise<void> {
-  const { error } = await supabase.from(TABLES.profiles).insert({
-    id: params.userId,
-    email: params.email,
-    role: params.role,
-    profile_completed: params.profile_completed,
-  });
+  },
+): Promise<any> {
+  const { data, error } = await supabase
+    .from(TABLES.profiles)
+    .insert({
+      id: params.userId,
+      email: params.email,
+      role: params.role,
+      profile_completed: params.profile_completed,
+    })
+    .select()
+    .single();
 
   if (error) throw error;
+
+  return data;
 }

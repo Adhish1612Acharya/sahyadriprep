@@ -5,7 +5,13 @@ import {
   CompanyStats,
 } from "@/types/services/company.types";
 import { CompanyInput, CompanyUpdate } from "@/lib/zod/schema/company.schema";
-import { httpGet, httpPost, httpPatch, httpDelete } from "@/lib/api/http";
+import {
+  httpGet,
+  httpPost,
+  httpPatch,
+  httpDelete,
+  httpPut,
+} from "@/lib/api/http";
 import { CompanyWithColleges } from "@/lib/repositories/companies";
 import { Camelize } from "@/types";
 
@@ -176,7 +182,9 @@ export const companyApi = {
     return sizeLabels[size || ""] || "Unknown";
   },
 
-  getCompanySizeBadgeClass: (size: Camelize<Company>["companySize"]): string => {
+  getCompanySizeBadgeClass: (
+    size: Camelize<Company>["companySize"],
+  ): string => {
     const sizeColors: Record<string, string> = {
       startup: "bg-purple-100 text-purple-800",
       small: "bg-blue-100 text-blue-800",

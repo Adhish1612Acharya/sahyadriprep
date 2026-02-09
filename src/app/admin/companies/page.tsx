@@ -50,6 +50,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import Image from "next/image";
 import { companyApi } from "@/lib/api/company";
+import { Company } from "@/models";
+import { Camelize } from "@/types";
 
 export default function ManageCompaniesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,16 +99,16 @@ export default function ManageCompaniesPage() {
     }
   };
 
-  const handleEditClick = (company: any) => {
+  const handleEditClick = (company: Camelize<Company>) => {
     setSelectedCompany(company);
     setFormData({
       name: company.name,
-      logo_url: company.logo_url || "",
+      logo_url: company.logoUrl || "",
       website: company.website || "",
       industry: company.industry || "",
       headquarters: company.headquarters || "",
-      company_size: company.company_size || undefined,
-      glassdoor_rating: company.glassdoor_rating || undefined,
+      company_size: company.companySize || undefined,
+      glassdoor_rating: company.glassdoorRating || undefined,
     });
     setIsEditDialogOpen(true);
   };

@@ -249,7 +249,6 @@ export const AI_OUTPUT_SCHEMAS = {
       },
     },
     required: ["summary"],
-    additionalProperties: false,
     examples: [
       {
         summary:

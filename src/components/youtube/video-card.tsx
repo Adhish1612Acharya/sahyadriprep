@@ -11,15 +11,15 @@ import {
   Youtube,
   Sparkles,
 } from "lucide-react";
-import { YouTubeVideo } from "@/types/services/interview-youtube-video.types";
 import { formatDuration } from "@/helpers/youtube/youtube-video.helpers";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import { InterviewSessionWithCollegeAndCompanyDetails } from "@/lib/repositories/interview-sessions";
+import { Camelize } from "@/types";
 
 interface VideoCardProps {
-  video: InterviewSessionWithCollegeAndCompanyDetails;
+  video: Camelize<InterviewSessionWithCollegeAndCompanyDetails>;
 }
 
 export function VideoCard({ video }: VideoCardProps) {

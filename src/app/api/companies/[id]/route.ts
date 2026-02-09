@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   return withApiHandler(async () => {
     const supabase = await createClient();
@@ -31,7 +31,7 @@ export async function GET(
     const company = await fetchCompanyWithCollegeForCollege(
       supabase,
       id,
-      userCollegeId
+      userCollegeId,
     );
 
     return NextResponse.json({
@@ -43,9 +43,9 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  withApiHandler(async () => {
+  return withApiHandler(async () => {
     const { id } = await params;
     const supabase = await createClient();
 
@@ -73,7 +73,7 @@ export async function PATCH(
         updatedBy: result.updated_by,
         updatedByRole: result.updated_by_role,
       },
-      { status: 200 }
+      { status: 200 },
     );
   });
 }
@@ -81,7 +81,7 @@ export async function PATCH(
 // DELETE - Delete company (college_admin or super_admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   withApiHandler(async () => {
     const { id } = await params;
@@ -107,7 +107,7 @@ export async function DELETE(
     if (!company) {
       return NextResponse.json(
         { success: false, error: "Company not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -117,7 +117,7 @@ export async function DELETE(
       id,
       user.id,
       role,
-      userCollegeId
+      userCollegeId,
     );
 
     return NextResponse.json(
@@ -126,7 +126,7 @@ export async function DELETE(
         message: "Company deleted successfully",
         data: result.data,
       },
-      { status: 200 }
+      { status: 200 },
     );
   });
 }

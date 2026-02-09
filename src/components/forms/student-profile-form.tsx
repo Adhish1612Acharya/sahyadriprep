@@ -32,17 +32,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2, Save } from "lucide-react";
+import { Camelize } from "@/types";
 
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
-
-// ============================================
-// COMPONENT
-// ============================================
 
 interface StudentProfileFormProps {
-  profile: StudentProfile;
+  profile: Camelize<StudentProfile>;
   onSubmit: (data: StudentProfileUpdate) => void;
   isSubmitting?: boolean;
 }
@@ -55,17 +49,17 @@ export function StudentProfileForm({
   const form = useForm<StudentProfileUpdate>({
     resolver: zodResolver(studentProfileUpdateSchema),
     defaultValues: {
-      full_name: profile.full_name || "",
+      full_name: profile.fullName || "",
       phone: profile.phone || "",
       usn: profile.usn || "",
       batch: profile.batch || "",
       branch: profile.branch || "",
-      current_semester: profile.current_semester || undefined,
-      current_cgpa: profile.current_cgpa || undefined,
-      linkedin_url: profile.linkedin_url || "",
-      github_url: profile.github_url || "",
-      placement_status: profile.placement_status || "seeking",
-      profile_visibility: profile.profile_visibility || "public",
+      current_semester: profile.currentSemester || undefined,
+      current_cgpa: profile.currentCgpa || undefined,
+      linkedin_url: profile.linkedinUrl || "",
+      github_url: profile.githubUrl || "",
+      placement_status: profile.placementStatus || "seeking",
+      profile_visibility: profile.profileVisibility || "public",
     },
   });
 
@@ -218,7 +212,7 @@ export function StudentProfileForm({
                         value={field.value || ""}
                         onChange={(e) =>
                           field.onChange(
-                            e.target.value ? Number(e.target.value) : undefined
+                            e.target.value ? Number(e.target.value) : undefined,
                           )
                         }
                       />

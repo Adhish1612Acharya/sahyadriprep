@@ -9,6 +9,7 @@ export async function withApiHandler(handler: () => Promise<NextResponse>) {
     const contentType = response.headers.get("content-type");
     if (contentType?.includes("application/json")) {
       const data = await response.json();
+
       return NextResponse.json(toCamelCase(data), {
         status: response.status,
         headers: response.headers,

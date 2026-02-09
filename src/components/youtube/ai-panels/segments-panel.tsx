@@ -4,18 +4,11 @@ import { ListChecks, PlayCircle } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-interface Segment {
-  segmentNumber: number;
-  title: string;
-  description: string;
-  startTime: number;
-  endTime: number;
-  keyConcepts?: string[];
-}
+import { InterviewSessionSegment } from "@/models";
+import { Camelize } from "@/types";
 
 interface AISegmentsPanelProps {
-  data?: Segment[];
+  data: Camelize<InterviewSessionSegment>[];
   onJumpTo: (seconds: number) => void;
 }
 

@@ -8,21 +8,21 @@ import { toast } from "sonner";
 import { profileApi } from "@/lib/api/profile";
 // import { useToast } from "@/hooks/use-toast";
 
+// ============================================
+// QUERIES
+// ============================================
+
+export const useProfileQuery = () =>
+  useQuery({
+    queryKey: ["profile", "me"],
+    queryFn: () => profileApi.getMyProfile(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+  });
+
 export const useProfile = () => {
   const queryClient = useQueryClient();
   // const { toast } = useToast();
-
-  // ============================================
-  // QUERIES
-  // ============================================
-
-  const useProfileQuery = () =>
-    useQuery({
-      queryKey: ["profile", "me"],
-      queryFn: () => profileApi.getMyProfile(),
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
-    });
 
   // ============================================
   // MUTATIONS
@@ -108,9 +108,6 @@ export const useProfile = () => {
   });
 
   return {
-    // Queries
-    useProfileQuery,
-
     // Mutations
     updateStudentProfile,
     updateCollegeAdminProfile,

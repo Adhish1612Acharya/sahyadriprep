@@ -5,17 +5,11 @@ import { BookOpen, PlayCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-interface Flashcard {
-  question: string;
-  answer: string;
-  difficulty: "easy" | "medium" | "hard";
-  category: string;
-  timestamp: number;
-}
+import { InterviewSessionFlashcard } from "@/models";
+import { Camelize } from "@/types";
 
 interface AIFlashcardsPanelProps {
-  data?: Flashcard[];
+  data: Camelize<InterviewSessionFlashcard>[];
   onJumpTo: (seconds: number) => void;
 }
 
@@ -63,8 +57,8 @@ export function AIFlashcardsPanel({ data, onJumpTo }: AIFlashcardsPanelProps) {
                       flashcard.difficulty === "hard"
                         ? "destructive"
                         : flashcard.difficulty === "medium"
-                        ? "default"
-                        : "secondary"
+                          ? "default"
+                          : "secondary"
                     }
                   >
                     {flashcard.difficulty}
@@ -76,7 +70,7 @@ export function AIFlashcardsPanel({ data, onJumpTo }: AIFlashcardsPanelProps) {
                     variant="ghost"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onJumpTo(flashcard.timestamp);
+                      onJumpTo(flashcard.timestamp || 0);
                     }}
                   >
                     <PlayCircle className="h-3 w-3 mr-1" />

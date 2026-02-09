@@ -4,19 +4,11 @@ import { Lightbulb, PlayCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { VideoTip } from "@/types/services/interview-youtube-video.types";
 import { Camelize } from "@/types";
-
-// interface Tip {
-//   tipText: string;
-//   category: string;
-//   importance: "critical" | "important" | "moderate";
-//   timestamp: number;
-//   context?: string;
-// }
+import { InterviewSessionTip } from "@/models";
 
 interface AITipsPanelProps {
-  data?: Camelize<VideoTip>[];
+  data: Camelize<InterviewSessionTip>[];
   onJumpTo: (seconds: number) => void;
 }
 

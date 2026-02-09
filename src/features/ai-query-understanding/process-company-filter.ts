@@ -9,7 +9,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
  */
 export async function processCompanyFilter(
   supabase: SupabaseClient,
-  query: string
+  query: string,
 ): Promise<string[]> {
   try {
     console.log("🔍 Processing company filter from query...");
@@ -19,7 +19,7 @@ export async function processCompanyFilter(
     const companyNames = await extractCompaniesFromQuery(query);
 
     if (companyNames.length === 0) {
-      console.log("ℹ️ No companies mentioned in query");
+      console.log("No companies mentioned in query");
       return [];
     }
 
@@ -30,7 +30,7 @@ export async function processCompanyFilter(
 
     const duration = Date.now() - startTime;
     console.log(
-      `✅ Company filter processed in ${duration}ms: ${companyIds.length} IDs found`
+      `✅ Company filter processed in ${duration}ms: ${companyIds.length} IDs found`,
     );
 
     return companyIds;

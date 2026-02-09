@@ -3,15 +3,11 @@
 import { Sparkles, CheckCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { InterviewSessionOverview } from "@/models";
+import { Camelize } from "@/types";
 
 interface AIOverviewPanelProps {
-  data?: {
-    summary: string;
-    keyPoints?: string[];
-    topics?: string[];
-    difficultyLevel?: string;
-    recommendedFor?: string[];
-  };
+  data: Camelize<InterviewSessionOverview> | null;
 }
 
 export function AIOverviewPanel({ data }: AIOverviewPanelProps) {

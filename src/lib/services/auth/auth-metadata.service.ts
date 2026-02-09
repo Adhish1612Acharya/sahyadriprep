@@ -12,14 +12,14 @@ export async function updateUserMetadata(
     college_id?: string | null;
     profile_completed: boolean;
     [key: string]: any;
-  }
+  },
 ): Promise<User | null> {
   const { data, error } = await adminUpdateUserMetadata(userId, metadata);
   const updateUserMetadataResult = handleSupabaseResult<User | null>(
     { data, error },
     "lenient",
     "User Metadata",
-    { notFoundMessage: "User not found for metadata update" }
+    { notFoundMessage: "User not found for metadata update" },
   );
 
   return updateUserMetadataResult;
@@ -27,8 +27,8 @@ export async function updateUserMetadata(
 
 export async function syncProfileToMetadata(
   supabase: SupabaseClient,
-  userId: string
-): Promise<User | null> {
+  userId: string,
+): Promise<AuthProfile | null> {
   const { data: authProfileData, error: authProfileDataError } =
     await fetchProfileByUserId(supabase, userId);
 
@@ -39,7 +39,7 @@ export async function syncProfileToMetadata(
     },
     "strict",
     "Profile",
-    { notFoundMessage: "User profile not found for metadata sync" }
+    { notFoundMessage: "User profile not found for metadata sync" },
   );
 
   const updatedUserMetadata = await updateUserMetadata(userId, {
@@ -47,5 +47,5 @@ export async function syncProfileToMetadata(
     profile_completed: authProfile.profile_completed,
   });
 
-  return updatedUserMetadata;
+  return updatedUserMetadata ? authProfile : null;
 }

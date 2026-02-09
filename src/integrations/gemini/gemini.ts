@@ -30,7 +30,7 @@ function createGeminiModel({
   if (mode === "json") {
     generationConfig.responseMimeType = "application/json";
     if (schema) {
-      generationConfig.responseSchema = schema;
+      generationConfig.responseJsonSchema = schema;
     }
   }
 
@@ -108,7 +108,7 @@ export async function callGeminiJson<T = unknown>(
   prompt: string,
   apiKey: string,
   schema: object,
-  modelName = "gemini-2.5-flash"
+  modelName = "gemini-2.5-flash",
 ): Promise<T> {
   return callGemini<T>({
     prompt,
@@ -126,7 +126,7 @@ export async function callGeminiJson<T = unknown>(
 export async function callGeminiText(
   prompt: string,
   apiKey: string,
-  modelName = "gemini-2.5-flash"
+  modelName = "gemini-2.5-flash",
 ): Promise<string> {
   return callGemini({
     prompt,
