@@ -43,6 +43,7 @@
     "cloudinary": "^2.7.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "googleapis": "^171.4.0",
     "groq-sdk": "^0.33.0",
     "lucide-react": "^0.544.0",
     "next": "^16.0.7",

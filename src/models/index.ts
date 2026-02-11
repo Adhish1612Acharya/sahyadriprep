@@ -21,3 +21,15 @@ export * from "./interview-session-segments.types";
 export * from "./interview-session-overview.types";
 
 export * from "./interview-session-tips.types";
+
+export * from "./learning-collection.types";
+
+export * from "./learning-resource.types";
+
+export * from "./media-learning-resource.types";
+
+export * from "./youtube-learning-resource.types";
+
+export * from "./youtube-learning-resource-segment.types";
+
+export * from "./segment-media-attachment.types";
