@@ -32,4 +32,6 @@ export * from "./youtube-learning-resource.types";
 
 export * from "./youtube-learning-resource-segment.types";
 
+export * from "./youtube-learning-resource-direct-media.types";
+
 export * from "./segment-media-attachment.types";

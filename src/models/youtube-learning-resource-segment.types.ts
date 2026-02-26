@@ -1,10 +1,11 @@
 export type YoutubeLearningResourceSegment = {
   id: string;
-  youtubeLearningResourceId: string;
+  youtube_learning_resource_id: string;
   title: string;
   description: string | null;
-  startTime: number;
-  endTime: number;
-  createdAt: string;
-  updatedAt: string;
+  start_time: number;
+  end_time: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 };

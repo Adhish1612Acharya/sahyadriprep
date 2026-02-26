@@ -10,3 +10,19 @@ export type Camelize<T> =
     : T extends object
       ? { [K in keyof T as SnakeToCamelCase<string & K>]: Camelize<T[K]> }
       : T;
+
+// Converts camelCase to snake_case
+type CamelToSnakeCase<S extends string> = S extends `${infer T}${infer U}`
+  ? U extends ""
+    ? Lowercase<T>
+    : T extends Capitalize<T>
+      ? `${Lowercase<T>}_${CamelToSnakeCase<U>}`
+      : `${T}${CamelToSnakeCase<U>}`
+  : S;
+
+export type Snakelize<T> =
+  T extends Array<infer U>
+    ? Array<Snakelize<U>>
+    : T extends object
+      ? { [K in keyof T as CamelToSnakeCase<string & K>]: Snakelize<T[K]> }
+      : T;

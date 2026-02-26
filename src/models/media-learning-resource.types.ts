@@ -1,7 +1,7 @@
 export type MediaLearningResource = {
   id: string;
-  resourceId: string;
-  mediaId: string;
-  createdAt: string;
-  updatedAt: string;
+  resource_id: string;
+  media_id: string;
+  created_at: string;
+  updated_at: string;
 };

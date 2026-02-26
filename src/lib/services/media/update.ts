@@ -1,5 +1,5 @@
 import { handleSupabaseResult } from "@/helpers/supabase";
-import { updateMediaMetadata } from "@/lib/repositories/media";
+import { fetchMediaById, updateMedia, updateMediaMetadata } from "@/lib/repositories/media";
 import { Media } from "@/models";
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -29,4 +29,37 @@ export async function updateInterviewExperienceMediaMetadata(
   );
 
   return updatedMedia;
+}
+
+/**
+ * Service to update the resourceId in a media record's metadata. 
+ * Often used after a resource is created to fix 'pending' associations.
+ */
+export async function updateMediaResourceIdService(
+  supabase: SupabaseClient,
+  mediaId: string,
+  resourceId: string
+): Promise<Media> {
+
+  const { data: existing, error: fetchError } = await fetchMediaById(supabase, mediaId);
+
+    const existingMedia = handleSupabaseResult<Media>(
+      { data: existing, error: fetchError },
+      "strict",
+      "Media Fetch"
+    );
+
+
+  const updatedMetadata = {
+    ...existingMedia.metadata,
+    resource_id: resourceId
+  };
+
+  const { data, error } = await updateMedia(supabase, mediaId, { metadata: updatedMetadata });
+
+  return handleSupabaseResult<Media>(
+    { data, error },
+    "strict",
+    "Media Resource ID Update"
+  );
 }

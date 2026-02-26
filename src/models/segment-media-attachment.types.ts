@@ -1,9 +1,10 @@
 export type SegmentMediaAttachment = {
   id: string;
-  segmentId: string;
-  mediaId: string;
+  segment_id: string;
+  media_id: string;
   label: string | null;
   position: number | null;
-  createdAt: string;
-  updatedAt: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 };

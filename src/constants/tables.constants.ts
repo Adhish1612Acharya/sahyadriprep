@@ -6,14 +6,6 @@ export const TABLES = {
   studentProfiles: "student_profiles" as const,
   profiles: "profiles" as const,
 
-  // Content & Resources
-  subjects: "subjects" as const,
-  modules: "modules" as const,
-  exams: "exams" as const,
-  resources: "resources" as const,
-  coreSubjectsResource: "core_subjects_resource" as const,
-  notes: "notes" as const,
-
   // Interview Experiences
   interviewExperiences: "interview_experiences" as const,
 
@@ -24,12 +16,19 @@ export const TABLES = {
   interviewSessionFlashcards: "youtube_video_flashcards" as const,
   interviewSessionTips: "youtube_video_tips" as const,
 
+  // Learning Collections
+  learningCollections: "learning_collections" as const,
+  learningResources: "learning_resources" as const,
+  mediaLearningResources: "media_learning_resources" as const,
+  youtubeLearningResources: "youtube_learning_resources" as const,
+  youtubeLearningResourceDirectMedia:
+    "youtube_learning_resource_direct_media" as const,
+  youtubeLearningResourceSegments:
+    "youtube_learning_resource_segments" as const,
+  segmentMediaAttachments: "segment_media_attachments" as const,
+
   // Media
   media: "media" as const,
-
-  // Playlists
-  playlists: "playlists" as const,
-  playlistsResourcesMap: "playlists_resources_map" as const,
 } as const;
 
 export const vectorStoreTables = {

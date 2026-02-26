@@ -2,11 +2,11 @@ export interface LearningCollection {
   id: string;
   title: string;
   description: string | null;
-  thumbnailMediaId: string | null;
-  status: "draft" | "published" | "archived" | null;
-  visibility: "public" | "private" | null;
-  isPremium: boolean | null;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
+  thumbnail_media_id: string | null;
+  status: "draft" | "published";
+  visibility: "public" | "private";
+  is_premium: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }

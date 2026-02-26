@@ -12,6 +12,18 @@ export async function requireAuth(supabase: SupabaseClient): Promise<User> {
   return user;
 }
 
+/**
+ * Auth guard for all Learning Collection endpoints.
+ * Wraps requireAuth to allow future role-based access control
+ * without touching each individual route handler.
+ */
+export async function requireCollectionAuth(
+  supabase: SupabaseClient
+): Promise<User> {
+  return requireAuth(supabase);
+}
+
+
 export async function requireAdmin(
   supabase: SupabaseClient
 ): Promise<{ user: User; role: string; profile: AuthProfile }> {

@@ -16,6 +16,8 @@ async function getOrCreateDriveFolder(
     q: `'${parentId}' in parents and name = '${name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
     fields: "files(id, name)",
     spaces: "drive",
+    includeItemsFromAllDrives: true,
+    supportsAllDrives: true,
   });
   if (res.data.files && res.data.files.length > 0) {
     return res.data.files[0].id!;
@@ -28,6 +30,7 @@ async function getOrCreateDriveFolder(
       parents: [parentId],
     },
     fields: "id",
+    supportsAllDrives: true,
   });
   return folder.data.id!;
 }
@@ -64,7 +67,7 @@ export async function uploadToDrivePath(
   folderPath?: string,
   makePublic: boolean = true,
 ): Promise<DriveUploadResult> {
-  const rootFolderId = ENV.GOOGLE_DRIVE_FOLDER_ID;
+    const rootFolderId = ENV.GOOGLE_DRIVE_FOLDER_ID;
   let parentId = rootFolderId;
   if (folderPath) {
     parentId = await resolveDriveFolderPath(folderPath, rootFolderId);
@@ -80,6 +83,7 @@ export async function uploadToDrivePath(
       body: file instanceof Buffer ? Readable.from(file) : file,
     },
     fields: "id, name, webViewLink, webContentLink",
+    supportsAllDrives: true,
   });
 
   if (makePublic && res.data.id) {
@@ -87,4 +91,5 @@ export async function uploadToDrivePath(
   }
 
   return res.data as DriveUploadResult;
+
 }

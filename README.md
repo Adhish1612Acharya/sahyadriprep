@@ -1,5 +1,45 @@
 # 📚 Coding Conventions & File Structure
 
+## Project Scripts
+
+### Module Generation
+
+You can quickly generate repository or service modules with standardized structure using:
+
+```
+npm run generate-module -- <repository|services> <moduleName> putAll
+```
+
+This creates a folder named `<moduleName>` in either `src/lib/repositories` or `src/lib/services` with files: `fetch.ts`, `create.ts`, `update.ts`, `delete.ts`, and `index.ts` (with exports).
+
+To generate only specific files:
+
+```
+npm run generate-module -- <repository|services> <moduleName> fetch create
+```
+
+This creates only `fetch.ts` and `create.ts` (plus `index.ts` with exports).
+
+### Index Export Scripts
+
+To update all `index.ts` files recursively:
+
+```
+npm run update-index-exports
+```
+
+To update the `index.ts` in a specific directory:
+
+```
+npm run update-current-index -- <relative/path/to/dir>
+```
+
+If no path is provided, it updates the current directory.
+
+> Make sure `ts-node` is installed as a dev dependency for these scripts to work.
+
+# 📚 Coding Conventions & File Structure
+
 > **Quick Reference Guide** for maintaining consistent code organization and naming conventions across the project.
 
 ---
@@ -21,16 +61,16 @@ Does the file contain:
 
 ### 📋 File Extension Reference
 
-| File Contains | Extension | Example | Usage |
-|--------------|-----------|---------|-------|
-| **Types/Interfaces only** | `.types.ts` | `exam.types.ts` | Type definitions, interfaces |
-| **Constants only** | `.constants.ts` | `api-routes.constants.ts` | Enums, constant values |
-| **Utility functions** | `.utils.ts` | `.helpers.ts`  | `date.utils.ts` | `date.helpers.ts` | Helper/utility functions |
-| **Service/API logic** | `.service.ts` | `exam.service.ts` | Business logic, API calls |
-| **React hooks** | `.hook.ts` | `useExam.hook.ts` | Custom React hooks |
-| **Configuration** | `.config.ts` | `supabase.config.ts` | Config files |
-| **React components** | `.tsx` | `ExamCard.tsx` | React components |
-| **Mixed content** | `.ts` | `exam.ts` | Types + runtime code |
+| File Contains             | Extension       | Example                   | Usage                        |
+| ------------------------- | --------------- | ------------------------- | ---------------------------- | ----------------- | ------------------------ |
+| **Types/Interfaces only** | `.types.ts`     | `exam.types.ts`           | Type definitions, interfaces |
+| **Constants only**        | `.constants.ts` | `api-routes.constants.ts` | Enums, constant values       |
+| **Utility functions**     | `.utils.ts`     | `.helpers.ts`             | `date.utils.ts`              | `date.helpers.ts` | Helper/utility functions |
+| **Service/API logic**     | `.service.ts`   | `exam.service.ts`         | Business logic, API calls    |
+| **React hooks**           | `.hook.ts`      | `useExam.hook.ts`         | Custom React hooks           |
+| **Configuration**         | `.config.ts`    | `supabase.config.ts`      | Config files                 |
+| **React components**      | `.tsx`          | `ExamCard.tsx`            | React components             |
+| **Mixed content**         | `.ts`           | `exam.ts`                 | Types + runtime code         |
 
 ---
 
@@ -93,25 +133,25 @@ src/
 
 ### 📝 Files & Folders
 
-| Item | Convention | ✅ Correct | ❌ Incorrect |
-|------|-----------|-----------|-------------|
-| **Files** | `kebab-case` | `exam.service.ts` | `examService.ts` |
-| **Multi-word files** | `kebab-case` | `content-chunk.types.ts` | `contentChunk.types.ts` |
-| **Folders** | **Plural** `kebab-case` | `services/`, `models/` | `service/`, `model/` |
-| **Components** | `PascalCase` | `ExamCard.tsx` | `examCard.tsx` |
+| Item                 | Convention              | ✅ Correct               | ❌ Incorrect            |
+| -------------------- | ----------------------- | ------------------------ | ----------------------- |
+| **Files**            | `kebab-case`            | `exam.service.ts`        | `examService.ts`        |
+| **Multi-word files** | `kebab-case`            | `content-chunk.types.ts` | `contentChunk.types.ts` |
+| **Folders**          | **Plural** `kebab-case` | `services/`, `models/`   | `service/`, `model/`    |
+| **Components**       | `PascalCase`            | `ExamCard.tsx`           | `examCard.tsx`          |
 
 ### 🏷️ Singular vs Plural
 
-| Type | Naming | Example |
-|------|--------|---------|
-| **Service files** | Singular | `exam.service.ts` ✅ |
-| **Model/Type files** | Singular | `exam.types.ts` ✅ |
-| **Controller files** | Singular | `exam.controller.ts` ✅ |
-| **Repository files** | Singular | `exam.repository.ts` ✅ |
-| **Database tables** | Plural | `exams` ✅ |
-| **API endpoints** | Plural | `/api/exams` ✅ |
-| **React components** | Singular | `ExamCard.tsx` ✅ |
-| **Folders** | Plural | `services/`, `models/` ✅ |
+| Type                 | Naming   | Example                   |
+| -------------------- | -------- | ------------------------- |
+| **Service files**    | Singular | `exam.service.ts` ✅      |
+| **Model/Type files** | Singular | `exam.types.ts` ✅        |
+| **Controller files** | Singular | `exam.controller.ts` ✅   |
+| **Repository files** | Singular | `exam.repository.ts` ✅   |
+| **Database tables**  | Plural   | `exams` ✅                |
+| **API endpoints**    | Plural   | `/api/exams` ✅           |
+| **React components** | Singular | `ExamCard.tsx` ✅         |
+| **Folders**          | Plural   | `services/`, `models/` ✅ |
 
 ---
 
@@ -119,25 +159,25 @@ src/
 
 ### TypeScript/JavaScript
 
-| Item | Convention | Example |
-|------|-----------|---------|
-| **Interfaces** | `PascalCase` | `interface Exam { }` |
-| **Types** | `PascalCase` | `type ExamStatus = ...` |
-| **Classes** | `PascalCase` | `class ExamService { }` |
-| **Functions** | `camelCase` | `function createExam() { }` |
-| **Variables** | `camelCase` | `const examList = []` |
-| **Constants** | `SCREAMING_SNAKE_CASE` | `const MAX_FILE_SIZE = 10` |
-| **Enum values** | `SCREAMING_SNAKE_CASE` | `EXAM_STATUS.COMPLETED` |
-| **Private properties** | `_camelCase` | `private _internalState` |
+| Item                   | Convention             | Example                     |
+| ---------------------- | ---------------------- | --------------------------- |
+| **Interfaces**         | `PascalCase`           | `interface Exam { }`        |
+| **Types**              | `PascalCase`           | `type ExamStatus = ...`     |
+| **Classes**            | `PascalCase`           | `class ExamService { }`     |
+| **Functions**          | `camelCase`            | `function createExam() { }` |
+| **Variables**          | `camelCase`            | `const examList = []`       |
+| **Constants**          | `SCREAMING_SNAKE_CASE` | `const MAX_FILE_SIZE = 10`  |
+| **Enum values**        | `SCREAMING_SNAKE_CASE` | `EXAM_STATUS.COMPLETED`     |
+| **Private properties** | `_camelCase`           | `private _internalState`    |
 
 ### Database
 
-| Item | Convention | Example |
-|------|-----------|---------|
-| **Tables** | `snake_case`, plural | `exams`, `user_profiles` |
-| **Columns** | `snake_case` | `created_at`, `user_id` |
-| **Foreign keys** | `table_id` | `exam_id`, `user_id` |
-| **Junction tables** | `table1_table2` | `user_exams`, `exam_questions` |
+| Item                | Convention           | Example                        |
+| ------------------- | -------------------- | ------------------------------ |
+| **Tables**          | `snake_case`, plural | `exams`, `user_profiles`       |
+| **Columns**         | `snake_case`         | `created_at`, `user_id`        |
+| **Foreign keys**    | `table_id`           | `exam_id`, `user_id`           |
+| **Junction tables** | `table1_table2`      | `user_exams`, `exam_questions` |
 
 ---
 
@@ -147,24 +187,24 @@ src/
 
 ```typescript
 // 1. External libraries
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 // 2. Internal configs/libs
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from "@/lib/supabase/server";
 
 // 3. Types
-import { Exam, CreateExamInput } from '@/models/exam.types';
-import { EXAM_STATUS } from '@/constants/exam-status.constants';
+import { Exam, CreateExamInput } from "@/models/exam.types";
+import { EXAM_STATUS } from "@/constants/exam-status.constants";
 
 // 4. Services
-import { examService } from '@/services/exam.service';
+import { examService } from "@/services/exam.service";
 
 // 5. Utils
-import { validateExamInput } from '@/utils/validation.utils';
+import { validateExamInput } from "@/utils/validation.utils";
 
 // 6. Relative imports (if any)
-import { helperFunction } from './helpers';
+import { helperFunction } from "./helpers";
 ```
 
 ---
@@ -195,7 +235,7 @@ export interface CreateExamInput {
 
 export interface UpdateExamInput extends Partial<CreateExamInput> {}
 
-export type ExamStatus = 'draft' | 'published' | 'archived';
+export type ExamStatus = "draft" | "published" | "archived";
 ```
 
 ### 2️⃣ Constants File
@@ -204,13 +244,13 @@ export type ExamStatus = 'draft' | 'published' | 'archived';
 // filepath: src/constants/exam-status.constants.ts
 
 export const EXAM_STATUS = {
-  DRAFT: 'draft',
-  PUBLISHED: 'published',
-  ARCHIVED: 'archived',
+  DRAFT: "draft",
+  PUBLISHED: "published",
+  ARCHIVED: "archived",
 } as const;
 
 export const MAX_EXAM_DURATION = 180; // minutes
-export const MIN_EXAM_DURATION = 30;  // minutes
+export const MIN_EXAM_DURATION = 30; // minutes
 ```
 
 ### 3️⃣ Service File
@@ -257,7 +297,7 @@ import { Exam } from "@/models/exam.types";
 
 export function calculateExamScore(
   correctAnswers: number,
-  totalQuestions: number
+  totalQuestions: number,
 ): number {
   return (correctAnswers / totalQuestions) * 100;
 }
@@ -279,20 +319,20 @@ export function isExamExpired(exam: Exam): boolean {
 ```typescript
 // filepath: src/hooks/useExam.hook.ts
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { examService } from '@/services/exam.service';
-import { CreateExamInput } from '@/models/exam.types';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { examService } from "@/services/exam.service";
+import { CreateExamInput } from "@/models/exam.types";
 
 export function useExam(examId: string) {
   return useQuery({
-    queryKey: ['exam', examId],
+    queryKey: ["exam", examId],
     queryFn: () => examService.getById(examId),
   });
 }
 
 export function useExams() {
   return useQuery({
-    queryKey: ['exams'],
+    queryKey: ["exams"],
     queryFn: () => examService.getAll(),
   });
 }
@@ -303,7 +343,7 @@ export function useCreateExam() {
   return useMutation({
     mutationFn: (data: CreateExamInput) => examService.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['exams'] });
+      queryClient.invalidateQueries({ queryKey: ["exams"] });
     },
   });
 }
@@ -329,7 +369,7 @@ export function ExamCard({ exam, onEdit, onDelete }: ExamCardProps) {
       <h3>{exam.title}</h3>
       <p>Duration: {formatExamDuration(exam.duration_minutes)}</p>
       <p>Total Marks: {exam.total_marks}</p>
-      
+
       <div className="actions">
         {onEdit && <button onClick={() => onEdit(exam)}>Edit</button>}
         {onDelete && <button onClick={() => onDelete(exam.id)}>Delete</button>}
@@ -426,13 +466,13 @@ touch src/components/QuestionCard.tsx
 
 ```typescript
 // ✅ GOOD: Clear imports with proper extensions
-import { Exam } from '@/models/exam.types';
-import { EXAM_STATUS } from '@/constants/exam-status.constants';
-import { examService } from '@/services/exam.service';
-import { formatExamDuration } from '@/utils/exam.utils';
+import { Exam } from "@/models/exam.types";
+import { EXAM_STATUS } from "@/constants/exam-status.constants";
+import { examService } from "@/services/exam.service";
+import { formatExamDuration } from "@/utils/exam.utils";
 
 // ❌ BAD: Unclear what's being imported
-import { Exam, examService, formatExamDuration } from '@/exam';
+import { Exam, examService, formatExamDuration } from "@/exam";
 ```
 
 ---
@@ -447,14 +487,14 @@ import { Exam, examService, formatExamDuration } from '@/exam';
 
 ## 🆘 Quick Help
 
-| Question | Answer |
-|----------|--------|
-| Should I use `exam.service.ts` or `exams.service.ts`? | **Singular**: `exam.service.ts` ✅ |
-| Where do I put types? | `src/models/` with `.types.ts` extension |
-| Where do I put constants? | `src/constants/` with `.constants.ts` extension |
-| Should folders be plural or singular? | **Plural**: `services/`, `models/` ✅ |
-| Can I use `any` type? | No, use `Json` or `unknown` instead |
-| How do I name multi-word files? | Use `kebab-case`: `content-chunk.types.ts` |
+| Question                                              | Answer                                          |
+| ----------------------------------------------------- | ----------------------------------------------- |
+| Should I use `exam.service.ts` or `exams.service.ts`? | **Singular**: `exam.service.ts` ✅              |
+| Where do I put types?                                 | `src/models/` with `.types.ts` extension        |
+| Where do I put constants?                             | `src/constants/` with `.constants.ts` extension |
+| Should folders be plural or singular?                 | **Plural**: `services/`, `models/` ✅           |
+| Can I use `any` type?                                 | No, use `Json` or `unknown` instead             |
+| How do I name multi-word files?                       | Use `kebab-case`: `content-chunk.types.ts`      |
 
 ---
 

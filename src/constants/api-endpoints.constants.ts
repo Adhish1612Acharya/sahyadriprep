@@ -157,6 +157,57 @@ export const PROFILE_ENDPOINTS = {
 } as const;
 
 // ============================================
+// LEARNING COLLECTION ENDPOINTS
+// ============================================
+export const LEARNING_COLLECTION_ENDPOINTS = {
+  BASE: `/learning-collections`,
+  BY_ID: (id: string) => `/learning-collections/${id}`,
+  PUBLISH: (id: string) => `/learning-collections/${id}/publish`,
+} as const;
+
+// ============================================
+// LEARNING RESOURCE ENDPOINTS
+// ============================================
+export const LEARNING_RESOURCE_ENDPOINTS = {
+  BASE: `/learning-resources`,
+  BY_ID: (id: string) => `/learning-resources/${id}`,
+  BY_COLLECTION: (collectionId: string) =>
+    `/learning-resources?collection_id=${collectionId}`,
+  DIRECT_MEDIA: `/learning-resources/direct-media`,
+} as const;
+
+// ============================================
+// YOUTUBE RESOURCE ENDPOINTS
+// ============================================
+export const YOUTUBE_RESOURCE_ENDPOINTS = {
+  // Metadata extension for base learning resource
+  METADATA: (resourceId: string) => `/learning-resources/${resourceId}/youtube`,
+  
+  // Singular resource path as per blueprint
+  BASE_SINGULAR: "/youtube-learning-resource",
+  BY_ID: (id: string) => `/youtube-learning-resource/${id}`,
+  
+  // Direct Media
+  DIRECT_MEDIA: (youtubeResourceId: string) =>
+    `/youtube-learning-resource/${youtubeResourceId}/directmedia`,
+  DIRECT_MEDIA_UPLOAD: (youtubeResourceId: string) =>
+    `/youtube-learning-resource/${youtubeResourceId}/directmedia-upload`,
+  DIRECT_MEDIA_BY_ID: (youtubeResourceId: string, mediaId: string) =>
+    `/youtube-learning-resource/${youtubeResourceId}/directmedia/${mediaId}`,
+    
+  // Segments
+  SEGMENTS: (youtubeResourceId: string) =>
+    `/youtube-learning-resource/${youtubeResourceId}/segments`,
+  SEGMENT_BY_ID: (segmentId: string) =>
+    `/youtube-learning-resource/segments/${segmentId}`,
+  SEGMENT_MEDIA: (segmentId: string) =>
+    `/youtube-learning-resource/segments/${segmentId}/media`,
+} as const;
+
+
+
+
+// ============================================
 // STUDENT ENDPOINTS
 // ============================================
 export const STUDENT_ENDPOINTS = {
@@ -182,4 +233,7 @@ export const API_ENDPOINTS = {
   YOUTUBE: YOUTUBE_ENDPOINTS,
   PROFILE: PROFILE_ENDPOINTS,
   STUDENT: STUDENT_ENDPOINTS,
+  LEARNING_COLLECTIONS: LEARNING_COLLECTION_ENDPOINTS,
+  LEARNING_RESOURCES: LEARNING_RESOURCE_ENDPOINTS,
+  YOUTUBE_RESOURCES: YOUTUBE_RESOURCE_ENDPOINTS,
 } as const;

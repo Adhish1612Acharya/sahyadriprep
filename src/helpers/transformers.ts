@@ -1,6 +1,7 @@
 import { CloudinaryAsset } from "@/integrations/cloudinary";
 import { UploadApiResponse } from "cloudinary";
 import camel from "to-camel-case";
+import snake from "to-snake-case";
 
 export function toCamelCase<T>(data: T): any {
   if (Array.isArray(data)) {
@@ -16,9 +17,23 @@ export function toCamelCase<T>(data: T): any {
   return data;
 }
 
+export function toSnakeCase<T>(data: T): any {
+  if (Array.isArray(data)) {
+    return data.map(toSnakeCase);
+  }
+  if (data && typeof data === "object" && data !== null) {
+    const snakeCased: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+      snakeCased[snake(key)] = toSnakeCase(value);
+    }
+    return snakeCased;
+  }
+  return data;
+}
+
 export function toCloudinaryAsset(
   result: UploadApiResponse,
-  createdAt?: string // Optional, if you want to pass a custom createdAt
+  createdAt?: string, // Optional, if you want to pass a custom createdAt
 ): CloudinaryAsset | null {
   if (!result.success) return null;
   return {

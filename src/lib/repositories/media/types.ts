@@ -8,7 +8,7 @@ export interface MediaCreateInput {
   width?: number | null;
   height?: number | null;
   uploaded_by: string | null;
-  college_id: string;
+  college_id?: string;
   usage_type: "interview_experience" | "profile" | string;
   metadata: Record<string, any>;
 }

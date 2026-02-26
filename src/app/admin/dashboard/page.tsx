@@ -59,6 +59,15 @@ export default function AdminDashboardPage() {
       href: "/admin/students",
       stats: "234 students",
     },
+    {
+      title: "Learning Collections",
+      description: "Manage structured learning paths and resources",
+      icon: Building2,
+      iconColor: "text-orange-600",
+      bgColor: "bg-orange-50",
+      href: "/manage-collections",
+      stats: "8 collections",
+    },
   ];
 
   const quickStats = [

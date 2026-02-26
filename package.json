@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "update-index-exports": "ts-node scripts/update-index-exports.cts",
+    "update-current-index": "ts-node scripts/update-current-index.cts",
+    "generate-module": "ts-node scripts/generate-module.cts"  
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -59,6 +62,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "to-camel-case": "^1.0.0",
+    "to-snake-case": "^1.0.0",
     "youtubei.js": "^16.0.1",
     "zod": "^3.25.76"
   },
@@ -70,6 +74,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/to-camel-case": "^1.0.2",
+    "@types/to-snake-case": "^1.0.2",
     "baseline-browser-mapping": "^2.9.19",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",

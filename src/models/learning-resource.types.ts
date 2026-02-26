@@ -1,10 +1,11 @@
 export interface LearningResource {
   id: string;
-  collectionId: string | null;
+  collection_id: string | null;
   title: string;
   description: string | null;
-  type: string; // Consider using a union type if you have a fixed set of resource types
+  type: "image" | "document" | "youtube";
   position: number;
-  createdAt: string;
-  updatedAt: string;
+  is_publishable: boolean;
+  created_at: string;
+  updated_at: string;
 }
