@@ -1,6 +1,6 @@
 {
   "name": "sahyadriprep",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -9,7 +9,7 @@
     "lint": "eslint",
     "update-index-exports": "ts-node scripts/update-index-exports.cts",
     "update-current-index": "ts-node scripts/update-current-index.cts",
-    "generate-module": "ts-node scripts/generate-module.cts"  
+    "generate-module": "ts-node scripts/generate-module.cts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
