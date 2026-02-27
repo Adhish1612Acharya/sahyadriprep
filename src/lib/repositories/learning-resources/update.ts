@@ -2,7 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { TABLES } from "@/constants";
 import { LearningResource } from "@/models";
 
-export async function updateLearningResource(
+export async function updateSingleLearningResource(
   supabase: SupabaseClient,
   filters: Partial<LearningResource>,
   updates: Partial<LearningResource>,

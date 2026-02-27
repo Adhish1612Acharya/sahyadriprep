@@ -11,6 +11,7 @@ export interface Media {
   uploaded_by?: string;
   uploaded_at: string;
   college_id: string;
-  usage_type:string;
+  usage_type: string;
+  upload_provider: "cloudinary" | "google_drive" | "supabase_storage";
   metadata: Record<string, any>;
 }

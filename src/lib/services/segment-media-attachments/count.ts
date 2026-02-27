@@ -10,4 +10,8 @@ export async function countSegmentMediaAttachmentsService(
   const { count, error } = await countSegmentMediaAttachments(supabase, filters);
 
   return handleSupabaseResult<number>(
+    { data: count, error },
+    "strict",
+    "Segment Media Attachments Count"
+  );
 }

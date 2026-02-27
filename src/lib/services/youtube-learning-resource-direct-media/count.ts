@@ -1,16 +1,19 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { countYoutubeLearningResourceDirectMedia } from "@/lib/repositories/youtube-learning-resource-direct-media";
-import { YoutubeLearningResourceDirectMedia } from "@/models";
+import { handleSupabaseResult } from "@/helpers/supabase";
 
-export async function countYoutubeLearningResourceDirectMediaService(
+export async function countYoutubeResourceDirectMediaByResourceIdService(
   supabase: SupabaseClient,
-  filters: Partial<YoutubeLearningResourceDirectMedia>
+  youtubeResourceId: string,
 ): Promise<number> {
-  const { count, error } = await countYoutubeLearningResourceDirectMedia(supabase, filters);
+  const { count, error } = await countYoutubeLearningResourceDirectMedia(
+    supabase,
+    { youtube_learning_resource_id: youtubeResourceId },
+  );
 
-  if (error) {
-    throw new Error(`Failed to count YouTube learning resource direct media: ${error.message}`);
-  }
-
-  return count;
+  return handleSupabaseResult<number>(
+    { data: count, error },
+    "strict",
+    "Direct Media Count",
+  );
 }

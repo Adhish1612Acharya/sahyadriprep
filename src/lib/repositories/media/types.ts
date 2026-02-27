@@ -9,6 +9,7 @@ export interface MediaCreateInput {
   height?: number | null;
   uploaded_by: string | null;
   college_id?: string;
+  upload_provider: "google_drive" | "cloudinary" | "supabase_storage";
   usage_type: "interview_experience" | "profile" | string;
   metadata: Record<string, any>;
 }

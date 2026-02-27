@@ -15,16 +15,21 @@ import { createMediaLearningResourceLink } from "./create";
 import { DirectMediaUploadSchema } from "@/lib/zod/schema";
 import { createDriveRollback } from "@/integrations/drive/rollback";
 import { validateDirectMediaUploadToResource } from "./edge-check";
-import {
-  countYoutubeResourceDirectMediaService,
-  countYoutubeResourceSegmentsService,
-} from "@/lib/services/youtube-learning-resource-segments";
-import { TABLES } from "@/constants";
+import { getSingleMediaLearningResourceWithMediaService } from "@/lib/services/media-learning-resources";
+import { getYoutubeLearningResourceByResourceIdService } from "@/lib/services/youtube-learning-resources";
+import { LearningResourceWithExtensions } from "./types";
+import { countYoutubeResourceDirectMediaByResourceIdService } from "../youtube-learning-resource-direct-media";
+import { countYoutubeLearningResourceSegmentsService } from "../youtube-learning-resource-segments";
+import { validateLearningCollectionOwnership } from "../learning-collections";
 
 export async function createLearningResourceOrchestrator(
   request: NextRequest,
   supabase: SupabaseClient,
+  collectionId: string,
+  userId: string,
 ) {
+  await validateLearningCollectionOwnership(supabase, collectionId, userId);
+
   // 1. Validate request body
   const body = await validateRequestBody(request, LearningResourceCreateSchema);
 
@@ -94,6 +99,7 @@ export async function uploadDirectMediaOrchestrator(
       fileSize: body.file.size,
       uploadedBy: userId,
       usageType: "learning_resource",
+      uploadProvider: "google_drive",
       metadata: {
         source: "learning_resource_direct_media",
         resource_id: resourceId,
@@ -128,46 +134,62 @@ export async function getLearningResourceWithExtensionsOrchestrator(
   supabase: SupabaseClient,
   resourceId: string,
 ) {
-  // 1. Fetch base resource with extensions
+  // 1. Fetch base resource (just the table data)
   const resource = await getLearningResourceByIdService(supabase, resourceId);
 
-  // 2. Handle YouTube resource extensions
-  if (resource.type === "youtube" && resource.is_publishable) {
-    const [segmentCount, directMediaCount] = await Promise.all([
-      countYoutubeResourceSegmentsService(supabase, resource.id),
-      countYoutubeResourceDirectMediaService(supabase, resource.id),
-    ]);
+  // Initialize result with base resource
+  const result: LearningResourceWithExtensions = {
+    ...resource,
+    youtube_learning_resource: null,
+    direct_media_resource: null,
+  };
 
-    result.youtube_learning_resources[0] = {
-      ...resource,
-      segment_count: segmentCount,
-      direct_media_count: directMediaCount,
-    };
+  // 2. Handle YouTube resource extensions
+  if (resource.type === "youtube") {
+    // First, get the YouTube learning resource for this resource
+    const youtubeResource = await getYoutubeLearningResourceByResourceIdService(
+      supabase,
+      resourceId,
+    );
+
+    if (youtubeResource) {
+      // Check if this YouTube resource has segments or direct media
+      if (youtubeResource.segments_available) {
+        // Count segments only
+        const segmentCount = await countYoutubeLearningResourceSegmentsService(
+          supabase,
+          youtubeResource.id,
+        );
+
+        result.youtube_learning_resource = {
+          ...youtubeResource,
+          segment_count: segmentCount,
+        };
+      } else if (youtubeResource.direct_media_resources_available) {
+        // Count direct media only
+        const directMediaCount =
+          await countYoutubeResourceDirectMediaByResourceIdService(
+            supabase,
+            youtubeResource.id,
+          );
+
+        result.youtube_learning_resource = {
+          ...youtubeResource,
+          direct_media_count: directMediaCount,
+        };
+      }
+    }
   }
 
   // 3. Handle Image/Document resource extensions
-  if (
-    (resource.type === "image" || resource.type === "document") &&
-    resource.media_learning_resources?.[0]
-  ) {
-    // Fetch expanded media data if needed
-    const { data: mediaData } = await supabase
-      .from(TABLES.mediaLearningResources)
-      .select(
-        `
-        *,
-        media(*)
-      `,
-      )
-      .eq("resource_id", resourceId)
-      .single();
+  if (resource.type === "image" || resource.type === "document") {
+    // Get the single media learning resource with media data for this resource
+    const mediaResourceWithMedia =
+      await getSingleMediaLearningResourceWithMediaService(supabase, {
+        resource_id: resourceId,
+      });
 
-    if (mediaData) {
-      result.media_learning_resources[0] = {
-        ...result.media_learning_resources[0],
-        media: mediaData.media,
-      };
-    }
+    result.direct_media_resource = mediaResourceWithMedia;
   }
 
   return result;

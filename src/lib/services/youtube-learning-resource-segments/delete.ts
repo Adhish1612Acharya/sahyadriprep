@@ -3,15 +3,17 @@ import { handleSupabaseResult } from "@/helpers/supabase";
 import { deleteYoutubeLearningResourceSegment } from "@/lib/repositories/youtube-learning-resource-segments";
 import { YoutubeLearningResourceSegment } from "@/models";
 
-export async function deleteYoutubeLearningResourceSegmentService(
+export async function deleteYoutubeLearningResourceSegmentByIdService(
   supabase: SupabaseClient,
-  filters: Partial<YoutubeLearningResourceSegment>
+  id: string,
 ): Promise<YoutubeLearningResourceSegment> {
-  const { data, error } = await deleteYoutubeLearningResourceSegment(supabase, filters);
+  const { data, error } = await deleteYoutubeLearningResourceSegment(supabase, {
+    id,
+  });
 
   return handleSupabaseResult<YoutubeLearningResourceSegment>(
     { data, error },
     "strict",
-    "YouTube Learning Resource Segment"
+    "YouTube Learning Resource Segment",
   );
 }

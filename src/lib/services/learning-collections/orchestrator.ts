@@ -6,10 +6,12 @@ import { createLearningCollectionService } from "@/lib/services/learning-collect
 import { createThumbnailMediaService } from "@/lib/services/media";
 import { HttpError } from "@/lib/api/http";
 import { uploadLearningResourceMediaToDrive } from "@/lib/services/drive/upload";
-import { getLearningResourcesByCollectionService } from "@/lib/services/learning-resources";
-import { updateLearningCollectionService } from "@/lib/services/learning-collections";
+import {
+  updateLearningCollectionService,
+  validateLearningCollectionOwnership,
+  validateLearningCollectionPublishingStatus,
+} from "@/lib/services/learning-collections";
 import { deleteLearningCollectionService } from "./delete";
-import { requireCollectionOwnershipService } from "./auth";
 import { createDriveRollback } from "@/integrations/drive/rollback";
 
 export async function createLearningCollectionOrchestrator(
@@ -68,6 +70,7 @@ export async function createLearningCollectionOrchestrator(
       fileType: body.thumbnail.type,
       fileSize: body.thumbnail.size,
       uploadedBy: userId,
+      uploadProvider: "google_drive",
       resourceType: "learning_collection",
       resourceId: learningCollection.id,
     });
@@ -86,73 +89,35 @@ export async function createLearningCollectionOrchestrator(
       thumbnail_media: media,
     };
   } catch (err) {
-    // If anything fails after collection creation, we might want to delete 
-    // the collection or just the drive file. Here we prioritize drive cleanup.
     await driveRollback.execute();
     throw err;
   }
 }
 
-/**
- * Publish Learning Collection orchestrator
- *
- * Enforces business rules:
- *   1. Collection must have ≥ 2 resources.
- *   2. All resources must have is_publishable = true.
- */
 export async function publishLearningCollectionOrchestrator(
   supabase: SupabaseClient,
   collectionId: string,
-  userId: string
+  userId: string,
 ) {
-  // 0. Check ownership
-  await requireCollectionOwnershipService(supabase, collectionId, userId);
-
-  // 1. Fetch resources
-  const resources = await getLearningResourcesByCollectionService(
+  await validateLearningCollectionPublishingStatus(
     supabase,
-    collectionId
+    collectionId,
+    userId,
   );
 
-  // 2. enforce count ≥ 2
-  if (resources.length < 2) {
-    throw new HttpError(
-      `Collection must have at least 2 resources to be published. Current count: ${resources.length}`,
-      400,
-      "MIN_RESOURCE_COUNT_NOT_MET"
-    );
-  }
-
-  // 3. enforce all are publishable
-  const unpublishable = resources.filter((r) => !r.is_publishable);
-  if (unpublishable.length > 0) {
-    throw new HttpError(
-      `All resources in the collection must be ready for publication. Found ${unpublishable.length} draft resources.`,
-      400,
-      "DRAFT_RESOURCES_PRESENT"
-    );
-  }
-
-  // 4. Update status to 'published'
   return await updateLearningCollectionService(supabase, collectionId, {
     status: "published",
   });
 }
 
-/**
- * Delete Learning Collection orchestrator
- * 
- * Enforces ownership before deletion.
- */
 export async function deleteLearningCollectionOrchestrator(
   supabase: SupabaseClient,
   collectionId: string,
-  userId: string
+  userId: string,
 ) {
   // 1. Check ownership
-  await requireCollectionOwnershipService(supabase, collectionId, userId);
+  await validateLearningCollectionOwnership(supabase, collectionId, userId);
 
   // 2. Perform deletion
   return await deleteLearningCollectionService(supabase, collectionId);
 }
-

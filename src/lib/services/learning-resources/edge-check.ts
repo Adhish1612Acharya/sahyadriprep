@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getLearningResourceByIdService } from "@/lib/services/learning-resources/fetch";
 import { HttpError } from "@/lib/api/http";
-import { fetchMediaLearningResourceByIdService } from "@/lib/services/media-learning-resource";
+import { getMediaLearningResourceByResourceIdService } from "../media-learning-resources";
 
 /**
  * Edge check before uploading media:
@@ -16,11 +16,10 @@ export async function validateDirectMediaUploadToResource(
   // 1. Fetch resource
   const resource = await getLearningResourceByIdService(supabase, resourceId);
 
-
   // 2. Fetch media-resource link
-  const mediaResource = await fetchMediaLearningResourceByIdService(
+  const mediaResource = await getMediaLearningResourceByResourceIdService(
     supabase,
-    mediaResourceFilters.id,
+    resourceId,
   );
 
   if (mediaResource) {

@@ -1,8 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { TABLES } from "@/constants";
 import { YoutubeLearningResource } from "@/models";
-
-
+import { YoutubeLearningResourceCreateInput } from "./types";
 
 export async function createYoutubeLearningResource(
   supabase: SupabaseClient,

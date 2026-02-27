@@ -4,7 +4,7 @@ import { SegmentMediaAttachment } from "@/models";
 
 export async function updateSegmentMediaAttachment(
   supabase: SupabaseClient,
-  filters: Partial<SegmentMediaAttachment, "id">>,
+  filters: Partial<SegmentMediaAttachment>,
   input: Partial<Pick<SegmentMediaAttachment, "label" | "position">>
 ): Promise<{ data: SegmentMediaAttachment | null; error: any | null }> {
   const { data, error } = await supabase

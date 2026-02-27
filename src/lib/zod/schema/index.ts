@@ -1,4 +1,7 @@
+export * from "./add-segment-media.schema";
 export * from "./company.schema";
+export * from "./create-segment.schema";
+export * from "./create-youtube-metadata.schema";
 export * from "./direct-media-upload.schema";
 export * from "./interview-experience.schema";
 export * from "./learning-collection.schema";
@@ -7,4 +10,5 @@ export * from "./playlist.schema";
 export * from "./profile.schema";
 export * from "./ragChat.schema";
 export * from "./resource.schema";
+export * from "./youtube-direct-media-upload.schema";
 export * from "./youtube-learning-resource.schema";

@@ -5,6 +5,7 @@ import {
   fetchYoutubeLearningResourceDirectMediaWithMedia,
 } from "@/lib/repositories/youtube-learning-resource-direct-media";
 import { YoutubeLearningResourceDirectMedia } from "@/models";
+import { countYoutubeResourceDirectMediaByResourceIdService } from "./count";
 
 export async function getYoutubeLearningResourceDirectMediaService(
   supabase: SupabaseClient,
@@ -41,4 +42,17 @@ export async function getYoutubeLearningResourceDirectMediaWithMediaService(
     "lenient",
     "YouTube Learning Resource Direct Media with Media",
   );
+}
+
+export async function getNextYoutubeDirectMediaPositionService(
+  supabase: SupabaseClient,
+  youtubeLearningResourceId: string,
+): Promise<number> {
+  const count = await countYoutubeResourceDirectMediaByResourceIdService(
+    supabase,
+    youtubeLearningResourceId,
+  );
+
+  // Next position is count + 1 (since positions are 1-based)
+  return count + 1;
 }

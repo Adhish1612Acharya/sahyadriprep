@@ -8,4 +8,5 @@ export interface LearningResource {
   is_publishable: boolean;
   created_at: string;
   updated_at: string;
+  created_by: string;
 }

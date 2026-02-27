@@ -5,7 +5,7 @@ import { YoutubeLearningResourceDirectMedia } from "@/models";
 export async function deleteYoutubeLearningResourceDirectMedia(
   supabase: SupabaseClient,
   filters: Partial<YoutubeLearningResourceDirectMedia>,
-): Promise<{ data: Youtu | null; error: any | null }> {
+): Promise<{ data: YoutubeLearningResourceDirectMedia | null; error: any | null }> {
   const { data, error } = await supabase
     .from(TABLES.youtubeLearningResourceDirectMedia)
     .delete()

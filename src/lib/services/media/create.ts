@@ -19,6 +19,7 @@ export async function createInterviewPdfMediaRecord(
     college_id: collegeId,
     file_type: "application/pdf",
     uploaded_by: userId,
+    upload_provider: "cloudinary",
     usage_type: "interview_experience",
     metadata: { file_kind: "document" },
   });
@@ -58,6 +59,7 @@ export async function createInterviewVideoPreviewMediaRecord(
     height: cloudinaryVideo.height || null,
     duration: cloudinaryVideo.duration || null,
     uploaded_by: userId,
+    upload_provider: "cloudinary",
     usage_type: "interview_experience",
     metadata: { file_kind: "video_preview" },
   });
@@ -87,6 +89,7 @@ export async function createThumbnailMediaService(
     uploadedBy: string;
     resourceType: "learning_collection";
     resourceId: string;
+    uploadProvider: "google_drive" | "cloudinary" | "supabase_storage";
     webViewLink?: string;
   },
 ): Promise<Media> {
@@ -98,6 +101,7 @@ export async function createThumbnailMediaService(
     file_type: params.fileType,
     uploaded_by: params.uploadedBy,
     usage_type: params.resourceType,
+    upload_provider: params.uploadProvider,
     metadata: {
       source: "learning_collection",
       file_kind: "thumbnail",
@@ -128,6 +132,7 @@ export async function createMediaService(
     uploadedBy: string;
     usageType: string;
     metadata: Record<string, any>;
+    uploadProvider: "google_drive" | "cloudinary" | "supabase_storage";
     webViewLink?: string;
   },
 ): Promise<Media> {
@@ -139,6 +144,7 @@ export async function createMediaService(
     file_type: params.fileType,
     uploaded_by: params.uploadedBy,
     usage_type: params.usageType,
+    upload_provider: params.uploadProvider,
     metadata: {
       ...params.metadata,
       web_view_link: params.webViewLink,

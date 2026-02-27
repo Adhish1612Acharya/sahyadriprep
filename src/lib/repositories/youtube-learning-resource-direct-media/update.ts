@@ -4,9 +4,14 @@ import { YoutubeLearningResourceDirectMedia } from "@/models";
 
 export async function updateYoutubeLearningResourceDirectMedia(
   supabase: SupabaseClient,
-  filters: Par,
-  input: Partial<Pick<YoutubeLearningResourceDirectMedia, "label" | "position">>
-): Promise<{ data: YoutubeLearningResourceDirectMedia | null; error: any | null }> {
+  filters: Partial<YoutubeLearningResourceDirectMedia>,
+  input: Partial<
+    Pick<YoutubeLearningResourceDirectMedia, "label" | "position">
+  >,
+): Promise<{
+  data: YoutubeLearningResourceDirectMedia | null;
+  error: any | null;
+}> {
   const { data, error } = await supabase
     .from(TABLES.youtubeLearningResourceDirectMedia)
     .update(input)
