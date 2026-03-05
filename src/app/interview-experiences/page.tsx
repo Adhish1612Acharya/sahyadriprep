@@ -63,24 +63,30 @@ export default function InterviewExperiencesPage() {
   const { data: experiences, isLoading, isError, error } = activeQuery;
 
   // Filter by search query (client-side)
-  const filteredExperiences = experiences?.filter((exp: any) => {
+  const filteredExperiences = experiences?.filter((exp) => {
     const matchesSearch =
       !searchQuery ||
-      exp.studentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exp.seniorStudent?.name
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
       exp.companyDetails?.name
         ?.toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
       exp.collegeDetails?.name
         ?.toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
-      exp.batch?.toLowerCase().includes(searchQuery.toLowerCase());
+      exp.seniorStudent?.batch
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase());
 
     const matchesCompany =
       selectedCompanyId === "all" || exp.companyId === selectedCompanyId;
 
     const matchesBatch =
       !batchFilter ||
-      exp.batch?.toLowerCase().includes(batchFilter.toLowerCase());
+      exp.seniorStudent?.batch
+        ?.toLowerCase()
+        .includes(batchFilter.toLowerCase());
 
     return matchesSearch && matchesCompany && matchesBatch;
   });
@@ -331,7 +337,7 @@ export default function InterviewExperiencesPage() {
       filteredExperiences &&
       filteredExperiences.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredExperiences.map((exp: any) => (
+          {filteredExperiences.map((exp) => (
             <Card
               key={exp.id}
               className="rounded-xl shadow hover:shadow-lg transition cursor-pointer flex flex-col h-full"
@@ -342,10 +348,10 @@ export default function InterviewExperiencesPage() {
                   {/* Title & Subtitle */}
                   <div>
                     <h3 className="text-xl font-bold mb-1 truncate">
-                      {exp.studentName || "Anonymous"}
+                      {exp.seniorStudent?.name || "Anonymous"}
                     </h3>
                     <p className="text-sm text-muted-foreground truncate">
-                      {exp.companyDetails?.name} • {exp.batch}
+                      {exp.companyDetails?.name} • {exp.seniorStudent?.batch}
                     </p>
                   </div>
 
@@ -365,12 +371,12 @@ export default function InterviewExperiencesPage() {
                     )}
                     <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded">
                       <Calendar className="h-3 w-3 text-muted-foreground" />
-                      Batch: {exp.batch}
+                      Batch: {exp.seniorStudent?.batch}
                     </span>
-                    {exp.placedYear && (
+                    {exp.seniorStudent?.placedYear && (
                       <span className="inline-flex items-center gap-1 bg-muted px-2 py-1 rounded">
                         <Calendar className="h-3 w-3 text-muted-foreground" />
-                        Placed: {exp.placedYear}
+                        Placed: {exp.seniorStudent?.placedYear}
                       </span>
                     )}
                   </div>

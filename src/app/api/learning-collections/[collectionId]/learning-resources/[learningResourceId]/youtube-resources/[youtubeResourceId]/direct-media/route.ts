@@ -35,12 +35,14 @@ export async function POST(
     const supabase = await createClient();
     const user = await requireCollectionAuth(supabase);
 
-    const { learningResourceId, youtubeResourceId } = await params;
+    const { collectionId, learningResourceId, youtubeResourceId } =
+      await params;
 
     const result = await uploadYouTubeDirectMediaOrchestrator(
       request,
       supabase,
       user.id,
+      collectionId,
       learningResourceId,
       youtubeResourceId,
     );

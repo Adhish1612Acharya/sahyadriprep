@@ -1,6 +1,7 @@
 import { InterviewExperience } from "@/models";
+import { SeniorStudent } from "@/models/senior-students.types";
 
-export interface InterviewExperienceWithCompanyCollegeDetails extends InterviewExperience {
+export interface InterviewExperienceWithSeniorStudentCompanyCollegeDetails extends InterviewExperience {
   company_details: {
     id: string;
     name: string;
@@ -11,9 +12,10 @@ export interface InterviewExperienceWithCompanyCollegeDetails extends InterviewE
     id: string;
     name: string;
   } | null;
+  senior_student: SeniorStudent;
 }
 
-export interface InterviewExpereinceWithMediaAndCompanyCollegeDetails extends InterviewExperienceWithCompanyCollegeDetails {
+export interface InterviewExpereinceWithMediaSeniorStudentAndCompanyCollegeDetails extends InterviewExperienceWithSeniorStudentCompanyCollegeDetails {
   document_media: {
     id: string;
     url: string;

@@ -34,7 +34,7 @@ export async function createInterviewExperienceOrchestrator(
   request: NextRequest,
   supabase: SupabaseClient,
   vectorSupabase: SupabaseClient,
-  userId: string
+  userId: string,
 ): Promise<CreateInterviewExperienceResult> {
   const ctx: RollbackContext = {
     tempFiles: [],
@@ -58,13 +58,13 @@ export async function createInterviewExperienceOrchestrator(
     const company = await fetchCompanyLightForCollege(
       supabase,
       validatedData.companyId,
-      collegeId
+      collegeId,
     );
 
     // 2. TEMP FILES
     const tempFilePathsResult = await saveTempInterviewExperienceFiles(
       pdfFile,
-      videoFile
+      videoFile,
     );
 
     if (
@@ -74,7 +74,7 @@ export async function createInterviewExperienceOrchestrator(
       throw new HttpError(
         tempFilePathsResult.error || "Failed to save temporary files",
         500,
-        "TEMP_FILE_SAVE_FAILED"
+        "TEMP_FILE_SAVE_FAILED",
       );
     }
 
@@ -82,7 +82,7 @@ export async function createInterviewExperienceOrchestrator(
     const videoPath = tempFilePathsResult.experienceVideoOverviewFilePath;
 
     const tempFilePaths = Array.of(pdfPath, videoPath).filter(
-      (path): path is string => path !== null
+      (path): path is string => path !== null,
     );
 
     ctx.tempFiles.push(...tempFilePaths);
@@ -95,7 +95,7 @@ export async function createInterviewExperienceOrchestrator(
         studentName: validatedData.studentName!,
         batch: validatedData.batch,
         companyName: company.name,
-      }
+      },
     );
     if (!cloudinaryResult.success || !cloudinaryResult.assets.pdf) {
       throw new HttpError(cloudinaryResult.error!, 500, "CLOUDINARY_FAILED");
@@ -111,9 +111,15 @@ export async function createInterviewExperienceOrchestrator(
     const { pdfMediaId, videoMediaId } =
       await createInterviewExperienceMediaRecords(
         supabase,
-        cloudinaryResult.assets,
+        {
+          pdf: cloudinaryResult.assets.pdf,
+          video:
+            cloudinaryResult.assets.video === undefined
+              ? null
+              : cloudinaryResult.assets.video,
+        },
         userId,
-        collegeId
+        collegeId,
       );
 
     // 5. INTERVIEW EXPERIENCE
@@ -129,7 +135,7 @@ export async function createInterviewExperienceOrchestrator(
         video_media_id: videoMediaId,
         source: "admin_upload",
         created_by: userId,
-      }
+      },
     );
     const experienceId = newInterviewExperience.id;
 
@@ -140,7 +146,7 @@ export async function createInterviewExperienceOrchestrator(
         pdfMediaId,
         experienceId,
         validatedData.studentName!,
-        "document"
+        "document",
       ),
       videoMediaId
         ? updateInterviewExperienceMediaMetadata(
@@ -148,7 +154,7 @@ export async function createInterviewExperienceOrchestrator(
             videoMediaId,
             experienceId,
             validatedData.studentName!,
-            "video"
+            "video",
           )
         : Promise.resolve(),
     ]);
@@ -162,10 +168,10 @@ export async function createInterviewExperienceOrchestrator(
         pdfPath,
         experienceId,
         pdfMediaId,
-        videoMediaId,
+        videoMediaId || null,
         cloudinaryResult.assets.pdf.fileName || "Untitled Document",
         validatedData,
-        collegeId
+        collegeId,
       );
       ragChunksCount = ragChunks.length;
     } catch (ragError) {
@@ -178,7 +184,7 @@ export async function createInterviewExperienceOrchestrator(
     return {
       experienceId,
       pdfMediaId,
-      videoMediaId,
+      videoMediaId: videoMediaId === undefined ? null : videoMediaId,
       ragStatus,
       ragChunksCount,
     };
@@ -193,7 +199,7 @@ export async function deleteInterviewExperienceOrchestrator(
   vectorSupabase: SupabaseClient,
   userId: string,
   collegeId: string,
-  interviewExperienceId: string
+  interviewExperienceId: string,
 ): Promise<{
   success: boolean;
   data: { id: string; deleted_at: string };
@@ -211,13 +217,13 @@ export async function deleteInterviewExperienceOrchestrator(
       supabase,
       interviewExperienceId,
       collegeId,
-      userId
+      userId,
     );
 
     if (experience.document_media_id) {
       const pdfMedia = await getMediaByIdService(
         supabase,
-        experience.document_media_id
+        experience.document_media_id,
       );
       cloudinaryAssets.pdf = {
         publicId: pdfMedia.public_id,
@@ -229,7 +235,7 @@ export async function deleteInterviewExperienceOrchestrator(
     if (experience.video_media_id) {
       const videoMedia = await getMediaByIdService(
         supabase,
-        experience.video_media_id
+        experience.video_media_id,
       );
       cloudinaryAssets.video = {
         publicId: videoMedia.public_id,
@@ -242,7 +248,7 @@ export async function deleteInterviewExperienceOrchestrator(
       supabase,
       interviewExperienceId,
       userId,
-      collegeId
+      collegeId,
     );
 
     for (const mediaId of mediaIds) {
@@ -250,19 +256,18 @@ export async function deleteInterviewExperienceOrchestrator(
         supabase,
         mediaId,
         collegeId,
-        userId
+        userId,
       );
     }
 
     await deleteVectorEmbeddingsForInterviewExperienceService(
       vectorSupabase,
-      interviewExperienceId
+      interviewExperienceId,
     );
 
     // 3. CLEANUP ASSETS (fire-and-forget - no FK dependency)
-    const cloudinaryResult = await deleteInterviewExperienceFilesFromCloudinary(
-      cloudinaryAssets
-    );
+    const cloudinaryResult =
+      await deleteInterviewExperienceFilesFromCloudinary(cloudinaryAssets);
 
     return {
       success: true,
@@ -280,7 +285,7 @@ export async function deleteInterviewExperienceOrchestrator(
       throw new HttpError(
         `Delete failed: ${error.message}`,
         500,
-        "DELETE_FAILED"
+        "DELETE_FAILED",
       );
     }
   }

@@ -13,6 +13,8 @@ import {
 } from "@/lib/services/learning-collections";
 import { deleteLearningCollectionService } from "./delete";
 import { createDriveRollback } from "@/integrations/drive/rollback";
+import { createCollectionReferencesService } from "../collection-references";
+import { createYouTubeMetadataFromReferenceUrlsService } from "../youtube-metadata";
 
 export async function createLearningCollectionOrchestrator(
   request: NextRequest,
@@ -29,15 +31,22 @@ export async function createLearningCollectionOrchestrator(
   );
 
   // 2. Create the base collection record first (without thumbnail yet)
-  // This gives us the ID needed for the Drive folder path
   const learningCollection = await createLearningCollectionService(supabase, {
     title: body.title,
     description: body.description,
-    isPremium: body.isPremium,
-    visibility: body.visibility,
-    status: body.status,
     createdBy: userId,
   });
+
+  await createCollectionReferencesService(
+    supabase,
+    learningCollection.id,
+    body.references || [],
+  );
+
+  await createYouTubeMetadataFromReferenceUrlsService(
+    supabase,
+    body.references || [],
+  );
 
   try {
     // 3. Upload thumbnail to Drive using the Collection ID in the path

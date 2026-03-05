@@ -13,9 +13,9 @@ export const LearningCollectionCreateSchema = z.object({
       (file) => file.size <= 2 * 1024 * 1024, // 2MB limit
       { message: "Thumbnail must be less than 2MB" },
     ),
-  isPremium: z.boolean().optional(),
-  visibility: z.enum(["public", "private"]).optional(),
-  status: z.enum(["draft", "published"]).optional(),
+  references: z
+    .array(z.string().url("Each reference must be a valid URL"))
+    .min(1, "At least one reference URL is required"),
 });
 
 export type LearningCollectionCreateInput = z.infer<

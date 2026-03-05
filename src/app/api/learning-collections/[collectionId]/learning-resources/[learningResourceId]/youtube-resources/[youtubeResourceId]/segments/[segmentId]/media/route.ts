@@ -17,12 +17,17 @@ export async function POST(
     const supabase = await createClient();
     const user = await requireCollectionAuth(supabase);
 
-    const { segmentId } = await params;
+    const { collectionId, learningResourceId, youtubeResourceId, segmentId } =
+      await params;
 
     const result = await addSegmentMediaOrchestrator(
       request,
       supabase,
       user.id,
+      collectionId,
+      learningResourceId,
+      youtubeResourceId,
+      segmentId
     );
 
     return NextResponse.json({ success: true, data: result }, { status: 201 });

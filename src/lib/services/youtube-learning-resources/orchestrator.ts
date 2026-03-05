@@ -7,17 +7,27 @@ import { createYoutubeLearningResourceService } from "./create";
 import { HttpError } from "@/lib/api/http";
 import { createYouTubeMetadataSchema } from "@/lib/zod/schema";
 import { validateYouTubeMetadataCreation } from "./validation";
+import { validateCollectionResourceOwnership } from "../learning-resources/validation";
 
 export async function createYouTubeMetadataOrchestrator(
   request: NextRequest,
   supabase: SupabaseClient,
-  resourceId: string,
   userId: string,
+  collectionId: string,
+  resourceId: string,
 ) {
-  // 1. Validate body
-  const body = await validateRequestBody(request, createYouTubeMetadataSchema);
+  // 1. Validations
 
-  await validateYouTubeMetadataCreation(supabase, resourceId, userId);
+  const { learningResource } = await validateCollectionResourceOwnership(
+    supabase,
+    userId,
+    collectionId,
+    resourceId,
+  );
+
+  await validateYouTubeMetadataCreation(supabase, learningResource);
+
+  const body = await validateRequestBody(request, createYouTubeMetadataSchema);
 
   // 2. Extract Video ID
   const videoId = extractYouTubeVideoId(body.link);

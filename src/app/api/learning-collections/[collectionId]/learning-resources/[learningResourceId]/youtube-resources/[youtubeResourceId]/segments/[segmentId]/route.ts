@@ -17,12 +17,12 @@ export async function DELETE(
     const supabase = await createClient();
     await requireCollectionAuth(supabase);
 
-    const { segmentId } = await params;
+    const { segmentId, youtubeResourceId } = await params;
 
     const result = await deleteSegmentOrchestrator(
       supabase,
-      params.segmentId,
-      {},
+      segmentId,
+      youtubeResourceId,
     );
 
     return NextResponse.json({ success: true, data: result }, { status: 200 });

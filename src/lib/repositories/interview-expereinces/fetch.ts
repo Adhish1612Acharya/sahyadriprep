@@ -1,8 +1,8 @@
 import { TABLES } from "@/constants";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  InterviewExpereinceWithMediaAndCompanyCollegeDetails,
-  InterviewExperienceWithCompanyCollegeDetails,
+  InterviewExpereinceWithMediaSeniorStudentAndCompanyCollegeDetails,
+  InterviewExperienceWithSeniorStudentCompanyCollegeDetails,
   InterviewFilters,
 } from "./types";
 import { InterviewExperience } from "@/models";
@@ -10,7 +10,7 @@ import { InterviewExperience } from "@/models";
 export async function interviewExperiencesCountForCompanyInCollege(
   supabase: SupabaseClient,
   companyId: string,
-  collegeId: string
+  collegeId: string,
 ): Promise<{ data: number | null; error: any }> {
   const { count, error } = await supabase
     .from(TABLES.interviewExperiences)
@@ -26,9 +26,9 @@ export async function interviewExperiencesCountForCompanyInCollege(
 
 export async function fetchInterviewExperiences(
   supabase: SupabaseClient,
-  filters?: InterviewFilters
+  filters?: InterviewFilters,
 ): Promise<{
-  data: InterviewExperienceWithCompanyCollegeDetails[] | null;
+  data: InterviewExperienceWithSeniorStudentCompanyCollegeDetails[] | null;
   error: any;
 }> {
   let query = supabase
@@ -37,8 +37,9 @@ export async function fetchInterviewExperiences(
       `
       *,
       company_details:company_id(id, name, logo_url, industry),
-      college_details:college_id(id, name)
-    `
+      college_details:college_id(id, name),
+      senior_student:senior_student_id(id, name, college_id, batch)
+    `,
     )
     .order("created_at", { ascending: false });
 
@@ -56,9 +57,9 @@ export async function fetchInterviewExperiences(
 export async function fetchInterviewExperienceByIdForCollege(
   supabase: SupabaseClient,
   interviewExperienceId: string,
-  collegeId: string
+  collegeId: string,
 ): Promise<{
-  data: InterviewExpereinceWithMediaAndCompanyCollegeDetails | null;
+  data: InterviewExpereinceWithMediaSeniorStudentAndCompanyCollegeDetails | null;
   error: any;
 }> {
   const { data, error } = await supabase
@@ -68,9 +69,10 @@ export async function fetchInterviewExperienceByIdForCollege(
       *,
       company_details:company_id(id, name, logo_url, industry),
       college_details:college_id(id, name),
+      senior_student:senior_student_id(id, name, college_id, batch,placed_year),
       document_media:document_media_id(id, url, file_name, file_type, file_size),
       video_media:video_media_id(id, url, file_name, file_type, file_size)
-    `
+    `,
     )
     .eq("id", interviewExperienceId)
     .eq("college_id", collegeId)
@@ -83,7 +85,7 @@ export async function fetchInterviewExperienceOwnCreatedByIdForCollege(
   supabase: SupabaseClient,
   interviewExperienceId: string,
   collegeId: string,
-  userId: string
+  userId: string,
 ): Promise<{
   data: InterviewExperience | null;
   error: any;

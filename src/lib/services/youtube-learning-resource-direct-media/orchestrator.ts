@@ -8,23 +8,36 @@ import { ytDirectMediaUploadSchema } from "@/lib/zod";
 import { createDriveRollback } from "@/integrations/drive/rollback";
 import { getNextYoutubeDirectMediaPositionService } from "./fetch";
 import { createYouTubeLearningResourceDirectMedia } from "@/lib/repositories/youtube-learning-resource-direct-media";
-import { updateYoutubeLearningResourceFlagsAndSyncParentResourceService } from "@/lib/services/youtube-learning-resources";
-import { validateDirectYouTubeMediaUpload } from "./validation";
+import { updateYoutubeLearningResourceFlagsAndSyncParentResourceService, validateCollectionLearningResourceAndYouTubeResourceOwnership } from "@/lib/services/youtube-learning-resources";
+import {
+  validateDirectYouTubeMediaUpload,
+} from "./validation";
 
 export async function uploadYouTubeDirectMediaOrchestrator(
   request: NextRequest,
   supabase: SupabaseClient,
   userId: string,
-  resourceId: string,
+  collectionId: string,
+  learningResourceId: string,
   youtubeResourceId: string,
 ) {
+  // 1. Validate
+
+  const { learningResource, youtubeLearningResource } =
+    await validateCollectionLearningResourceAndYouTubeResourceOwnership(
+      supabase,
+      userId,
+      collectionId,
+      learningResourceId,
+      youtubeResourceId,
+    );
+
+  await validateDirectYouTubeMediaUpload(learningResource, youtubeLearningResource);
+
+  const body = await validateRequestBody(request, ytDirectMediaUploadSchema);
+
   // ── RollbackContext ────────────────────────────────────────────────────────
   const driveRollback = createDriveRollback();
-
-  await validateDirectYouTubeMediaUpload(supabase, resourceId, userId);
-
-  // 1. Validate
-  const body = await validateRequestBody(request, ytDirectMediaUploadSchema);
 
   // 2. Upload to Drive
   const driveResult = await uploadLearningResourceMediaToDrive(body.file, {

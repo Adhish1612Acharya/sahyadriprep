@@ -27,6 +27,10 @@ export const TABLES = {
     "youtube_learning_resource_segments" as const,
   segmentMediaAttachments: "segment_media_attachments" as const,
 
+  collectionReferences: "collection_references",
+  resourceReferences: "resource_references",
+  youtubeReferencesMetadata: "youtube_references_metadata",
+
   // Media
   media: "media" as const,
 } as const;

@@ -3,6 +3,7 @@ import { createMediaRecord } from "@/lib/repositories/media";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { handleSupabaseResult } from "@/helpers/supabase";
 import { Media } from "@/models";
+import { CloudinaryAsset } from "@/integrations/cloudinary";
 
 export async function createInterviewPdfMediaRecord(
   supabase: SupabaseClient,
@@ -72,6 +73,58 @@ export async function createInterviewVideoPreviewMediaRecord(
     );
 
   return uploadedInterviewExperienceVideoPreviewMedia;
+}
+
+export async function createInterviewExperienceMediaRecords(
+  supabase: SupabaseClient,
+  cloudinaryAssets: {
+    pdf: CloudinaryAsset;
+    video: CloudinaryAsset | null;
+  },
+  userId: string,
+  collegeId: string,
+): Promise<{
+  pdfMediaId: string;
+  videoMediaId?: string;
+}> {
+  // Create PDF media record
+  const pdfMedia = await createInterviewPdfMediaRecord(
+    supabase,
+    {
+      secureUrl: cloudinaryAssets.pdf.secureUrl,
+      publicId: cloudinaryAssets.pdf.publicId,
+      bytes: cloudinaryAssets.pdf.bytes,
+    },
+    cloudinaryAssets.pdf.fileName || "Interview Experience Document",
+    userId,
+    collegeId,
+  );
+
+  let videoMedia: Media | null = null;
+
+  // Create video media record if video exists
+  if (cloudinaryAssets.video) {
+    videoMedia = await createInterviewVideoPreviewMediaRecord(
+      supabase,
+      {
+        secureUrl: cloudinaryAssets.video.secureUrl,
+        publicId: cloudinaryAssets.video.publicId,
+        bytes: cloudinaryAssets.video.bytes,
+        format: cloudinaryAssets.video.format,
+        width: cloudinaryAssets.video.width,
+        height: cloudinaryAssets.video.height,
+        duration: cloudinaryAssets.video.duration,
+      },
+      cloudinaryAssets.video.fileName || "Interview Experience Video",
+      userId,
+      collegeId,
+    );
+  }
+
+  return {
+    pdfMediaId: pdfMedia.id,
+    videoMediaId: videoMedia?.id,
+  };
 }
 
 /**

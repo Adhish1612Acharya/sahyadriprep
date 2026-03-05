@@ -1,12 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,7 +26,6 @@ import { useInterviewExperiences } from "@/hooks/useInterviewExperiences.hook";
 import Image from "next/image";
 import axios from "axios";
 
-
 const DynamicPDFViewer = dynamic(
   () => import("@/components/pdf-viewer").then((mod) => mod.PDFViewer),
   {
@@ -44,7 +38,7 @@ const DynamicPDFViewer = dynamic(
         </div>
       </div>
     ),
-  }
+  },
 );
 
 export default function InterviewExperienceDetailPage() {
@@ -61,7 +55,6 @@ export default function InterviewExperienceDetailPage() {
     isError,
     error,
   } = useExperienceQuery(experienceId);
-
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -93,7 +86,7 @@ export default function InterviewExperienceDetailPage() {
       a.href = url;
       a.download = `${
         experience.companyDetails?.name || "Interview"
-      }_Experience_${experience.studentName || experience.batch}.pdf`;
+      }_Experience_${experience.seniorStudent?.name || experience.seniorStudent?.batch}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -291,13 +284,13 @@ export default function InterviewExperienceDetailPage() {
               <CardTitle>Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {experience.studentName && (
+              {experience.seniorStudent.name && (
                 <div className="flex items-start gap-3">
                   <User className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium">Student Name</p>
                     <p className="text-sm text-muted-foreground">
-                      {experience.studentName}
+                      {experience.seniorStudent.name}
                     </p>
                   </div>
                 </div>
@@ -350,12 +343,12 @@ export default function InterviewExperienceDetailPage() {
                 <div>
                   <p className="text-sm font-medium">Batch</p>
                   <p className="text-sm text-muted-foreground">
-                    {experience.batch}
+                    {experience.seniorStudent.batch}
                   </p>
                 </div>
               </div>
 
-              {experience.placedYear && (
+              {experience.seniorStudent.placedYear && (
                 <>
                   <Separator />
                   <div className="flex items-start gap-3">
@@ -363,7 +356,7 @@ export default function InterviewExperienceDetailPage() {
                     <div>
                       <p className="text-sm font-medium">Placed Year</p>
                       <p className="text-sm text-muted-foreground">
-                        {experience.placedYear}
+                        {experience.seniorStudent.placedYear}
                       </p>
                     </div>
                   </div>
@@ -389,7 +382,7 @@ export default function InterviewExperienceDetailPage() {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
-                      }
+                      },
                     )}
                   </p>
                 </div>
@@ -408,7 +401,7 @@ export default function InterviewExperienceDetailPage() {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
-                      }
+                      },
                     )}
                   </p>
                 </div>

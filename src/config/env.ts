@@ -46,6 +46,8 @@ export const ENV = {
   GEMINI_API_KEY_TIPS: process.env.GEMINI_API_KEY_TIPS!,
   GEMINI_API_KEY_FIND_COMPANY: process.env.GEMINI_API_KEY_FIND_COMPANY!,
 
+  OPEN_ROUTER_API_KEY: process.env.OPEN_ROUTER_API_KEY!,
+
   // Google Drive (OAuth2 for Personal Accounts)
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET!,

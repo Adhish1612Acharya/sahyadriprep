@@ -5,11 +5,11 @@ export type ExperienceSource = "admin_upload" | "student_self_upload";
 
 export interface InterviewExperience {
   id: string;
-  student_id: string;
-  student_name: string;
+  senior_student_id: string;
+  // student_name: string;
   college_id: string;
-  batch: string; // Format: "2023-2027"
-  placed_year: number;
+  // batch: string; // Format: "2023-2027"
+  // placed_year: number;
   company_id: string;
   document_media_id: string;
   video_media_id: string;

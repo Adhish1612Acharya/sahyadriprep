@@ -1,21 +1,29 @@
 import { HttpError } from "@/lib/api/http";
-import { getSegmentsByYoutubeResourceIdService } from "./fetch";
-import { getLearningResourceByIdService } from "../learning-resources";
+import {
+  getSegmentsByYoutubeResourceIdService,
+  getYoutubeLearningResourceSegmentByIdService,
+} from "./fetch";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { getYoutubeLearningResourceByResourceIdService } from "../youtube-learning-resources";
+import {
+  LearningCollection,
+  LearningResource,
+  YoutubeLearningResource,
+  YoutubeLearningResourceSegment,
+} from "@/models";
+import { validateCollectionLearningResourceAndYouTubeResourceOwnership } from "../youtube-learning-resources";
 
 export async function validateYouTubeSegmentCreation(
   supabase: SupabaseClient,
-  resourceId: string,
-  userId: string,
+  learningResource: LearningResource,
+  youtubeLearningResource: YoutubeLearningResource,
   startTime: number,
   endTime: number,
 ): Promise<{ allowed: true }> {
   // 1. Fetch resource
-  const resource = await getLearningResourceByIdService(supabase, resourceId);
+  const learningResourceId = learningResource.id;
 
   // 2. Check if resource type is 'youtube'
-  if (resource.type !== "youtube") {
+  if (learningResource.type !== "youtube") {
     throw new HttpError(
       "Resource must be of type 'youtube' for segment creation.",
       400,
@@ -23,34 +31,12 @@ export async function validateYouTubeSegmentCreation(
     );
   }
 
-  if (resource.created_by !== userId) {
-    throw new HttpError(
-      "You don't have permission to create segments for this YouTube resource.",
-      403,
-      "INSUFFICIENT_PERMISSIONS",
-    );
-  }
-
-  const youtubeResource = await getYoutubeLearningResourceByResourceIdService(
-    supabase,
-    resourceId,
-  );
-
   // 3. Check if segmentation is allowed
-  if (!youtubeResource.segments_available) {
+  if (!youtubeLearningResource.segments_available) {
     throw new HttpError(
       "Segmentation is not allowed for this YouTube resource.",
       400,
       "SEGMENTATION_NOT_ALLOWED",
-    );
-  }
-
-  // 4. Check ownership
-  if (youtubeResource.created_by !== userId) {
-    throw new HttpError(
-      "You don't have permission to create segments for this YouTube resource.",
-      403,
-      "INSUFFICIENT_PERMISSIONS",
     );
   }
 
@@ -73,8 +59,8 @@ export async function validateYouTubeSegmentCreation(
 
   // 6. Check against video duration
   if (
-    youtubeResource.duration_seconds &&
-    endTime > youtubeResource.duration_seconds
+    youtubeLearningResource.duration_seconds &&
+    endTime > youtubeLearningResource.duration_seconds
   ) {
     throw new HttpError(
       "End time cannot exceed video duration.",
@@ -85,7 +71,7 @@ export async function validateYouTubeSegmentCreation(
 
   // 7. Fetch existing segments to check for overlaps
   const youtubeLearningResourceSegments =
-    await getSegmentsByYoutubeResourceIdService(supabase, resourceId);
+    await getSegmentsByYoutubeResourceIdService(supabase, learningResourceId);
 
   // 8. Check for overlaps with existing segments
   if (
@@ -109,4 +95,62 @@ export async function validateYouTubeSegmentCreation(
   }
 
   return { allowed: true };
+}
+
+export async function validateCollectionLearningResourceYouTubeResourceAndSegmentOwnership(
+  supabase: SupabaseClient,
+  userId: string,
+  collectionId: string,
+  learningResourceId: string,
+  youtubeResourceId: string,
+  segmentId: string,
+): Promise<{
+  allowed: true;
+  collection: LearningCollection;
+  learningResource: LearningResource;
+  youtubeLearningResource: YoutubeLearningResource;
+  youtubeLearningResourceSegment: YoutubeLearningResourceSegment;
+}> {
+  // 1. First validate collection, learning resource, and YouTube resource ownership
+  const { collection, learningResource, youtubeLearningResource } =
+    await validateCollectionLearningResourceAndYouTubeResourceOwnership(
+      supabase,
+      userId,
+      collectionId,
+      learningResourceId,
+      youtubeResourceId,
+    );
+
+  // 2. Fetch segment using existing service
+  const youtubeLearningResourceSegment =
+    await getYoutubeLearningResourceSegmentByIdService(supabase, segmentId);
+
+  // 3. Validate segment ownership
+  if (youtubeLearningResourceSegment.created_by !== userId) {
+    throw new HttpError(
+      "You don't have permission to access this segment.",
+      403,
+      "SEGMENT_ACCESS_DENIED",
+    );
+  }
+
+  // 4. Validate that segment belongs to the YouTube resource
+  if (
+    youtubeLearningResourceSegment.youtube_learning_resource_id !==
+    youtubeLearningResource.id
+  ) {
+    throw new HttpError(
+      "Segment does not belong to the specified YouTube resource.",
+      400,
+      "SEGMENT_YOUTUBE_RESOURCE_MISMATCH",
+    );
+  }
+
+  return {
+    allowed: true,
+    collection,
+    learningResource,
+    youtubeLearningResource,
+    youtubeLearningResourceSegment,
+  };
 }

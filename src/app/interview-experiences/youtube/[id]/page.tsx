@@ -98,9 +98,6 @@ export default function VideoDetailPage() {
   const [jumpToTimestamp, setJumpToTimestamp] = useState<number | null>(null);
   const [playerReady, setPlayerReady] = useState(false);
 
-  console.log("Video Data:", video);
-
-  console.log("Ai Data:", aiData);
 
   // ✅ Ref for auto-scroll to AI section
   const aiSectionRef = useRef<HTMLDivElement>(null);

@@ -10,22 +10,33 @@ import {
   validateYouTubeSegmentCreation,
 } from "@/lib/services/youtube-learning-resource-segments";
 import { CreateSegmentSchema } from "@/lib/zod";
-import { updateYoutubeLearningResourceFlagsAndSyncParentResourceService } from "../youtube-learning-resources";
+import { updateYoutubeLearningResourceFlagsAndSyncParentResourceService, validateCollectionLearningResourceAndYouTubeResourceOwnership } from "../youtube-learning-resources";
 
 export async function createSegmentOrchestrator(
   request: NextRequest,
   supabase: SupabaseClient,
   userId: string,
+  collectionId: string,
   learningResourceId: string,
   youtubeLearningResourceId: string,
 ) {
   // 1. Validate
+
+  const { learningResource, youtubeLearningResource } =
+    await validateCollectionLearningResourceAndYouTubeResourceOwnership(
+      supabase,
+      userId,
+      collectionId,
+      learningResourceId,
+      youtubeLearningResourceId,
+    );
+
   const body = await validateRequestBody(request, CreateSegmentSchema);
 
   await validateYouTubeSegmentCreation(
     supabase,
-    learningResourceId,
-    userId,
+    learningResource,
+    youtubeLearningResource,
     body.startTime,
     body.endTime,
   );

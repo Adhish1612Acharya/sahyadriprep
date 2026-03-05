@@ -6,19 +6,20 @@ import { uploadDirectMediaOrchestrator } from "@/lib/services/learning-resources
 
 export async function POST(
   request: NextRequest,
-  params: Promise<{ id: string }>,
+  params: Promise<{ collectionId: string; learningResourceId: string }>,
 ) {
   return withApiHandler(async () => {
     const supabase = await createClient();
     const user = await requireCollectionAuth(supabase);
 
-    const { id: resourceId } = await params;
+    const { collectionId, learningResourceId } = await params;
 
     const result = await uploadDirectMediaOrchestrator(
       request,
       supabase,
       user.id,
-      resourceId,
+      collectionId,
+      learningResourceId,
     );
 
     return NextResponse.json({ success: true, data: result }, { status: 201 });

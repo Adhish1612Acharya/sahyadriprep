@@ -9,7 +9,7 @@ import { createMediaLearningResource } from "@/lib/repositories/media-learning-r
 
 export async function createLearningResourceService(
   supabase: SupabaseClient,
-  input: Camelize<LearningResourceCreateInput & { position: number }>,
+  input: Camelize<LearningResourceCreateInput & { position: number , collection_id:string}>,
 ): Promise<LearningResource> {
   const { data, error } = await createLearningResource(
     supabase,

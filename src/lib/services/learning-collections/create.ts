@@ -6,7 +6,7 @@ import { toSnakeCase } from "@/helpers/transformers";
 
 export async function createLearningCollectionService(
   supabase: SupabaseClient,
-  input: Omit<LearningCollectionCreateInput, "thumbnail"> & {
+  input: Omit<LearningCollectionCreateInput, "thumbnail" | "references"> & {
     thumbnailMediaId?: string;
     createdBy?: string;
   },

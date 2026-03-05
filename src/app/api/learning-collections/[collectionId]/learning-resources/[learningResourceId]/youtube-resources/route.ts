@@ -6,18 +6,21 @@ import { createYouTubeMetadataOrchestrator } from "@/lib/services/youtube-learni
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { collectionId: string; learningResourceId: string } },
 ) {
   return withApiHandler(async () => {
     const supabase = await createClient();
 
     const user = await requireCollectionAuth(supabase);
 
+    const { collectionId, learningResourceId } = await params;
+
     const result = await createYouTubeMetadataOrchestrator(
       request,
       supabase,
-      params.id,
       user.id,
+      collectionId,
+      learningResourceId,
     );
 
     return NextResponse.json({ success: true, data: result }, { status: 201 });

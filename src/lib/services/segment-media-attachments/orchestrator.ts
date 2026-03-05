@@ -4,12 +4,11 @@ import { validateRequestBody } from "@/lib/zod/validateRequest";
 import { uploadLearningResourceMediaToDrive } from "@/lib/services/drive/upload";
 import { createMediaService } from "@/lib/services/media";
 import { HttpError } from "@/lib/api/http";
-import { getYoutubeLearningResourceSegmentByIdService } from "@/lib/services/youtube-learning-resource-segments";
+import { validateCollectionLearningResourceYouTubeResourceAndSegmentOwnership } from "@/lib/services/youtube-learning-resource-segments";
 import { addSegmentMediaSchema } from "@/lib/zod";
 import {
   createSegmentMediaAttachmentService,
   getNextSegmentMediaPositionService,
-  validateYouTubeSegmentMediaUpload,
 } from "@/lib/services/segment-media-attachments";
 import { createDriveRollback } from "@/integrations/drive/rollback";
 
@@ -17,18 +16,26 @@ export async function addSegmentMediaOrchestrator(
   request: NextRequest,
   supabase: SupabaseClient,
   userId: string,
+  collectionId: string,
+  learningResourceId: string,
+  youtubeResourceId: string,
   segmentId: string,
 ) {
-  // ─── RollbackContext ───────────────────────────────────────────────────────
-  const driveRollback = createDriveRollback();
-
-  await validateYouTubeSegmentMediaUpload(supabase, segmentId, userId);
+  const { youtubeLearningResourceSegment } =
+    await validateCollectionLearningResourceYouTubeResourceAndSegmentOwnership(
+      supabase,
+      userId,
+      collectionId,
+      learningResourceId,
+      youtubeResourceId,
+      segmentId,
+    );
 
   // 1. Validate
   const body = await validateRequestBody(request, addSegmentMediaSchema);
 
-  const youtubeLearningResourceSegment =
-    await getYoutubeLearningResourceSegmentByIdService(supabase, segmentId);
+  // ─── RollbackContext ───────────────────────────────────────────────────────
+  const driveRollback = createDriveRollback();
 
   // 2. Upload to Drive
   const driveResult = await uploadLearningResourceMediaToDrive(body.file, {

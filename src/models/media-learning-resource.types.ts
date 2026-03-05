@@ -4,5 +4,5 @@ export type MediaLearningResource = {
   media_id: string;
   created_at: string;
   updated_at: string;
-  created_by;
+  created_by: string;
 };

@@ -1,15 +1,14 @@
 import { INTERVIEW_EXPERIENCE_ENDPOINTS } from "@/constants/api-endpoints.constants";
 import {
   CreateInterviewExperienceInput,
-  InterviewExperience,
   InterviewExperienceResponse,
 } from "@/types/services/interview-experience.types";
 import { InterviewExperienceFormValues } from "@/lib/zod/schema/interview-experience.schema";
 import { httpGet, httpPost, httpDelete } from "@/lib/api/http";
 import { ListInterviewsResult } from "@/lib/services/interview-experiences";
 import {
-  InterviewExpereinceWithMediaAndCompanyCollegeDetails,
-  InterviewExperienceWithCompanyCollegeDetails,
+  InterviewExpereinceWithMediaSeniorStudentAndCompanyCollegeDetails,
+  InterviewExperienceWithSeniorStudentCompanyCollegeDetails,
 } from "@/lib/repositories/interview-expereinces";
 import { Camelize } from "@/types";
 
@@ -57,7 +56,7 @@ export const interviewExperienceApi = {
     college_id?: string;
     batch?: string;
     placed_year?: number;
-  }): Promise<Camelize<InterviewExperienceWithCompanyCollegeDetails>[]> => {
+  }): Promise<Camelize<InterviewExperienceWithSeniorStudentCompanyCollegeDetails>[]> => {
     const params = new URLSearchParams();
     if (filters?.company_id) params.append("company_id", filters.company_id);
     if (filters?.college_id) params.append("college_id", filters.college_id);
@@ -75,19 +74,19 @@ export const interviewExperienceApi = {
   getById: async (
     id: string,
   ): Promise<
-    Camelize<InterviewExpereinceWithMediaAndCompanyCollegeDetails>
+    Camelize<InterviewExpereinceWithMediaSeniorStudentAndCompanyCollegeDetails>
   > => {
     const response = await httpGet<{
       success: boolean;
-      interviewExperienceDetails: Camelize<InterviewExpereinceWithMediaAndCompanyCollegeDetails>;
+      interviewExperienceDetails: Camelize<InterviewExpereinceWithMediaSeniorStudentAndCompanyCollegeDetails>;
     }>(INTERVIEW_EXPERIENCE_ENDPOINTS.BY_ID(id));
     return response.interviewExperienceDetails;
   },
 
   getByCollege: async (
     collegeId: string,
-  ): Promise<Camelize<InterviewExperience>[]> => {
-    const response = await httpGet<{ data: Camelize<InterviewExperience>[] }>(
+  ): Promise<Camelize<InterviewExperienceWithSeniorStudentCompanyCollegeDetails>[]> => {
+    const response = await httpGet<{ data: Camelize<InterviewExperienceWithSeniorStudentCompanyCollegeDetails>[] }>(
       INTERVIEW_EXPERIENCE_ENDPOINTS.BY_COLLEGE(collegeId),
     );
     return response.data;
@@ -95,7 +94,7 @@ export const interviewExperienceApi = {
 
   getByCompany: async (
     companyId: string,
-  ): Promise<Camelize<InterviewExperienceWithCompanyCollegeDetails>[]> => {
+  ): Promise<Camelize<InterviewExperienceWithSeniorStudentCompanyCollegeDetails>[]> => {
     const response = await httpGet<{
       success: boolean;
       data: Camelize<ListInterviewsResult>;
@@ -105,7 +104,7 @@ export const interviewExperienceApi = {
 
   getByBatch: async (
     batch: string,
-  ): Promise<Camelize<InterviewExperienceWithCompanyCollegeDetails>[]> => {
+  ): Promise<Camelize<InterviewExperienceWithSeniorStudentCompanyCollegeDetails>[]> => {
     const response = await httpGet<{
       success: boolean;
       data: Camelize<ListInterviewsResult>;

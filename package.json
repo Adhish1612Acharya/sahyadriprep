@@ -18,6 +18,7 @@
     "@langchain/community": "^0.3.57",
     "@langchain/core": "^0.3.78",
     "@langchain/textsplitters": "^0.1.0",
+    "@openrouter/sdk": "^0.9.11",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.10",

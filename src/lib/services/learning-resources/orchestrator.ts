@@ -14,12 +14,12 @@ import { HttpError } from "@/lib/api/http";
 import { createMediaLearningResourceLink } from "./create";
 import { DirectMediaUploadSchema } from "@/lib/zod/schema";
 import { createDriveRollback } from "@/integrations/drive/rollback";
-import { validateDirectMediaUploadToResource } from "./edge-check";
+import {
+  validateCollectionResourceOwnership,
+  validateDirectMediaUploadToResource,
+} from "./validation";
 import { getSingleMediaLearningResourceWithMediaService } from "@/lib/services/media-learning-resources";
-import { getYoutubeLearningResourceByResourceIdService } from "@/lib/services/youtube-learning-resources";
 import { LearningResourceWithExtensions } from "./types";
-import { countYoutubeResourceDirectMediaByResourceIdService } from "../youtube-learning-resource-direct-media";
-import { countYoutubeLearningResourceSegmentsService } from "../youtube-learning-resource-segments";
 import { validateLearningCollectionOwnership } from "../learning-collections";
 
 export async function createLearningResourceOrchestrator(
@@ -34,18 +34,16 @@ export async function createLearningResourceOrchestrator(
   const body = await validateRequestBody(request, LearningResourceCreateSchema);
 
   // 2. Auto-calculate next position
-  const position = await getNextResourcePositionService(
-    supabase,
-    body.collectionId,
-  );
+  const position = await getNextResourcePositionService(supabase, collectionId);
 
   // 3. Create base learning resource
   const learningResource = await createLearningResourceService(supabase, {
-    collectionId: body.collectionId,
     title: body.title,
     description: body.description,
     type: body.type,
     position,
+    collectionId,
+    referenceIds: body.referenceIds,
   });
 
   return learningResource;
@@ -58,6 +56,7 @@ export async function uploadDirectMediaOrchestrator(
   request: NextRequest,
   supabase: SupabaseClient,
   userId: string,
+  collectionId: string,
   resourceId: string,
 ) {
   // ─── RollbackContext ───────────────────────────────────────────────────────
@@ -66,11 +65,18 @@ export async function uploadDirectMediaOrchestrator(
   // 1. Validate FormData
   const body = await validateRequestBody(request, DirectMediaUploadSchema);
 
+  // 2. Validate user has permission to modify the resource (ownership of collection + resource)
+  const { learningResource } = await validateCollectionResourceOwnership(
+    supabase,
+    userId,
+    collectionId,
+    resourceId,
+  );
+
   // 2. Edge check before upload
   await validateDirectMediaUploadToResource(
     supabase,
-    resourceId,
-    { id: resourceId },
+    learningResource,
     body.file.type,
   );
 
@@ -145,41 +151,41 @@ export async function getLearningResourceWithExtensionsOrchestrator(
   };
 
   // 2. Handle YouTube resource extensions
-  if (resource.type === "youtube") {
-    // First, get the YouTube learning resource for this resource
-    const youtubeResource = await getYoutubeLearningResourceByResourceIdService(
-      supabase,
-      resourceId,
-    );
+  // if (resource.type === "youtube") {
+  //   // First, get the YouTube learning resource for this resource
+  //   const youtubeResource = await getYoutubeLearningResourceByResourceIdService(
+  //     supabase,
+  //     resourceId,
+  //   );
 
-    if (youtubeResource) {
-      // Check if this YouTube resource has segments or direct media
-      if (youtubeResource.segments_available) {
-        // Count segments only
-        const segmentCount = await countYoutubeLearningResourceSegmentsService(
-          supabase,
-          youtubeResource.id,
-        );
+  //   if (youtubeResource) {
+  //     // Check if this YouTube resource has segments or direct media
+  //     if (youtubeResource.segments_available) {
+  //       // Count segments only
+  //       const segmentCount = await countYoutubeLearningResourceSegmentsService(
+  //         supabase,
+  //         youtubeResource.id,
+  //       );
 
-        result.youtube_learning_resource = {
-          ...youtubeResource,
-          segment_count: segmentCount,
-        };
-      } else if (youtubeResource.direct_media_resources_available) {
-        // Count direct media only
-        const directMediaCount =
-          await countYoutubeResourceDirectMediaByResourceIdService(
-            supabase,
-            youtubeResource.id,
-          );
+  //       result.youtube_learning_resource = {
+  //         ...youtubeResource,
+  //         segment_count: segmentCount,
+  //       };
+  //     } else if (youtubeResource.direct_media_resources_available) {
+  //       // Count direct media only
+  //       const directMediaCount =
+  //         await countYoutubeResourceDirectMediaByResourceIdService(
+  //           supabase,
+  //           youtubeResource.id,
+  //         );
 
-        result.youtube_learning_resource = {
-          ...youtubeResource,
-          direct_media_count: directMediaCount,
-        };
-      }
-    }
-  }
+  //       result.youtube_learning_resource = {
+  //         ...youtubeResource,
+  //         direct_media_count: directMediaCount,
+  //       };
+  //     }
+  //   }
+  // }
 
   // 3. Handle Image/Document resource extensions
   if (resource.type === "image" || resource.type === "document") {

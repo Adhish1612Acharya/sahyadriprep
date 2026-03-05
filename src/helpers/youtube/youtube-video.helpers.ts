@@ -1,7 +1,6 @@
 import { TranscriptSegment } from "@/features/youtube/types";
-import {
-  ChunkWithMetadata,
-} from "@/types/youtube-videos.types";
+import { ReferenceType } from "@/models";
+import { ChunkWithMetadata } from "@/types/youtube-videos.types";
 
 /**
  * Parse YouTube ISO 8601 duration to seconds
@@ -56,7 +55,7 @@ export const formatTimestamp = (seconds: number): string => {
 export function chunkTranscriptByTokens(
   segments: TranscriptSegment[],
   targetWords: number = 200,
-  maxWords: number = 300
+  maxWords: number = 300,
 ): ChunkWithMetadata[] {
   const chunks: ChunkWithMetadata[] = [];
   let currentChunk: TranscriptSegment[] = [];
@@ -93,7 +92,7 @@ export function chunkTranscriptByTokens(
   }
 
   console.log(
-    `✅ Created ${chunks.length} chunks with target=${targetWords}, max=${maxWords} words`
+    `✅ Created ${chunks.length} chunks with target=${targetWords}, max=${maxWords} words`,
   );
   console.log(`📊 Chunk sizes: ${chunks.map((c) => c.word_count).join(", ")}`);
 
@@ -105,7 +104,7 @@ export function chunkTranscriptByTokens(
  */
 function createChunkFromSegments(
   segments: TranscriptSegment[],
-  chunkIndex: number
+  chunkIndex: number,
 ): ChunkWithMetadata {
   const firstSegment = segments[0];
   const lastSegment = segments[segments.length - 1];
@@ -170,3 +169,8 @@ export const extractYouTubeVideoId = (url: string): string | null => {
     return null;
   }
 };
+
+export function determineReferenceType(url: string): ReferenceType {
+  const youtubeRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)/;
+  return youtubeRegex.test(url) ? "youtube" : "external";
+}
