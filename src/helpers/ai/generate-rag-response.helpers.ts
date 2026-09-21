@@ -60,7 +60,7 @@ Please provide a comprehensive answer based on the above sources. Reference spec
           content: `${systemPrompt}\n\n${contextPrompt}`,
         },
       ],
-      model: "llama-3.3-70b-versatile", // ✅ Best model for reasoning
+      model: "openai/gpt-oss-120b", // ✅ Best model for reasoning
       temperature: 0.3, // ✅ Lower temperature for factual responses
       max_tokens: 1500, // ✅ Allow detailed responses
       top_p: 0.9,
