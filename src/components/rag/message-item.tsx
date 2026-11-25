@@ -45,7 +45,9 @@ export const MessageItem = memo(({ message }: MessageItemProps) => {
         </Avatar>
       )}
 
-      <div className={cn("flex-1 max-w-[85%]", isUser && "flex justify-end")}>
+      <div
+        className={cn("flex-1 min-w-0 max-w-[85%]", isUser && "flex justify-end")}
+      >
         {isUser ? (
           // User message - simple card
           <Card className={cn("px-4 py-3 bg-primary text-primary-foreground")}>

@@ -218,7 +218,7 @@ export function SourcesDisplayComponent({
                       >
                         <div className="group p-2.5 rounded-lg border bg-card hover:bg-accent transition-colors cursor-pointer">
                           <div className="flex items-start justify-between gap-2 mb-1.5">
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2 min-w-0">
                               <span className="text-xs font-mono text-muted-foreground">
                                 [
                                 {(sources.interview_documents?.length ?? 0) +
@@ -239,8 +239,8 @@ export function SourcesDisplayComponent({
                                 ({Math.floor(ts.duration_seconds)}s)
                               </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">
                                 {(ts.similarity * 100).toFixed(1)}% match
                               </span>
                               <PlayCircle className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />

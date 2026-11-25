@@ -81,7 +81,10 @@ export default function RagChatbot() {
 
       {/* Chat Messages */}
       <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
+        {/* Radix wraps content in a display:table div that grows to fit wide
+            children (e.g. the Sources tab), pushing messages out of the panel.
+            Force it to block so content wraps to the panel width. */}
+        <ScrollArea className="h-full [&_[data-slot=scroll-area-viewport]>div]:!block">
           <div className="p-4">
             {messages.length === 0 ? (
               <EmptyState setInputMessage={setInputMessage} />
