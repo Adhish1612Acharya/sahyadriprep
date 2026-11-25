@@ -1,7 +1,7 @@
-import { HuggingFaceInferenceEmbeddings } from "@langchain/community/embeddings/hf";
+import type { Embeddings } from "@langchain/core/embeddings";
 
 async function embedDocumentsWithHandling(
-  embeddings: HuggingFaceInferenceEmbeddings,
+  embeddings: Embeddings,
   documentChunks: string[]
 ) {
   try {

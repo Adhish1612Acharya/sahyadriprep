@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "prebuild": "node scripts/download-embedding-model.mjs",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint"
@@ -12,6 +13,7 @@
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.2.2",
     "@huggingface/inference": "^4.11.0",
+    "@huggingface/transformers": "3.8.1",
     "@langchain/community": "^0.3.57",
     "@langchain/core": "^0.3.78",
     "@langchain/textsplitters": "^0.1.0",

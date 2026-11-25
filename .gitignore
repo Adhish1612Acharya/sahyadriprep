@@ -20,6 +20,9 @@
 # production
 /build
 
+# self-hosted embedding weights (fetched by scripts/download-embedding-model.mjs)
+/models
+
 # misc
 .DS_Store
 *.pem
